@@ -1,80 +1,91 @@
-workspace "VulkanProject"
-   architecture "x64"
+workspace "VulkanApp"
    configurations { "Debug", "Release" }
+   location "build"  -- Specify where to place generated files
 
--- Main Project
-project "VulkanApp"
-   location "VulkanApp"
-   kind "ConsoleApp"
-   language "C++"
-   cppdialect "C++17"
-   staticruntime "on"
+   -- Project 1: Editor
+   project "Editor"
+      kind "ConsoleApp"
+      language "C++"
+	  cppdialect "C++20"
+      targetdir "bin/%{cfg.buildcfg}"
 
-   targetdir ("bin/%{cfg.buildcfg}/%{prj.name}")
-   objdir ("bin-int/%{cfg.buildcfg}/%{prj.name}")
+      files { "Editor/**.h", "Editor/**.cpp" }
+	  
+	   links { "Core" }
 
-   files {
-      "%{prj.name}/src/**.h",
-      "%{prj.name}/src/**.cpp"
-   }
+      filter "configurations:Debug"
+         defines { "DEBUG" }
+         symbols "On"
 
-   includedirs {
-      "%{prj.name}/src",
-      "C:/VulkanSDK/1.3.290.0/Include"   -- Replace with your Vulkan SDK include path
-   }
+      filter "configurations:Release"
+         defines { "NDEBUG" }
+         optimize "On"
 
-   libdirs {
-      "C:/VulkanSDK/1.3.290.0/Lib"       -- Replace with your Vulkan SDK library path
-   }
+   -- Project 2: Core
+   project "Core"
+      kind "StaticLib"  
+      language "C++"
+	  cppdialect "C++20"
+      targetdir "bin/%{cfg.buildcfg}"
 
-   links {
-      "vulkan-1",                 -- Replace with the Vulkan library name (e.g., vulkan-1.lib)
-      "VulkanUtils"               -- Link the VulkanUtils static library to VulkanApp
-   }
+      files { "Core/**.h", "Core/**.cpp" }
+	  
+	  links { "Graphic" }
 
-   filter "system:windows"
-      systemversion "latest"
+      filter "configurations:Debug"
+         defines { "DEBUG" }
+         symbols "On"
 
-   filter "configurations:Debug"
-      defines { "DEBUG" }
-      runtime "Debug"
-      symbols "on"
+      filter "configurations:Release"
+         defines { "NDEBUG" }
+         optimize "On"
+		 
+		 
+	project "Graphic"
+      kind "StaticLib"  
+      language "C++"
+	  cppdialect "C++20"
+      targetdir "bin/%{cfg.buildcfg}"
 
-   filter "configurations:Release"
-      defines { "NDEBUG" }
-      runtime "Release"
-      optimize "on"
+      files { "Graphic/**.h", "Graphic/**.cpp" }
+	  
+	  includedirs {
+      "dependencies",
+      "C:/VulkanSDK/1.3.290.0/Include"
+	  }
 
--- Subproject
-project "VulkanUtils"
-   location "VulkanUtils"
-   kind "StaticLib"
-   language "C++"
-   cppdialect "C++17"
-   staticruntime "on"
+	 libdirs {
+	  "C:/VulkanSDK/1.3.290.0/Lib"
+     }
 
-   targetdir ("bin/%{cfg.buildcfg}/%{prj.name}")
-   objdir ("bin-int/%{cfg.buildcfg}/%{prj.name}")
+     links {
+      "GLFW",
+      "shaderc_sharedd.lib",
+      "vulkan-1.lib"
+     }
+	 
 
-   files {
-      "%{prj.name}/src/**.h",
-      "%{prj.name}/src/**.cpp"
-   }
+      filter "configurations:Debug"
+         defines { "DEBUG" }
+         symbols "On"
 
-   includedirs {
-      "%{prj.name}/src",
-      "C:/VulkanSDK/1.3.290.0/Include"   -- Replace with your Vulkan SDK include path
-   }
+      filter "configurations:Release"
+         defines { "NDEBUG" }
+         optimize "On"
 
-   filter "system:windows"
-      systemversion "latest"
+	project "GLFW"
+      kind "StaticLib"  
+      language "C"
+	  location "build/dependencies"
+      targetdir "bin/%{cfg.buildcfg}"
 
-   filter "configurations:Debug"
-      defines { "DEBUG" }
-      runtime "Debug"
-      symbols "on"
+      files { "dependencies/glfw/include/GLFW/**.h",
+	  "dependencies/glfw/src/**.c" }
 
-   filter "configurations:Release"
-      defines { "NDEBUG" }
-      runtime "Release"
-      optimize "on"
+      filter "configurations:Debug"
+         defines { "DEBUG" }
+         symbols "On"
+
+      filter "configurations:Release"
+         defines { "NDEBUG" }
+         optimize "On"
