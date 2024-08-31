@@ -1,6 +1,7 @@
 workspace "VulkanApp"
    configurations { "Debug", "Release" }
-   location "build"  -- Specify where to place generated files
+   location "VKEngine"  -- Specify where to place generated files
+   startproject "Editor"  -- Set the default startup project
 
    -- Project 1: Editor
    project "Editor"
@@ -9,7 +10,7 @@ workspace "VulkanApp"
 	  cppdialect "C++20"
       targetdir "bin/%{cfg.buildcfg}"
 
-      files { "Editor/**.h", "Editor/**.cpp" }
+      files { "VKEngine/editor/**.hpp","VKEngine/editor/**.cpp"}
 	  
 	   links { "Core" }
 
@@ -28,7 +29,7 @@ workspace "VulkanApp"
 	  cppdialect "C++20"
       targetdir "bin/%{cfg.buildcfg}"
 
-      files { "Core/**.h", "Core/**.cpp" }
+      files { "VKEngine/core/**.hpp" ,"VKEngine/core/**.cpp"}
 	  
 	  links { "Graphic" }
 
@@ -41,13 +42,13 @@ workspace "VulkanApp"
          optimize "On"
 		 
 		 
-	project "Graphic"
+	project "Graphics"
       kind "StaticLib"  
       language "C++"
 	  cppdialect "C++20"
       targetdir "bin/%{cfg.buildcfg}"
 
-      files { "Graphic/**.h", "Graphic/**.cpp" }
+      files { "VKEngine/graphics/**.hpp", "VKEngine/graphics/**.cpp" }
 	  
 	  includedirs {
       "dependencies",
@@ -60,7 +61,6 @@ workspace "VulkanApp"
 
      links {
       "GLFW",
-      "shaderc_sharedd.lib",
       "vulkan-1.lib"
      }
 	 
@@ -68,10 +68,14 @@ workspace "VulkanApp"
       filter "configurations:Debug"
          defines { "DEBUG" }
          symbols "On"
+		 
+		 links {"shaderc_sharedd.lib"}
 
       filter "configurations:Release"
          defines { "NDEBUG" }
          optimize "On"
+		 
+		 links {"shaderc_shared.lib"}
 
 	project "GLFW"
       kind "StaticLib"  
@@ -81,6 +85,8 @@ workspace "VulkanApp"
 
       files { "dependencies/glfw/include/GLFW/**.h",
 	  "dependencies/glfw/src/**.c" }
+	  
+	  defines {"_GLFW_WIN32"}
 
       filter "configurations:Debug"
          defines { "DEBUG" }
