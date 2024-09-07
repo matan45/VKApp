@@ -3,95 +3,128 @@ workspace "VulkanApp"
    location "VKEngine"  -- Specify where to place generated files
    startproject "Editor"  -- Set the default startup project
 
-   -- Project 1: Editor
-   project "Editor"
-      kind "ConsoleApp"
-      language "C++"
-	  cppdialect "C++20"
-      targetdir "bin/%{cfg.buildcfg}"
+-- Project 1: Editor
+project "Editor"
+   kind "ConsoleApp"
+   language "C++"
+   cppdialect "C++20"
+   targetdir "bin/%{cfg.buildcfg}"
 
-      files { "VKEngine/editor/**.hpp","VKEngine/editor/**.cpp"}
-	  
-	   links { "Core" }
+   files { "VKEngine/editor/**.hpp", "VKEngine/editor/**.cpp" }
 
-      filter "configurations:Debug"
-         defines { "DEBUG" }
-         symbols "On"
+   links { "Core" }
 
-      filter "configurations:Release"
-         defines { "NDEBUG" }
-         optimize "On"
+   filter "configurations:Debug"
+      defines { "DEBUG" }
+      symbols "On"
 
-   -- Project 2: Core
-   project "Core"
-      kind "StaticLib"  
-      language "C++"
-	  cppdialect "C++20"
-      targetdir "bin/%{cfg.buildcfg}"
+   filter "configurations:Release"
+      defines { "NDEBUG" }
+      optimize "On"
 
-      files { "VKEngine/core/**.hpp" ,"VKEngine/core/**.cpp"}
-	  
-	  links { "Graphic" }
+-- Project 2: Core
+project "Core"
+   kind "StaticLib"
+   language "C++"
+   cppdialect "C++20"
+   targetdir "bin/%{cfg.buildcfg}"
 
-      filter "configurations:Debug"
-         defines { "DEBUG" }
-         symbols "On"
+   files { "VKEngine/core/**.hpp", "VKEngine/core/**.cpp" }
 
-      filter "configurations:Release"
-         defines { "NDEBUG" }
-         optimize "On"
-		 
-		 
-	project "Graphics"
-      kind "StaticLib"  
-      language "C++"
-	  cppdialect "C++20"
-      targetdir "bin/%{cfg.buildcfg}"
+   links { "Graphics" }
 
-      files { "VKEngine/graphics/**.hpp", "VKEngine/graphics/**.cpp" }
-	  
-	  includedirs {
+   filter "configurations:Debug"
+      defines { "DEBUG" }
+      symbols "On"
+
+   filter "configurations:Release"
+      defines { "NDEBUG" }
+      optimize "On"
+
+-- Project 3: Graphics
+project "Graphics"
+   kind "StaticLib"
+   language "C++"
+   cppdialect "C++20"
+   targetdir "bin/%{cfg.buildcfg}"
+
+   files { "VKEngine/graphics/**.hpp", "VKEngine/graphics/**.cpp" }
+
+   includedirs {
       "dependencies",
       "C:/VulkanSDK/1.3.290.0/Include"
-	  }
+   }
 
-	 libdirs {
-	  "C:/VulkanSDK/1.3.290.0/Lib"
-     }
+   libdirs {
+      "C:/VulkanSDK/1.3.290.0/Lib"
+   }
 
-     links {
+   links {
       "GLFW",
+      "spdLog",
       "vulkan-1.lib"
-     }
-	 
+   }
 
-      filter "configurations:Debug"
-         defines { "DEBUG" }
-         symbols "On"
-		 
-		 links {"shaderc_sharedd.lib"}
+   filter "configurations:Debug"
+      defines { "DEBUG" }
+      symbols "On"
+      links { "shaderc_sharedd.lib" }
 
-      filter "configurations:Release"
-         defines { "NDEBUG" }
-         optimize "On"
-		 
-		 links {"shaderc_shared.lib"}
+   filter "configurations:Release"
+      defines { "NDEBUG" }
+      optimize "On"
+      links { "shaderc_shared.lib" }
 
-	project "GLFW"
-      kind "StaticLib"  
-      language "C"
-	  location "build/dependencies"
-      targetdir "bin/%{cfg.buildcfg}"
+-- Group for Libraries
+group "libs"
 
-      files { "dependencies/glfw/include/GLFW/**.h",
-	  "dependencies/glfw/src/**.c" }
-	  
-	  defines {"_GLFW_WIN32"}
+-- Project: GLFW
+project "GLFW"
+   kind "StaticLib"
+   language "C"
+   targetdir "bin/%{cfg.buildcfg}"
 
-      filter "configurations:Debug"
-         defines { "DEBUG" }
-         symbols "On"
+   files {
+      "dependencies/glfw/include/GLFW/**.h",
+      "dependencies/glfw/src/**.c"
+   }
 
-      filter "configurations:Release"
-         defines { "NDEBUG" }
-         optimize "On"
+   includedirs {
+      "dependencies/glfw/include"
+   }
+
+   defines { "_GLFW_WIN32", "_CRT_SECURE_NO_WARNINGS" }
+
+   filter "configurations:Debug"
+      defines { "DEBUG" }
+      symbols "On"
+
+   filter "configurations:Release"
+      defines { "NDEBUG" }
+      optimize "On"
+
+-- Project: spdLog
+project "spdLog"
+   kind "StaticLib"
+   language "C++"
+   cppdialect "C++20"
+   targetdir "bin/%{cfg.buildcfg}"
+
+   files {
+      "dependencies/spdlog/include/spdlog/**.h",
+      "dependencies/spdlog/src/**.cpp"
+   }
+
+   includedirs {
+      "dependencies/spdlog/include"
+   }
+
+   defines { "SPDLOG_COMPILED_LIB" }
+
+   filter "configurations:Debug"
+      defines { "DEBUG" }
+      symbols "On"
+
+   filter "configurations:Release"
+      defines { "NDEBUG" }
+      optimize "On"
