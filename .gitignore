@@ -68,6 +68,10 @@ ScaffoldingReadMe.txt
 # StyleCop
 StyleCopReport.xml
 
+# Ignore Visual Studio solution and filters files
+*.sln
+*.vcxproj.filters
+
 # Files built by Visual Studio
 *_i.c
 *_p.c
