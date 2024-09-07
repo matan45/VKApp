@@ -3,14 +3,21 @@ workspace "VulkanApp"
    location "VKEngine"  -- Specify where to place generated files
    startproject "Editor"  -- Set the default startup project
 
+
+local vulkanLibPath = os.getenv("VULKAN_SDK")
 -- Project 1: Editor
 project "Editor"
    kind "ConsoleApp"
    language "C++"
    cppdialect "C++20"
-   targetdir "bin/%{cfg.buildcfg}"
+   location "VKEngine/editor"
+   targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
    files { "VKEngine/editor/**.hpp", "VKEngine/editor/**.cpp" }
+   
+   includedirs {
+      "VKEngine/core/interface/CoreInterface.hpp"
+   }
 
    links { "Core" }
 
@@ -27,9 +34,14 @@ project "Core"
    kind "StaticLib"
    language "C++"
    cppdialect "C++20"
-   targetdir "bin/%{cfg.buildcfg}"
+   location "VKEngine/core"
+   targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
    files { "VKEngine/core/**.hpp", "VKEngine/core/**.cpp" }
+   
+   includedirs {
+      "VKEngine/graphics/interface/GraphicsInterface.hpp"
+   }
 
    links { "Graphics" }
 
@@ -46,17 +58,18 @@ project "Graphics"
    kind "StaticLib"
    language "C++"
    cppdialect "C++20"
-   targetdir "bin/%{cfg.buildcfg}"
+   location "VKEngine/graphics"
+   targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
    files { "VKEngine/graphics/**.hpp", "VKEngine/graphics/**.cpp" }
 
    includedirs {
       "dependencies",
-      "C:/VulkanSDK/1.3.290.0/Include"
+      vulkanLibPath.."/Include"
    }
 
    libdirs {
-      "C:/VulkanSDK/1.3.290.0/Lib"
+      vulkanLibPath.."/Lib"
    }
 
    links {
@@ -82,7 +95,7 @@ group "libs"
 project "GLFW"
    kind "StaticLib"
    language "C"
-   targetdir "bin/%{cfg.buildcfg}"
+   targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
    files {
       "dependencies/glfw/include/GLFW/**.h",
@@ -108,7 +121,7 @@ project "spdLog"
    kind "StaticLib"
    language "C++"
    cppdialect "C++20"
-   targetdir "bin/%{cfg.buildcfg}"
+   targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
    files {
       "dependencies/spdlog/include/spdlog/**.h",
