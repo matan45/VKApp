@@ -1,5 +1,10 @@
 #pragma once
-class CoreInterface
-{
-};
+
+namespace interface {
+	class CoreInterface
+	{
+	public:
+		void init();
+	};
+}
 

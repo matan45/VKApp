@@ -64,9 +64,12 @@ project "Graphics"
    files { "VKEngine/graphics/**.hpp", "VKEngine/graphics/**.cpp" }
 
    includedirs {
-      "dependencies",
+      "dependencies/spdlog/include",
+      "dependencies/glfw/include",
       vulkanLibPath.."/Include"
    }
+   
+   defines {"_CRT_SECURE_NO_WARNINGS" }
 
    libdirs {
       vulkanLibPath.."/Lib"

@@ -5,4 +5,9 @@ namespace interface
 	void GraphicsInterface::init() {
 
 	}
+
+	void GraphicsInterface::cleanup()
+	{
+
+	}
 };
