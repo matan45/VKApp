@@ -5,6 +5,8 @@ namespace interface {
 	{
 	public:
 		void init();
+
+		void cleanUp();
 	};
 }
 

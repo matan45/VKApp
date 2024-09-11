@@ -5,5 +5,9 @@ namespace interface {
 	{
 
 	}
-};
 
+	void CoreInterface::cleanUp()
+	{
+
+	}
+};
