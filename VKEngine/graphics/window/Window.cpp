@@ -1,5 +1,5 @@
 #include "Window.hpp"
-#include "../utilities/Logger.hpp"
+#include "log/Logger.hpp"
 
 namespace window {
 	void Window::initWindow()

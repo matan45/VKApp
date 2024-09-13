@@ -3,8 +3,15 @@ workspace "VulkanApp"
    location "VKEngine"  -- Specify where to place generated files
    startproject "Editor"  -- Set the default startup project
 
-
+-- Check if the Vulkan SDK environment variable is set
 local vulkanLibPath = os.getenv("VULKAN_SDK")
+if not vulkanLibPath then
+   error("VULKAN_SDK environment variable is not set.")
+end
+
+-- Group for Engine Projects
+group "Engine"
+
 -- Project 1: Editor
 project "Editor"
    kind "ConsoleApp"
@@ -16,7 +23,7 @@ project "Editor"
    files { "VKEngine/editor/**.hpp", "VKEngine/editor/**.cpp" }
    
    includedirs {
-      "VKEngine/core/interface/CoreInterface.hpp"
+      "VKEngine/core/interface"  -- Include the directory, not specific files
    }
 
    links { "Core" }
@@ -40,10 +47,11 @@ project "Core"
    files { "VKEngine/core/**.hpp", "VKEngine/core/**.cpp" }
    
    includedirs {
-      "VKEngine/graphics/interface/GraphicsInterface.hpp"
+      "VKEngine/graphics/interface",   -- Graphics headers
+      "VKEngine/utilities"             -- Utilities headers (if used in Core)
    }
 
-   links { "Graphics" }
+   links { "Graphics", "Utilities" }  -- Link against Graphics and Utilities
 
    filter "configurations:Debug"
       defines { "DEBUG" }
@@ -64,12 +72,14 @@ project "Graphics"
    files { "VKEngine/graphics/**.hpp", "VKEngine/graphics/**.cpp" }
 
    includedirs {
-      "dependencies/spdlog/include",
       "dependencies/glfw/include",
+      "dependencies/spdlog/include",
+      "dependencies/glm",
+      "VKEngine/utilities",           -- Utilities headers
       vulkanLibPath.."/Include"
    }
-   
-   defines {"_CRT_SECURE_NO_WARNINGS" }
+
+   defines { "_CRT_SECURE_NO_WARNINGS" }
 
    libdirs {
       vulkanLibPath.."/Lib"
@@ -77,7 +87,7 @@ project "Graphics"
 
    links {
       "GLFW",
-      "spdLog",
+      "Utilities",                    -- Link against Utilities project
       "vulkan-1.lib"
    }
 
@@ -90,6 +100,56 @@ project "Graphics"
       defines { "NDEBUG" }
       optimize "On"
       links { "shaderc_shared.lib" }
+
+-- Project 4: Runtime (Moved after Core and Graphics)
+project "Runtime"
+   kind "ConsoleApp"
+   language "C++"
+   cppdialect "C++20"
+   location "VKEngine/runtime"
+   targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
+
+   files { "VKEngine/runtime/**.hpp", "VKEngine/runtime/**.cpp" }
+
+   includedirs {
+      "VKEngine/core/interface",
+      "VKEngine/graphics/interface"
+   }
+
+   links { "Core", "Graphics" }  -- Link against Core and Graphics
+
+   filter "configurations:Debug"
+      defines { "DEBUG" }
+      symbols "On"
+
+   filter "configurations:Release"
+      defines { "NDEBUG" }
+      optimize "On"
+
+-- Project 5: Utilities (Moved before Graphics)
+project "Utilities"
+   kind "StaticLib"
+   language "C++"
+   cppdialect "C++20"
+   location "VKEngine/utilities"
+   targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
+
+   files { "VKEngine/utilities/**.hpp", "VKEngine/utilities/**.cpp" }
+
+   includedirs {
+      "dependencies/spdlog/include",
+      "dependencies/glm"
+   }
+
+   links { "spdLog" }
+
+   filter "configurations:Debug"
+      defines { "DEBUG" }
+      symbols "On"
+
+   filter "configurations:Release"
+      defines { "NDEBUG" }
+      optimize "On"
 
 -- Group for Libraries
 group "libs"
@@ -119,7 +179,7 @@ project "GLFW"
       defines { "NDEBUG" }
       optimize "On"
 
--- Project: spdLog
+-- Project: spdLog (Moved under libs group)
 project "spdLog"
    kind "StaticLib"
    language "C++"
