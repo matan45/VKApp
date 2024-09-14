@@ -33,13 +33,14 @@ namespace window {
 		ISRESIZE = false;
 	}
 
-	vk::SurfaceKHR Window::createWindowSurface(const vk::UniqueInstance& instance) const
+	void Window::createWindowSurface(const vk::UniqueInstance& instance, vk::SurfaceKHR& surface)
 	{
 		VkSurfaceKHR rawSurface;
-		loggerAssert(glfwCreateWindowSurface(*instance, window, nullptr, &rawSurface) != VK_SUCCESS,
+		VkResult result = glfwCreateWindowSurface(*instance, window, nullptr, &rawSurface);
+		loggerAssert(result != VK_SUCCESS,
 			"failed to create window surface!");
 
-		return vk::SurfaceKHR(rawSurface);
+		surface = vk::SurfaceKHR(rawSurface);
 	}
 
 	void Window::cleanup()

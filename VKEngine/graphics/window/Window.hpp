@@ -18,7 +18,7 @@ namespace window {
 		explicit Window();
 		~Window() = default;
 
-		vk::SurfaceKHR createWindowSurface(const vk::UniqueInstance& instance) const;
+		void createWindowSurface(const vk::UniqueInstance& instance, vk::SurfaceKHR& surface);
 
 		void initWindow();
 		void cleanup();

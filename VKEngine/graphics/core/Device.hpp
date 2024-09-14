@@ -43,7 +43,7 @@ namespace core {
 		vk::Queue graphicsAndComputeQueue{ nullptr };
 
 		const std::array<const char*, 1> validationLayers = { "VK_LAYER_KHRONOS_validation" };
-		const std::array<const char*, 0> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+		const std::array<const char*, 1> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 		// Private functions for setup and initialization
 		void createInstance();
@@ -55,7 +55,7 @@ namespace core {
 
 		bool isDeviceSuitable(const vk::PhysicalDevice& device) const;
 		bool checkDeviceExtensionSupport(const vk::PhysicalDevice& device) const;
-		QueueFamilyIndices findQueueFamiliesFromDevice() const;
+		QueueFamilyIndices findQueueFamiliesFromDevice(const vk::PhysicalDevice& device) const;
 
 	public:
 		explicit Device(window::Window& window);

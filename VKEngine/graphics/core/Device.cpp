@@ -110,6 +110,8 @@ namespace core {
 				throw std::runtime_error("Validation layers requested, but not available!");
 			}
 		}
+
+		window.createWindowSurface(instance, surface);
 	}
 
 	std::vector<const char*> Device::getRequiredExtensions() const
@@ -157,8 +159,9 @@ namespace core {
 		}
 
 		for (const vk::PhysicalDevice& device : devices) {
-			if (isDeviceSuitable(device)) {
-				physicalDevice = device;
+			//pick the rtx card
+			if (isDeviceSuitable(devices[1])) {
+				physicalDevice = devices[1];
 				if (debug) {
 					loggerInfo("Selected physical device: {}", physicalDevice.getProperties().deviceName);
 				}
@@ -170,12 +173,13 @@ namespace core {
 			loggerError("Failed to find a suitable GPU!");
 			throw std::runtime_error("Failed to find a suitable GPU!");
 		}
+
+		
 	}
 
 	void Device::createLogicalDevice()
 	{
-		surface = window.createWindowSurface(instance);
-		const QueueFamilyIndices indices = findQueueFamiliesFromDevice();
+		const QueueFamilyIndices indices = findQueueFamiliesFromDevice(physicalDevice);
 		const float queuePriority = 1.0f;
 
 		vk::DeviceQueueCreateInfo queueCreateInfo{};
@@ -233,7 +237,8 @@ namespace core {
 
 	bool Device::isDeviceSuitable(const vk::PhysicalDevice& device) const
 	{
-		const QueueFamilyIndices indices = findQueueFamiliesFromDevice();
+		const QueueFamilyIndices indices = findQueueFamiliesFromDevice(device);
+
 		const bool extensionsSupported = checkDeviceExtensionSupport(device);
 		const vk::PhysicalDeviceFeatures supportedFeatures = device.getFeatures();
 
@@ -260,17 +265,17 @@ namespace core {
 		return true;
 	}
 
-	QueueFamilyIndices Device::findQueueFamiliesFromDevice() const {
+	QueueFamilyIndices Device::findQueueFamiliesFromDevice(const vk::PhysicalDevice& device) const {
 		QueueFamilyIndices indices;
-		const std::vector<vk::QueueFamilyProperties> queueFamilies = physicalDevice.getQueueFamilyProperties();
+		const std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();
 
 		if (debug) {
 			loggerInfo("Found {} queue families.", queueFamilies.size());
 		}
-
+		
 		int i = 0;
 		for (const vk::QueueFamilyProperties& queueFamily : queueFamilies) {
-			if (physicalDevice.getSurfaceSupportKHR(i, surface)) {
+			if (device.getSurfaceSupportKHR(i, surface)) {
 				indices.presentFamily = i;
 			}
 
