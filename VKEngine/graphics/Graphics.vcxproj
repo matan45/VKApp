@@ -97,11 +97,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="core\Device.hpp" />
+    <ClInclude Include="core\SwapChain.hpp" />
     <ClInclude Include="interface\GraphicsInterface.hpp" />
     <ClInclude Include="window\Window.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\Device.cpp" />
+    <ClCompile Include="core\SwapChain.cpp" />
     <ClCompile Include="interface\GraphicsInterface.cpp" />
     <ClCompile Include="window\Window.cpp" />
   </ItemGroup>

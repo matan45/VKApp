@@ -23,10 +23,16 @@ project "Editor"
    files { "VKEngine/editor/**.hpp", "VKEngine/editor/**.cpp" }
    
    includedirs {
-      "VKEngine/core/interface"  -- Include the directory, not specific files
+      "VKEngine/core/interface",          -- Core headers
+      "VKEngine/graphics/interface",      -- Graphics headers
+      "dependencies/glfw/include",        -- GLFW headers
    }
 
-   links { "Core" }
+   links {
+      "Core"                             -- Link Core project
+   }
+
+   defines { "_CRT_SECURE_NO_WARNINGS" }
 
    filter "configurations:Debug"
       defines { "DEBUG" }
@@ -47,11 +53,14 @@ project "Core"
    files { "VKEngine/core/**.hpp", "VKEngine/core/**.cpp" }
    
    includedirs {
+	  vulkanLibPath.."/Include",
+      "dependencies/glfw/include",
       "VKEngine/graphics/interface",   -- Graphics headers
       "VKEngine/utilities"             -- Utilities headers (if used in Core)
    }
 
    links { "Graphics", "Utilities" }  -- Link against Graphics and Utilities
+   defines { "_CRT_SECURE_NO_WARNINGS" }
 
    filter "configurations:Debug"
       defines { "DEBUG" }
@@ -116,7 +125,7 @@ project "Runtime"
       "VKEngine/graphics/interface"
    }
 
-   links { "Core", "Graphics" }  -- Link against Core and Graphics
+   links { "Core"}  -- Link against Core and Graphics
 
    filter "configurations:Debug"
       defines { "DEBUG" }

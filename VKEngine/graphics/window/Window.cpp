@@ -1,6 +1,7 @@
 #include "Window.hpp"
 #include "log/Logger.hpp"
 
+
 namespace window {
 	void Window::initWindow()
 	{
@@ -30,18 +31,31 @@ namespace window {
 		WIDTH = 800;
 		HEIGHT = 600;
 		ISRESIZE = false;
-		initWindow();
 	}
 
-	Window::~Window()
+	vk::SurfaceKHR Window::createWindowSurface(const vk::UniqueInstance& instance) const
+	{
+		VkSurfaceKHR rawSurface;
+		loggerAssert(glfwCreateWindowSurface(*instance, window, nullptr, &rawSurface) != VK_SUCCESS,
+			"failed to create window surface!");
+
+		return vk::SurfaceKHR(rawSurface);
+	}
+
+	void Window::cleanup()
 	{
 		glfwDestroyWindow(window);
 		glfwTerminate();
 	}
 
-	void Window::createWindowSurface(const vk::UniqueInstance& instance, vk::SurfaceKHR& surface) const
+	void Window::pollEvents() const
 	{
+		glfwPollEvents();
+	}
 
+	bool Window::shouldClose() const
+	{
+		return glfwWindowShouldClose(window);
 	}
 
 }
