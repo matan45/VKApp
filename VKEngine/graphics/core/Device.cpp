@@ -6,23 +6,25 @@
 #include <unordered_set>
 
 
-namespace core {
+VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+	VkDebugUtilsMessageTypeFlagsEXT messageType,
+	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+	void* pUserData) {
 
-	VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-		VkDebugUtilsMessageTypeFlagsEXT messageType,
-		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-		void* pUserData) {
-		if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-			loggerWarning("Validation layer: {}", pCallbackData->pMessage);
-		}
-		else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-			loggerError("Validation layer ERROR: {}", pCallbackData->pMessage);
-		}
-		else {
-			loggerInfo("Validation layer: {}", pCallbackData->pMessage);
-		}
-		return VK_FALSE;
+	if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+		loggerWarning("Validation layer: {}", pCallbackData->pMessage);
 	}
+	else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+		loggerError("Validation layer ERROR: {}", pCallbackData->pMessage);
+	}
+	else {
+		loggerInfo("Validation layer: {}", pCallbackData->pMessage);
+	}
+	return VK_FALSE;
+}
+
+
+namespace core {
 
 	Device::Device(window::Window& window) : window{ window } {}
 
@@ -42,7 +44,7 @@ namespace core {
 		}
 
 		if (debug && debugMessenger) {
-			instance->destroyDebugUtilsMessengerEXT(debugMessenger);
+			instance->destroyDebugUtilsMessengerEXT(debugMessenger, nullptr, dldi);
 		}
 
 		if (surface) {
@@ -65,11 +67,11 @@ namespace core {
 
 		vk::InstanceCreateInfo createInfo{};
 		createInfo.pApplicationInfo = &appInfo;
-		createInfo.enabledExtensionCount = extensions.size();
+		createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
 		createInfo.ppEnabledExtensionNames = extensions.data();
 
 		if (debug) {
-			createInfo.enabledLayerCount = validationLayers.size();
+			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 			createInfo.ppEnabledLayerNames = validationLayers.data();
 		}
 
@@ -81,28 +83,35 @@ namespace core {
 			throw std::runtime_error("Vulkan instance creation failed.");
 		}
 
-		dldi = vk::DispatchLoaderDynamic(*instance, vkGetInstanceProcAddr);
-		
 		if (debug) {
 			for (const auto& extension : vk::enumerateInstanceExtensionProperties()) {
 				loggerInfo("Available extension: {}", extension.extensionName);
 			}
 		}
-		
+
 		if (debug) {
 			uint32_t version{ 0 };
-			vk::enumerateInstanceVersion(&version);
+			if (vk::Result result = vk::enumerateInstanceVersion(&version); result == vk::Result::eSuccess) {
+				loggerInfo("Vulkan API version: {}.{}.{}",
+					VK_API_VERSION_MAJOR(version),
+					VK_API_VERSION_MINOR(version),
+					VK_API_VERSION_PATCH(version));
+			}
+			else {
+				loggerError("Failed to enumerate Vulkan instance version. Error code: {}", vk::to_string(result));
+			}
+
 
 			loggerInfo("Vulkan API version: {}.{}.{}",
 				VK_API_VERSION_MAJOR(version), VK_API_VERSION_MINOR(version), VK_API_VERSION_PATCH(version));
-			
+
 			if (!checkValidationLayerSupport()) {
 				loggerError("Validation layers requested, but not available!");
 				throw std::runtime_error("Validation layers requested, but not available!");
 			}
 		}
 	}
-	
+
 	std::vector<const char*> Device::getRequiredExtensions() const
 	{
 		uint32_t glfwExtensionCount = 0;
@@ -119,8 +128,11 @@ namespace core {
 
 	void Device::createDebugMessenger()
 	{
+
 		using enum vk::DebugUtilsMessageTypeFlagBitsEXT;
 		if (!debug) return;
+
+		dldi = vk::DispatchLoaderDynamic(*instance, vkGetInstanceProcAddr);
 
 		vk::DebugUtilsMessengerCreateInfoEXT createInfo{};
 		createInfo.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
@@ -128,7 +140,7 @@ namespace core {
 		createInfo.pfnUserCallback = debugCallback;
 
 		try {
-			debugMessenger = instance->createDebugUtilsMessengerEXT(createInfo);
+			debugMessenger = instance->createDebugUtilsMessengerEXT(createInfo, nullptr, dldi);
 		}
 		catch (const vk::SystemError& err) {
 			loggerError("Failed to set up debug messenger: {}", err.what());
@@ -177,14 +189,14 @@ namespace core {
 		deviceFeatures.samplerAnisotropy = VK_TRUE;
 
 		vk::DeviceCreateInfo createInfo{};
-		createInfo.queueCreateInfoCount = queueCreateInfos.size();
+		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 		createInfo.pQueueCreateInfos = queueCreateInfos.data();
 		createInfo.pEnabledFeatures = &deviceFeatures;
-		createInfo.enabledExtensionCount = deviceExtensions.size();
+		createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 		createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
 		if (debug) {
-			createInfo.enabledLayerCount = validationLayers.size();
+			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 			createInfo.ppEnabledLayerNames = validationLayers.data();
 		}
 
@@ -201,31 +213,19 @@ namespace core {
 
 	bool Device::checkValidationLayerSupport() const
 	{
-		uint32_t layerCount;
-		vk::enumerateInstanceLayerProperties(&layerCount, nullptr);
-
-		std::vector<vk::LayerProperties> availableLayers(layerCount);
-		vk::enumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-
-		loggerInfo("Available validation layers:");
-		for (const auto& layer : availableLayers) {
-			loggerInfo("{}", layer.layerName);
-		}
-
-		for (const char* layerName : validationLayers) {
-			bool layerFound = false;
-
-			for (const auto& layerProperties : availableLayers) {
-				if (strcmp(layerName, layerProperties.layerName) == 0) {
-					layerFound = true;
-					break;
+		if (uint32_t layerCount = 0; vk::enumerateInstanceLayerProperties(&layerCount, nullptr) == vk::Result::eSuccess) {
+			std::vector<vk::LayerProperties> availableLayers(layerCount);
+			if (vk::enumerateInstanceLayerProperties(&layerCount, availableLayers.data()) == vk::Result::eSuccess) {
+				for (const auto& layer : availableLayers) {
+					loggerInfo("Available validation layer: {}", layer.layerName);
 				}
 			}
-
-			if (!layerFound) {
-				loggerError("Validation layer not found: {}", layerName);
-				return false;
+			else {
+				loggerError("Failed to retrieve Vulkan instance layers.");
 			}
+		}
+		else {
+			loggerError("Failed to count Vulkan instance layers.");
 		}
 
 		return true;
@@ -291,5 +291,5 @@ namespace core {
 
 		return indices;
 	}
-	
+
 }

@@ -1,5 +1,6 @@
 workspace "VulkanApp"
    configurations { "Debug", "Release" }
+   platforms { "x64" }
    location "VKEngine"  -- Specify where to place generated files
    startproject "Editor"  -- Set the default startup project
 

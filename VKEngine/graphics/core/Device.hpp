@@ -1,6 +1,5 @@
 // Define VK_NO_PROTOTYPES before including Vulkan headers
 
-
 #include <vulkan/vulkan.hpp>
 #include <optional>
 #include <vector>
@@ -37,15 +36,14 @@ namespace core {
 		vk::Device logicalDevice{ nullptr };
 
 		vk::DebugUtilsMessengerEXT debugMessenger{ nullptr };
-		// DispatchLoaderDynamic is used with vkGetInstanceProcAddr for dynamic function loading
-		vk::DispatchLoaderDynamic dldi{ nullptr,vkGetInstanceProcAddr };
+		vk::DispatchLoaderDynamic dldi;
 
 		vk::SurfaceKHR surface{ nullptr };
 		vk::Queue presentQueue{ nullptr };
 		vk::Queue graphicsAndComputeQueue{ nullptr };
 
 		const std::array<const char*, 1> validationLayers = { "VK_LAYER_KHRONOS_validation" };
-		const std::array<const char*, 0> deviceExtensions = {};
+		const std::array<const char*, 0> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 		// Private functions for setup and initialization
 		void createInstance();
