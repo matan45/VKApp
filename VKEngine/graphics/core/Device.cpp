@@ -159,9 +159,8 @@ namespace core {
 		}
 
 		for (const vk::PhysicalDevice& device : devices) {
-			//pick the rtx card
-			if (isDeviceSuitable(devices[1])) {
-				physicalDevice = devices[1];
+			if (isDeviceSuitable(device)) {
+				physicalDevice = device;
 				if (debug) {
 					loggerInfo("Selected physical device: {}", physicalDevice.getProperties().deviceName);
 				}
@@ -179,7 +178,7 @@ namespace core {
 
 	void Device::createLogicalDevice()
 	{
-		const QueueFamilyIndices indices = findQueueFamiliesFromDevice(physicalDevice);
+		const QueueFamilyIndices indices = Utilities::findQueueFamiliesFromDevice(physicalDevice,surface);
 		const float queuePriority = 1.0f;
 
 		vk::DeviceQueueCreateInfo queueCreateInfo{};
@@ -237,22 +236,46 @@ namespace core {
 
 	bool Device::isDeviceSuitable(const vk::PhysicalDevice& device) const
 	{
-		const QueueFamilyIndices indices = findQueueFamiliesFromDevice(device);
+		const QueueFamilyIndices indices = Utilities::findQueueFamiliesFromDevice(device,surface);
 
 		const bool extensionsSupported = checkDeviceExtensionSupport(device);
 		const vk::PhysicalDeviceFeatures supportedFeatures = device.getFeatures();
+		const vk::PhysicalDeviceProperties deviceProperties = device.getProperties();
 
-		return indices.isComplete() && extensionsSupported && supportedFeatures.samplerAnisotropy;
+		return indices.isComplete() && 
+			extensionsSupported && 
+			supportedFeatures.samplerAnisotropy && 
+			deviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu;
 	}
 
 	bool Device::checkDeviceExtensionSupport(const vk::PhysicalDevice& device) const
 	{
+		// Convert the required extensions into an unordered set for fast lookup and erasure
 		std::unordered_set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
-		for (const vk::ExtensionProperties& extension : device.enumerateDeviceExtensionProperties()) {
-			requiredExtensions.erase(extension.extensionName);
+		// Get available extensions for the current physical device
+		std::vector<vk::ExtensionProperties> availableExtensions = device.enumerateDeviceExtensionProperties();
+
+		if (debug) {
+			loggerInfo("Found {} available device extensions.", availableExtensions.size());
 		}
 
+		// Remove each available extension from the required extensions set
+		for (const vk::ExtensionProperties& extension : availableExtensions) {
+			requiredExtensions.erase(extension.extensionName);
+
+			// Optional debug logging to show which extensions are available
+			if (debug) {
+				loggerInfo("Available device extension: {}", extension.extensionName);
+			}
+
+			// Early exit if all required extensions have been found
+			if (requiredExtensions.empty()) {
+				return true;
+			}
+		}
+
+		// If there are missing required extensions, log an error and return false
 		if (!requiredExtensions.empty()) {
 			if (debug) {
 				for (const auto& ext : requiredExtensions) {
@@ -263,38 +286,6 @@ namespace core {
 		}
 
 		return true;
-	}
-
-	QueueFamilyIndices Device::findQueueFamiliesFromDevice(const vk::PhysicalDevice& device) const {
-		QueueFamilyIndices indices;
-		const std::vector<vk::QueueFamilyProperties> queueFamilies = device.getQueueFamilyProperties();
-
-		if (debug) {
-			loggerInfo("Found {} queue families.", queueFamilies.size());
-		}
-		
-		int i = 0;
-		for (const vk::QueueFamilyProperties& queueFamily : queueFamilies) {
-			if (device.getSurfaceSupportKHR(i, surface)) {
-				indices.presentFamily = i;
-			}
-
-			if ((queueFamily.queueFlags & vk::QueueFlagBits::eGraphics) && (queueFamily.queueFlags & vk::QueueFlagBits::eCompute)) {
-				indices.graphicsAndComputeFamily = i;
-			}
-
-			if (indices.isComplete()) {
-				break;
-			}
-
-			i++;
-		}
-
-		if (!indices.isComplete() && debug) {
-			loggerWarning("Could not find complete queue family support.");
-		}
-
-		return indices;
 	}
 
 }

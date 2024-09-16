@@ -1,30 +1,15 @@
 // Define VK_NO_PROTOTYPES before including Vulkan headers
 
-#include <vulkan/vulkan.hpp>
-#include <optional>
 #include <vector>
 #include <array>
 
-#ifdef NDEBUG
-constexpr bool debug = false;
-#else
-constexpr bool debug = true;
-#endif
+#include "Utilities.hpp"
 
 namespace window {
 	class Window;
 }
 
 namespace core {
-
-	struct QueueFamilyIndices {
-		std::optional<uint32_t> presentFamily;
-		std::optional<uint32_t> graphicsAndComputeFamily;
-
-		bool isComplete() const {
-			return presentFamily.has_value() && graphicsAndComputeFamily.has_value();
-		}
-	};
 
 	class Device
 	{
@@ -55,7 +40,6 @@ namespace core {
 
 		bool isDeviceSuitable(const vk::PhysicalDevice& device) const;
 		bool checkDeviceExtensionSupport(const vk::PhysicalDevice& device) const;
-		QueueFamilyIndices findQueueFamiliesFromDevice(const vk::PhysicalDevice& device) const;
 
 	public:
 		explicit Device(window::Window& window);
