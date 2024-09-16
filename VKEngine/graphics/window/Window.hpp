@@ -8,14 +8,15 @@ namespace window {
 	{
 	private:
 		GLFWwindow* window{ nullptr };
-		inline static bool ISRESIZE;
-		inline static int WIDTH;
-		inline static int HEIGHT;
+		bool isResized{ false }; // Non-static resize flag
+		int width{ 800 };
+		int height{ 600 };
+
 
 		static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 	public:
-		explicit Window();
+		explicit Window() = default;
 		~Window() = default;
 
 		void createWindowSurface(const vk::UniqueInstance& instance, vk::SurfaceKHR& surface);
@@ -24,6 +25,8 @@ namespace window {
 		void cleanup();
 		void pollEvents() const;
 		bool shouldClose() const;
+		bool isWindowResized() const { return isResized; }
+		void resetResizeFlag() { isResized = false; }
 	};
 }
 

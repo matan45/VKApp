@@ -19,6 +19,12 @@ namespace core {
 		}
 	};
 
+	struct SwapchainSupportDetails {
+		vk::SurfaceCapabilitiesKHR capabilities;
+		std::vector<vk::SurfaceFormatKHR> formats;
+		std::vector<vk::PresentModeKHR> presentModes;
+	};
+
 	class Utilities
 	{
 	private:
@@ -26,6 +32,7 @@ namespace core {
 		~Utilities() = delete;
 	public:
 		static QueueFamilyIndices findQueueFamiliesFromDevice(const vk::PhysicalDevice& device, const vk::SurfaceKHR& surface);
+		static SwapchainSupportDetails querySwapchainSupport(const vk::PhysicalDevice& device, const vk::SurfaceKHR& surface);
 	};
 }
 

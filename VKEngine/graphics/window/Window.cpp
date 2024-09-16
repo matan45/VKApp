@@ -5,32 +5,29 @@
 namespace window {
 	void Window::initWindow()
 	{
-		if (!glfwInit())
+		if(!glfwInit()) {
 			loggerError("Unable to initialize GLFW");
+		}
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-		window = glfwCreateWindow(WIDTH, HEIGHT, "engine test", nullptr, nullptr);
+		window = glfwCreateWindow(width, height, "engine test", nullptr, nullptr);
 
-		if (window == nullptr)
+		if (window == nullptr) {
 			loggerError("Failed to create GLFW window");
+		}
 
+		glfwSetWindowUserPointer(window, this); // Set the user pointer to access the class
 		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 	}
 
 	void Window::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 	{
-		WIDTH = width;
-		HEIGHT = height;
-		ISRESIZE = true;
-	}
-
-	Window::Window()
-	{
-		WIDTH = 800;
-		HEIGHT = 600;
-		ISRESIZE = false;
+		auto userWindow = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+		userWindow->width = width;
+		userWindow->height = height;
+		userWindow->isResized = true;
 	}
 
 	void Window::createWindowSurface(const vk::UniqueInstance& instance, vk::SurfaceKHR& surface)

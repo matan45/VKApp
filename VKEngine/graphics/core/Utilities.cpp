@@ -34,5 +34,15 @@ namespace core {
 
 		return indices;
 	}
+
+	core::SwapchainSupportDetails Utilities::querySwapchainSupport(const vk::PhysicalDevice& device, const vk::SurfaceKHR& surface)
+	{
+		SwapchainSupportDetails details;
+		details.capabilities = device.getSurfaceCapabilitiesKHR(surface);
+		details.formats = device.getSurfaceFormatsKHR(surface);
+		details.presentModes = device.getSurfacePresentModesKHR(surface);
+		return details;
+	}
+
 }
 

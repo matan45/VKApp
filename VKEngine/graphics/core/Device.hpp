@@ -47,6 +47,11 @@ namespace core {
 
 		void init();
 		void cleanUp();
+
+		const vk::SurfaceKHR& getSurface() const { return surface; }
+		const vk::PhysicalDevice& getPhysicalDevice() const { return physicalDevice; }
+		const vk::Device& getLogicalDevice() const { return logicalDevice; }
+
 	};
 
 }
