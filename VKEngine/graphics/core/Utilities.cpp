@@ -44,5 +44,19 @@ namespace core {
 		return details;
 	}
 
+	uint32_t Utilities::findMemoryType(const vk::PhysicalDevice& device, uint32_t typeFilter, vk::MemoryPropertyFlags properties)
+	{
+		vk::PhysicalDeviceMemoryProperties memProperties = device.getMemoryProperties();
+
+		for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+			if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+				return i;
+			}
+		}
+
+		loggerError("Failed to find suitable memory type.");
+		throw std::runtime_error("Failed to find suitable memory type.");
+	}
+
 }
 

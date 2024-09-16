@@ -1,6 +1,7 @@
 #include "SwapChain.hpp"
 #include "Device.hpp"
 #include "Utilities.hpp"
+#include "log/Logger.hpp"
 
 namespace core {
 
@@ -9,39 +10,47 @@ namespace core {
 
 	}
 
-	void SwapChain::init()
+	void SwapChain::init(uint32_t width, uint32_t height)
 	{
-		createSwapchain();
+		createSwapchain(width, height);
 		createImageViews();
+		createDepthStencil();
 	}
 
 	void SwapChain::cleanUp()
 	{
+		device.getLogicalDevice().waitIdle();
+
 		// Destroy swapchain image views first
 		for (auto imageView : swapchainImageViews) {
 			device.getLogicalDevice().destroyImageView(imageView);
 		}
 		swapchainImageViews.clear();
 
+		device.getLogicalDevice().destroyImageView(swapchainDepthStencil.depthStencilView);
+		device.getLogicalDevice().destroyImage(swapchainDepthStencil.depthStencilImage);
+		device.getLogicalDevice().freeMemory(swapchainDepthStencil.depthStencilMemory);
+
 		// Destroy swapchain
 		if (swapchain) {
 			swapchain.reset();  // vk::UniqueSwapchainKHR automatically cleans up
 		}
+
 	}
 
-	void SwapChain::recreate()
+	void SwapChain::recreate(uint32_t width, uint32_t height)
 	{
 		cleanUp();
-		init();
+		init(width, height);
 	}
 
-	void SwapChain::createSwapchain()
+	void SwapChain::createSwapchain(uint32_t width, uint32_t height)
 	{
 		SwapchainSupportDetails swapchainSupport = Utilities::querySwapchainSupport(device.getPhysicalDevice(), device.getSurface());
 
 		vk::SurfaceFormatKHR surfaceFormat = chooseSurfaceFormat(swapchainSupport.formats);
 		vk::PresentModeKHR presentMode = choosePresentMode(swapchainSupport.presentModes);
-		vk::Extent2D extent = chooseSwapExtent(swapchainSupport.capabilities);
+		vk::Extent2D extent = chooseSwapExtent(width, height, swapchainSupport.capabilities);
 
 		uint32_t imageCount = swapchainSupport.capabilities.minImageCount + 1;
 		if (swapchainSupport.capabilities.maxImageCount > 0 && imageCount > swapchainSupport.capabilities.maxImageCount) {
@@ -108,6 +117,89 @@ namespace core {
 		}
 	}
 
+	void SwapChain::createDepthStencil()
+	{
+		swapchainDepthStencilFormat = findDepthStencilFormat();
+
+		vk::ImageCreateInfo imageInfo{};
+		imageInfo.imageType = vk::ImageType::e2D;
+		imageInfo.extent.width = swapchainExtent.width;
+		imageInfo.extent.height = swapchainExtent.height;
+		imageInfo.extent.depth = 1;
+		imageInfo.mipLevels = 1;
+		imageInfo.arrayLayers = 1;
+		imageInfo.format = swapchainDepthStencilFormat;
+		imageInfo.tiling = vk::ImageTiling::eOptimal;
+		imageInfo.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
+
+		try {
+			swapchainDepthStencil.depthStencilImage = device.getLogicalDevice().createImage(imageInfo);
+		}
+		catch (vk::SystemError& err) {
+			loggerError("Failed to create depth stencil image: {}", err.what());
+			throw;
+		}
+
+		vk::MemoryRequirements memRequirements = device.getLogicalDevice().getImageMemoryRequirements(swapchainDepthStencil.depthStencilImage);
+
+		vk::MemoryAllocateInfo allocInfo{};
+		allocInfo.allocationSize = memRequirements.size;
+		allocInfo.memoryTypeIndex = Utilities::findMemoryType(device.getPhysicalDevice(), memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
+
+		try {
+			swapchainDepthStencil.depthStencilMemory = device.getLogicalDevice().allocateMemory(allocInfo);
+			device.getLogicalDevice().bindImageMemory(swapchainDepthStencil.depthStencilImage, swapchainDepthStencil.depthStencilMemory, 0);
+		}
+		catch (vk::SystemError& err) {
+			loggerError("Failed to allocate depth stencil memory: {}", err.what());
+			throw;
+		}
+
+		vk::ImageViewCreateInfo viewInfo{};
+		viewInfo.image = swapchainDepthStencil.depthStencilImage;
+		viewInfo.viewType = vk::ImageViewType::e2D;
+		viewInfo.format = swapchainDepthStencilFormat;
+		viewInfo.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth;
+		viewInfo.subresourceRange.baseMipLevel = 0;
+		viewInfo.subresourceRange.levelCount = 1;
+		viewInfo.subresourceRange.baseArrayLayer = 0;
+		viewInfo.subresourceRange.layerCount = 1;
+
+		if (swapchainDepthStencilFormat >= vk::Format::eD16UnormS8Uint) {
+			viewInfo.subresourceRange.aspectMask |= vk::ImageAspectFlagBits::eStencil;
+		}
+
+		try {
+			swapchainDepthStencil.depthStencilView = device.getLogicalDevice().createImageView(viewInfo);
+		}
+		catch (vk::SystemError& err) {
+			loggerError("Failed to create depth stencil image view: {}", err.what());
+			throw;
+		}
+	}
+
+	vk::Format SwapChain::findDepthStencilFormat() const
+	{
+		using enum vk::Format;
+		std::array<vk::Format, 5> candidates = {
+			eD32SfloatS8Uint,
+			eD32Sfloat,
+			eD24UnormS8Uint,
+			eD16UnormS8Uint,
+			eD16Unorm
+		};
+
+		for (vk::Format format : candidates) {
+			vk::FormatProperties props = device.getPhysicalDevice().getFormatProperties(format);
+			if (props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment) {
+				return format;
+			}
+		}
+
+		loggerError("Failed to find a supported format for depth stencil attachment!");
+		throw std::runtime_error("Failed to find a supported format for depth stencil attachment");
+	}
+
 	vk::SurfaceFormatKHR SwapChain::chooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) const
 	{
 		for (const auto& format : availableFormats) {
@@ -128,7 +220,7 @@ namespace core {
 	}
 
 
-	vk::Extent2D SwapChain::chooseSwapExtent(const vk::SurfaceCapabilitiesKHR& capabilities) const {
+	vk::Extent2D SwapChain::chooseSwapExtent(uint32_t width, uint32_t height, const vk::SurfaceCapabilitiesKHR& capabilities) const {
 		if (capabilities.currentExtent.width != UINT32_MAX) {
 			return capabilities.currentExtent;
 		}

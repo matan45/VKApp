@@ -27,6 +27,8 @@ namespace window {
 		bool shouldClose() const;
 		bool isWindowResized() const { return isResized; }
 		void resetResizeFlag() { isResized = false; }
+		uint32_t getWidth() const { return width; }
+		uint32_t getHeight() const { return height; }
 	};
 }
 

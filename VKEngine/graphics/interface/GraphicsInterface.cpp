@@ -21,12 +21,14 @@ namespace interface
 	void GraphicsInterface::init() {
 		window->initWindow();
 		device->init();
+		swapChain->init(window->getWidth(), window->getHeight());
 	}
 
 	void GraphicsInterface::cleanup()
 	{
-		window->cleanup();
+		swapChain->cleanUp();
 		device->cleanUp();
+		window->cleanup();
 	}
 
 	void GraphicsInterface::windowPollEvents() const
@@ -47,7 +49,7 @@ namespace interface
 	void GraphicsInterface::reSize() const
 	{
 		//handle resize window
-		swapChain->recreate();
+		swapChain->recreate(window->getWidth(), window->getHeight());
 
 
 		window->resetResizeFlag();
