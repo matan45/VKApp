@@ -6,9 +6,9 @@ namespace core {
 	class Device;
 
 	struct SwapChainDepthStencil {
-		vk::Image depthStencilImage;
-		vk::DeviceMemory depthStencilMemory;
-		vk::ImageView depthStencilView;
+		vk::UniqueImage depthStencilImage;
+		vk::UniqueDeviceMemory depthStencilMemory;
+		vk::UniqueImageView depthStencilView;
 	};
 
 	class SwapChain

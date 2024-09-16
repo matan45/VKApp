@@ -173,16 +173,16 @@ namespace core {
 			throw std::runtime_error("Failed to find a suitable GPU!");
 		}
 
+		queueFamilyIndices = Utilities::findQueueFamiliesFromDevice(physicalDevice, surface);
 		
 	}
 
 	void Device::createLogicalDevice()
 	{
-		const QueueFamilyIndices indices = Utilities::findQueueFamiliesFromDevice(physicalDevice,surface);
 		const float queuePriority = 1.0f;
 
 		vk::DeviceQueueCreateInfo queueCreateInfo{};
-		queueCreateInfo.queueFamilyIndex = indices.graphicsAndComputeFamily.value();
+		queueCreateInfo.queueFamilyIndex = queueFamilyIndices.graphicsAndComputeFamily.value();
 		queueCreateInfo.queueCount = 1;
 		queueCreateInfo.pQueuePriorities = &queuePriority;
 
@@ -205,8 +205,8 @@ namespace core {
 
 		try {
 			logicalDevice = physicalDevice.createDevice(createInfo);
-			graphicsAndComputeQueue = logicalDevice.getQueue(indices.graphicsAndComputeFamily.value(), 0);
-			presentQueue = logicalDevice.getQueue(indices.presentFamily.value(), 0);
+			graphicsAndComputeQueue = logicalDevice.getQueue(queueFamilyIndices.graphicsAndComputeFamily.value(), 0);
+			presentQueue = logicalDevice.getQueue(queueFamilyIndices.presentFamily.value(), 0);
 		}
 		catch (const vk::SystemError& err) {
 			loggerError("Failed to create logical device: {}", err.what());

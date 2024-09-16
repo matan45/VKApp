@@ -25,11 +25,13 @@ namespace core {
 		for (auto imageView : swapchainImageViews) {
 			device.getLogicalDevice().destroyImageView(imageView);
 		}
+
 		swapchainImageViews.clear();
 
-		device.getLogicalDevice().destroyImageView(swapchainDepthStencil.depthStencilView);
-		device.getLogicalDevice().destroyImage(swapchainDepthStencil.depthStencilImage);
-		device.getLogicalDevice().freeMemory(swapchainDepthStencil.depthStencilMemory);
+		// Destroy depth stencil resources
+		swapchainDepthStencil.depthStencilView.reset();    // Resetting the depth stencil image view
+		swapchainDepthStencil.depthStencilImage.reset();   // Resetting the depth stencil image
+		swapchainDepthStencil.depthStencilMemory.reset();  // Resetting the depth stencil memory
 
 		// Destroy swapchain
 		if (swapchain) {
@@ -40,6 +42,10 @@ namespace core {
 
 	void SwapChain::recreate(uint32_t width, uint32_t height)
 	{
+		if (width == 0 || height == 0) {
+			loggerInfo("Window is minimized. Waiting for valid dimensions...");
+			return;  // Don't recreate the swapchain if the window is minimized
+		}
 		cleanUp();
 		init(width, height);
 	}
@@ -66,7 +72,7 @@ namespace core {
 		createInfo.imageArrayLayers = 1;  // For VR, this could be 2
 		createInfo.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
 
-		QueueFamilyIndices indices = Utilities::findQueueFamiliesFromDevice(device.getPhysicalDevice(), device.getSurface());
+		QueueFamilyIndices indices = device.getQueueFamilyIndices();
 		std::array<uint32_t, 2> queueFamilyIndices = { indices.graphicsAndComputeFamily.value(), indices.presentFamily.value() };
 
 		if (indices.graphicsAndComputeFamily != indices.presentFamily) {
@@ -89,6 +95,11 @@ namespace core {
 		swapchainImages = device.getLogicalDevice().getSwapchainImagesKHR(swapchain.get());
 		swapchainImageFormat = surfaceFormat.format;
 		swapchainExtent = extent;
+
+		loggerInfo("Creating swapchain with extent: {}x{}", extent.width, extent.height);
+		loggerInfo("Swapchain image format: {}", vk::to_string(swapchainImageFormat));
+		loggerInfo("Swapchain image count: {}", swapchainImages.size());
+
 	}
 
 	void SwapChain::createImageViews()
@@ -133,22 +144,22 @@ namespace core {
 		imageInfo.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
 
 		try {
-			swapchainDepthStencil.depthStencilImage = device.getLogicalDevice().createImage(imageInfo);
+			swapchainDepthStencil.depthStencilImage = device.getLogicalDevice().createImageUnique(imageInfo);
 		}
 		catch (vk::SystemError& err) {
 			loggerError("Failed to create depth stencil image: {}", err.what());
 			throw;
 		}
 
-		vk::MemoryRequirements memRequirements = device.getLogicalDevice().getImageMemoryRequirements(swapchainDepthStencil.depthStencilImage);
+		vk::MemoryRequirements memRequirements = device.getLogicalDevice().getImageMemoryRequirements(swapchainDepthStencil.depthStencilImage.get());
 
 		vk::MemoryAllocateInfo allocInfo{};
 		allocInfo.allocationSize = memRequirements.size;
 		allocInfo.memoryTypeIndex = Utilities::findMemoryType(device.getPhysicalDevice(), memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
 		try {
-			swapchainDepthStencil.depthStencilMemory = device.getLogicalDevice().allocateMemory(allocInfo);
-			device.getLogicalDevice().bindImageMemory(swapchainDepthStencil.depthStencilImage, swapchainDepthStencil.depthStencilMemory, 0);
+			swapchainDepthStencil.depthStencilMemory = device.getLogicalDevice().allocateMemoryUnique(allocInfo);
+			device.getLogicalDevice().bindImageMemory(swapchainDepthStencil.depthStencilImage.get(), swapchainDepthStencil.depthStencilMemory.get(), 0);
 		}
 		catch (vk::SystemError& err) {
 			loggerError("Failed to allocate depth stencil memory: {}", err.what());
@@ -156,7 +167,7 @@ namespace core {
 		}
 
 		vk::ImageViewCreateInfo viewInfo{};
-		viewInfo.image = swapchainDepthStencil.depthStencilImage;
+		viewInfo.image = swapchainDepthStencil.depthStencilImage.get();
 		viewInfo.viewType = vk::ImageViewType::e2D;
 		viewInfo.format = swapchainDepthStencilFormat;
 		viewInfo.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth;
@@ -170,12 +181,14 @@ namespace core {
 		}
 
 		try {
-			swapchainDepthStencil.depthStencilView = device.getLogicalDevice().createImageView(viewInfo);
+			swapchainDepthStencil.depthStencilView = device.getLogicalDevice().createImageViewUnique(viewInfo);
 		}
 		catch (vk::SystemError& err) {
 			loggerError("Failed to create depth stencil image view: {}", err.what());
 			throw;
 		}
+
+		loggerInfo("Swapchain depthStencilFormat format: {}", vk::to_string(swapchainDepthStencilFormat));
 	}
 
 	vk::Format SwapChain::findDepthStencilFormat() const

@@ -100,6 +100,7 @@
     <ClInclude Include="core\SwapChain.hpp" />
     <ClInclude Include="interface\GraphicsInterface.hpp" />
     <ClInclude Include="core\Utilities.hpp" />
+    <ClInclude Include="core\Shader.hpp" />
     <ClInclude Include="window\Window.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -107,6 +108,7 @@
     <ClCompile Include="core\SwapChain.cpp" />
     <ClCompile Include="interface\GraphicsInterface.cpp" />
     <ClCompile Include="core\Utilities.cpp" />
+    <ClCompile Include="core\Shader.cpp" />
     <ClCompile Include="window\Window.cpp" />
   </ItemGroup>
   <ItemGroup>

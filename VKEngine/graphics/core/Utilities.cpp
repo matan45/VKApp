@@ -2,6 +2,7 @@
 #include "log/Logger.hpp"
 
 namespace core {
+	//TODO call it only ones in the device class and save it
 	QueueFamilyIndices Utilities::findQueueFamiliesFromDevice(const vk::PhysicalDevice& device, const vk::SurfaceKHR& surface)
 	{
 		QueueFamilyIndices indices;

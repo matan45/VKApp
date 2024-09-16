@@ -27,6 +27,8 @@ namespace core {
 		vk::Queue presentQueue{ nullptr };
 		vk::Queue graphicsAndComputeQueue{ nullptr };
 
+		QueueFamilyIndices queueFamilyIndices{};
+
 		const std::array<const char*, 1> validationLayers = { "VK_LAYER_KHRONOS_validation" };
 		const std::array<const char*, 1> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
@@ -51,6 +53,7 @@ namespace core {
 		const vk::SurfaceKHR& getSurface() const { return surface; }
 		const vk::PhysicalDevice& getPhysicalDevice() const { return physicalDevice; }
 		const vk::Device& getLogicalDevice() const { return logicalDevice; }
+		const QueueFamilyIndices& getQueueFamilyIndices() const { return queueFamilyIndices; }
 
 	};
 
