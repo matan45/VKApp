@@ -19,3 +19,6 @@
 [submodule "dependencies/JoltPhysics"]
 	path = dependencies/JoltPhysics
 	url = https://github.com/jrouwe/JoltPhysics.git
+[submodule "dependencies/entt"]
+	path = dependencies/entt
+	url = https://github.com/skypjack/entt.git
