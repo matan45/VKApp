@@ -3,7 +3,7 @@
 #include "log/Logger.hpp"
 
 namespace core {
-	Shader::Shader(core::Device& device) :device{ device }
+	Shader::Shader(Device& device) :device{ device }
 	{
 
 	}

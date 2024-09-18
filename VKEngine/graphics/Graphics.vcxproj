@@ -96,19 +96,23 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="core\CommandPool.hpp" />
     <ClInclude Include="core\Device.hpp" />
     <ClInclude Include="core\SwapChain.hpp" />
     <ClInclude Include="interface\GraphicsInterface.hpp" />
     <ClInclude Include="core\Utilities.hpp" />
     <ClInclude Include="core\Shader.hpp" />
+    <ClInclude Include="core\RenderManager.hpp" />
     <ClInclude Include="window\Window.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="core\CommandPool.cpp" />
     <ClCompile Include="core\Device.cpp" />
     <ClCompile Include="core\SwapChain.cpp" />
     <ClCompile Include="interface\GraphicsInterface.cpp" />
     <ClCompile Include="core\Utilities.cpp" />
     <ClCompile Include="core\Shader.cpp" />
+    <ClCompile Include="core\RenderManager.cpp" />
     <ClCompile Include="window\Window.cpp" />
   </ItemGroup>
   <ItemGroup>

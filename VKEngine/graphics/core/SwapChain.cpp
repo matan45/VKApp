@@ -5,7 +5,7 @@
 
 namespace core {
 
-	SwapChain::SwapChain(core::Device& device) :device{ device }
+	SwapChain::SwapChain(Device& device) :device{ device }
 	{
 
 	}
@@ -43,7 +43,7 @@ namespace core {
 	void SwapChain::recreate(uint32_t width, uint32_t height)
 	{
 		if (width == 0 || height == 0) {
-			loggerInfo("Window is minimized. Waiting for valid dimensions...");
+			loggerWarning("Window is minimized. Waiting for valid dimensions...");
 			return;  // Don't recreate the swapchain if the window is minimized
 		}
 		cleanUp();

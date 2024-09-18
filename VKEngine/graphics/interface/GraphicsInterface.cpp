@@ -2,30 +2,28 @@
 #include "../window/Window.hpp"
 #include "../core/Device.hpp"
 #include "../core/SwapChain.hpp"
+#include "../core/RenderManager.hpp"
 
 namespace interface
 {
 	GraphicsInterface::GraphicsInterface() :window{ new window::Window() },
-		device{ new core::Device(*window) }, swapChain{ new core::SwapChain(*device) }
+		device{ new core::Device(*window) },
+		swapChain{ new core::SwapChain(*device) }
+		, renderManager{ new core::RenderManager(*device,*swapChain) }
 	{
 
-	}
-
-	GraphicsInterface::~GraphicsInterface()
-	{
-		delete swapChain;
-		delete device;
-		delete window;
 	}
 
 	void GraphicsInterface::init() {
 		window->initWindow();
 		device->init();
 		swapChain->init(window->getWidth(), window->getHeight());
+		renderManager->init();
 	}
 
 	void GraphicsInterface::cleanup()
 	{
+		renderManager->cleanUp();
 		swapChain->cleanUp();
 		device->cleanUp();
 		window->cleanup();
@@ -50,9 +48,18 @@ namespace interface
 	{
 		//handle resize window
 		swapChain->recreate(window->getWidth(), window->getHeight());
-
+		renderManager->recreate(window->getWidth(), window->getHeight());
 
 		window->resetResizeFlag();
 	}
+
+	GraphicsInterface::~GraphicsInterface()
+	{
+		delete renderManager;
+		delete swapChain;
+		delete device;
+		delete window;
+	}
+
 };
 

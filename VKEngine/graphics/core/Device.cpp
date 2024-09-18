@@ -80,7 +80,7 @@ namespace core {
 		}
 		catch (const vk::SystemError& err) {
 			loggerError("Failed to create Vulkan instance: {}", err.what());
-			throw std::runtime_error("Vulkan instance creation failed.");
+			throw;
 		}
 
 		if (debug) {
@@ -107,7 +107,6 @@ namespace core {
 
 			if (!checkValidationLayerSupport()) {
 				loggerError("Validation layers requested, but not available!");
-				throw std::runtime_error("Validation layers requested, but not available!");
 			}
 		}
 
@@ -170,15 +169,13 @@ namespace core {
 
 		if (!physicalDevice) {
 			loggerError("Failed to find a suitable GPU!");
-			throw std::runtime_error("Failed to find a suitable GPU!");
 		}
-
-		queueFamilyIndices = Utilities::findQueueFamiliesFromDevice(physicalDevice, surface);
 		
 	}
 
 	void Device::createLogicalDevice()
 	{
+		queueFamilyIndices = Utilities::findQueueFamiliesFromDevice(physicalDevice, surface);
 		const float queuePriority = 1.0f;
 
 		vk::DeviceQueueCreateInfo queueCreateInfo{};

@@ -14,7 +14,7 @@ namespace core {
 	class SwapChain
 	{
 	private:
-		core::Device& device;
+		Device& device;
 
 		vk::UniqueSwapchainKHR swapchain;
 		std::vector<vk::Image> swapchainImages;
@@ -27,11 +27,19 @@ namespace core {
 		vk::Extent2D swapchainExtent;
 
 	public:
-		explicit SwapChain(core::Device& device);
+		explicit SwapChain(Device& device);
 		~SwapChain() = default;
 
 		void init(uint32_t width, uint32_t height);
 		void cleanUp();
+
+		uint32_t getImageCount() const { return static_cast<uint32_t>(swapchainImages.size()); }
+		vk::SwapchainKHR getSwapchain() const { return swapchain.get(); }
+		vk::Image getSwapchainImage(uint32_t imageIndex) const { return swapchainImages[imageIndex]; }
+		vk::Image getDepthStencilImage() const { return swapchainDepthStencil.depthStencilImage.get(); }
+
+		vk::Format getSwapchainDepthStencilFormat() const { return swapchainImageFormat; }
+		vk::Format getSwapchainImageFormat() const { return swapchainDepthStencilFormat; }
 
 		void recreate(uint32_t width, uint32_t height);
 
@@ -43,7 +51,7 @@ namespace core {
 
 		vk::SurfaceFormatKHR chooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) const;
 		vk::PresentModeKHR choosePresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes) const;
-		vk::Extent2D chooseSwapExtent(uint32_t width, uint32_t height,const vk::SurfaceCapabilitiesKHR& capabilities) const;
+		vk::Extent2D chooseSwapExtent(uint32_t width, uint32_t height, const vk::SurfaceCapabilitiesKHR& capabilities) const;
 	};
 }
 

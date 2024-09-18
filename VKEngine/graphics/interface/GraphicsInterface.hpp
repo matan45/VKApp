@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 
 
 namespace window {
@@ -9,6 +8,7 @@ namespace window {
 namespace core {
 	class Device;
 	class SwapChain;
+	class RenderManager;
 }
 
 namespace interface {
@@ -18,6 +18,7 @@ namespace interface {
 		window::Window* window{ nullptr };
 		core::Device* device{ nullptr };
 		core::SwapChain* swapChain{ nullptr };
+		core::RenderManager* renderManager{ nullptr };
 	public:
 		explicit GraphicsInterface();
 		~GraphicsInterface();

@@ -10,11 +10,11 @@ namespace core {
 	class Shader
 	{
 	private:
-		core::Device& device;
+		Device& device;
 		vk::UniqueShaderModule shaderModule;
-		vk::ShaderStageFlagBits stageShader{};
+		vk::ShaderStageFlagBits stageShader;
 	public:
-		Shader(core::Device& device);
+		explicit Shader(Device& device);
 		~Shader() = default;
 		//todo move it to the resource class
 		void readShader(const std::string& sourceCode, vk::ShaderStageFlagBits stage, const std::string& shaderName);

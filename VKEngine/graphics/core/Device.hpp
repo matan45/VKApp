@@ -54,6 +54,8 @@ namespace core {
 		const vk::PhysicalDevice& getPhysicalDevice() const { return physicalDevice; }
 		const vk::Device& getLogicalDevice() const { return logicalDevice; }
 		const QueueFamilyIndices& getQueueFamilyIndices() const { return queueFamilyIndices; }
+		const vk::Queue& getPresentQueue() const { return presentQueue; }
+		const vk::Queue& getGraphicsQueue() const { return graphicsAndComputeQueue; }
 
 	};
 
