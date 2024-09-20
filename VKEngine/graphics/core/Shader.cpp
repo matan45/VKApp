@@ -33,32 +33,18 @@ namespace core {
 		// Map Vulkan shader stage to shaderc shader kind
 		switch (stage) {
 			using enum vk::ShaderStageFlagBits;
-		case eVertex:
-			kind = shaderc_vertex_shader;
-			break;
-		case eFragment:
-			kind = shaderc_fragment_shader;
-			break;
-		case eGeometry:
-			kind = shaderc_geometry_shader;
-			break;
-		case eCompute:
-			kind = shaderc_compute_shader;
-			break;
-		case eTessellationControl:
-			kind = shaderc_tess_control_shader;
-			break;
-		case eTessellationEvaluation:
-			kind = shaderc_tess_evaluation_shader;
-			break;
+		case eVertex: kind = shaderc_vertex_shader; break;
+		case eFragment: kind = shaderc_fragment_shader; break;
+		case eGeometry: kind = shaderc_geometry_shader; break;
+		case eCompute: kind = shaderc_compute_shader; break;
+		case eTessellationControl: kind = shaderc_tess_control_shader; break;
+		case eTessellationEvaluation: kind = shaderc_tess_evaluation_shader; break;
 		default:
 			loggerError("Unsupported shader stage");
 		}
 
 		shaderc::Compiler compiler;
 		shaderc::CompileOptions options;
-
-		// Enable optimizations (optional)
 		options.SetOptimizationLevel(shaderc_optimization_level_performance);
 
 		// Compile GLSL to SPIR-V
@@ -66,7 +52,8 @@ namespace core {
 
 		// Check for compilation errors
 		if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-			loggerError("Shader compilation failed: {}", std::string(result.GetErrorMessage()));
+			std::string errorMsg = result.GetErrorMessage();
+			loggerError("Shader compilation failed for {}: {}", shaderName, errorMsg);
 		}
 
 		// Return the compiled SPIR-V code

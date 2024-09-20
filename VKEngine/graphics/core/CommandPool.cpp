@@ -1,6 +1,7 @@
 #include "CommandPool.hpp"
 #include "Device.hpp"
 #include "SwapChain.hpp"
+#include "log/Logger.hpp"
 
 namespace core {
 
@@ -11,27 +12,50 @@ namespace core {
 
 	void CommandPool::allocateCommandBuffers() {
 		vk::CommandBufferAllocateInfo allocInfo{};
-		allocInfo.commandPool = getCommandPool();
+		allocInfo.commandPool = commandPool.get();  // Using vk::UniqueCommandPool
 		allocInfo.level = vk::CommandBufferLevel::ePrimary;
 		allocInfo.commandBufferCount = swapChain.getImageCount();
 
-		commandBuffers = device.getLogicalDevice().allocateCommandBuffers(allocInfo);
+		try {
+			commandBuffers = device.getLogicalDevice().allocateCommandBuffersUnique(allocInfo);
+		}
+		catch (const vk::SystemError& err) {
+			loggerError("Failed to allocate command buffers: {}", err.what());
+		}
 	}
 
 	void CommandPool::createCommandPool() {
 		vk::CommandPoolCreateInfo poolInfo{};
 		poolInfo.queueFamilyIndex = device.getQueueFamilyIndices().graphicsAndComputeFamily.value();
-		poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+		poolInfo.flags = poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer | vk::CommandPoolCreateFlagBits::eTransient;
 
-		commandPool = device.getLogicalDevice().createCommandPool(poolInfo);
+		try {
+			commandPool = device.getLogicalDevice().createCommandPoolUnique(poolInfo);
+		}
+		catch (const vk::SystemError& err) {
+			loggerError("Failed to create command pool: {}", err.what());
+		}
 	}
 
-	void CommandPool::cleanUp() const {
+	void CommandPool::cleanUp() {
+		for (auto& comd : commandBuffers) {
+			comd.reset();
+		}
+		commandBuffers.clear();
+		commandPool.reset();
+	}
 
-		device.getLogicalDevice().freeCommandBuffers(commandPool, commandBuffers);
+	void CommandPool::recreate() {
+		allocateCommandBuffers();
+	}
 
-		if (commandPool) {
-			device.getLogicalDevice().destroyCommandPool(commandPool);
+	void CommandPool::resetCommandBuffer(uint32_t index)
+	{
+		try {
+			commandBuffers[index].get().reset(vk::CommandBufferResetFlagBits::eReleaseResources);  // Reset with resource release
+		}
+		catch (const vk::SystemError& err) {
+			loggerError("Failed to reset command buffer: {}", err.what());
 		}
 	}
 

@@ -1,15 +1,16 @@
-
+#include "RenderManager.hpp"
 #include "Device.hpp"
 #include "SwapChain.hpp"
 #include "CommandPool.hpp"
 #include "log/Logger.hpp"
-#include "RenderManager.hpp"
+#include "../window/Window.hpp"
+
 
 namespace core {
 
 
-	RenderManager::RenderManager(Device& device, SwapChain& swapChain) : device{ device },
-		swapChain{ swapChain }
+	RenderManager::RenderManager(Device& device, SwapChain& swapChain, window::Window& window) : device{ device },
+		swapChain{ swapChain }, window{window}
 	{
 		
 	}
@@ -46,7 +47,7 @@ namespace core {
 		);
 
 		if (result == vk::Result::eErrorOutOfDateKHR) {
-			recreate(800, 600);  // Handle swapchain recreation
+			recreate(window.getHeight(), window.getWidth());  // Handle swapchain recreation
 			return;
 		}
 
@@ -55,6 +56,8 @@ namespace core {
 		if (result != vk::Result::eSuccess) {
 			loggerError("failed to reset fences");
 		}
+
+		commandPool->resetCommandBuffer(imageIndex);
 
 		// Begin recording commands for the acquired image
 		commandPool->getCommandBuffer(imageIndex).begin(vk::CommandBufferBeginInfo{});
@@ -120,13 +123,15 @@ namespace core {
 
 	}
 
-	void RenderManager::recreate(uint32_t width, uint32_t height)
+	void RenderManager::recreate(uint32_t width, uint32_t height) const
 	{
-
+		if (width == 0 || height == 0) return;  // Skip if minimized
+		commandPool->recreate();  // Reallocate command buffers if needed
 	}
 
 	void RenderManager::cleanUp() const
 	{
+		device.getLogicalDevice().waitIdle();
 		commandPool->cleanUp();
 
 		device.getLogicalDevice().destroySemaphore(imageAvailableSemaphore);
@@ -155,7 +160,7 @@ namespace core {
 		vk::Result result = device.getPresentQueue().presentKHR(&presentInfo);
 
 		if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
-			recreate(800, 600);  // Handle swapchain recreation
+			recreate(window.getHeight(), window.getWidth());
 		}
 	}
 

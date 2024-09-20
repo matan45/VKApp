@@ -10,22 +10,25 @@ namespace core {
 		Device& device;
 		SwapChain& swapChain;
 
-		vk::CommandPool commandPool;
-		std::vector<vk::CommandBuffer> commandBuffers;
+		vk::UniqueCommandPool commandPool;
+		std::vector<vk::UniqueCommandBuffer> commandBuffers;
 
 	public:
 		explicit CommandPool(Device& device, SwapChain& swapChain);
 		~CommandPool() = default;
 
-		vk::CommandPool getCommandPool() const { return commandPool; }
+		vk::CommandPool getCommandPool() const { return commandPool.get(); }
 
-		void cleanUp() const;
+		void cleanUp();
+		void recreate();
 
-		vk::CommandBuffer getCommandBuffer(uint32_t index) const { return commandBuffers[index]; }
+		vk::CommandBuffer getCommandBuffer(uint32_t index) const { return commandBuffers[index].get(); }
+		void resetCommandBuffer(uint32_t index);
 
 	private:
 		void createCommandPool();
 		void allocateCommandBuffers();
+		
 	};
 }
 

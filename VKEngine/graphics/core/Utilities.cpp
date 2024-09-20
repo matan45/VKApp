@@ -2,7 +2,7 @@
 #include "log/Logger.hpp"
 
 namespace core {
-	//TODO call it only ones in the device class and save it
+
 	QueueFamilyIndices Utilities::findQueueFamiliesFromDevice(const vk::PhysicalDevice& device, const vk::SurfaceKHR& surface)
 	{
 		QueueFamilyIndices indices;
@@ -14,6 +14,15 @@ namespace core {
 
 		int i = 0;
 		for (const vk::QueueFamilyProperties& queueFamily : queueFamilies) {
+			if (debug) {
+				loggerInfo("Queue Family {}: Graphics: {}, Compute: {}, Transfer: {}",
+					i,
+					(queueFamily.queueFlags & vk::QueueFlagBits::eGraphics) ? "Yes" : "No",
+					(queueFamily.queueFlags & vk::QueueFlagBits::eCompute) ? "Yes" : "No",
+					(queueFamily.queueFlags & vk::QueueFlagBits::eTransfer) ? "Yes" : "No"
+				);
+			}
+
 			if (device.getSurfaceSupportKHR(i, surface)) {
 				indices.presentFamily = i;
 			}
@@ -29,8 +38,10 @@ namespace core {
 			i++;
 		}
 
-		if (!indices.isComplete() && debug) {
-			loggerWarning("Could not find complete queue family support.");
+		if (!indices.isComplete()) {
+			if (debug) {
+				loggerWarning("Could not find complete queue family support.");
+			}
 		}
 
 		return indices;
@@ -56,7 +67,6 @@ namespace core {
 		}
 
 		loggerError("Failed to find suitable memory type.");
-		throw std::runtime_error("Failed to find suitable memory type.");
 	}
 
 }

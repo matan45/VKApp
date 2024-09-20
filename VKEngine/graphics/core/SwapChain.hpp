@@ -38,8 +38,9 @@ namespace core {
 		vk::Image getSwapchainImage(uint32_t imageIndex) const { return swapchainImages[imageIndex]; }
 		vk::Image getDepthStencilImage() const { return swapchainDepthStencil.depthStencilImage.get(); }
 
-		vk::Format getSwapchainDepthStencilFormat() const { return swapchainImageFormat; }
-		vk::Format getSwapchainImageFormat() const { return swapchainDepthStencilFormat; }
+		vk::Format getSwapchainDepthStencilFormat() const { return swapchainDepthStencilFormat; }
+		vk::Format getSwapchainImageFormat() const { return swapchainImageFormat; }
+
 
 		void recreate(uint32_t width, uint32_t height);
 
