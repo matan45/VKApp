@@ -1,0 +1,24 @@
+[submodule "dependencies/stb"]
+	path = dependencies/stb
+	url = https://github.com/nothings/stb.git
+[submodule "dependencies/imgui"]
+	path = dependencies/imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "dependencies/ImGuizmo"]
+	path = dependencies/ImGuizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo.git
+[submodule "dependencies/imgui-node-editor"]
+	path = dependencies/imgui-node-editor
+	url = https://github.com/thedmd/imgui-node-editor.git
+[submodule "dependencies/assimp"]
+	path = dependencies/assimp
+	url = https://github.com/assimp/assimp.git
+[submodule "dependencies/openal-soft"]
+	path = dependencies/openal-soft
+	url = https://github.com/kcat/openal-soft.git
+[submodule "dependencies/JoltPhysics"]
+	path = dependencies/JoltPhysics
+	url = https://github.com/jrouwe/JoltPhysics.git
+[submodule "dependencies/entt"]
+	path = dependencies/entt
+	url = https://github.com/skypjack/entt.git
