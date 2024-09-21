@@ -90,9 +90,11 @@
   <ItemGroup>
     <ClInclude Include="log\Logger.hpp" />
     <ClInclude Include="math\MathHelper.hpp" />
+    <ClInclude Include="resource\ShaderResource.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="math\MathHelper.cpp" />
+    <ClCompile Include="resource\ShaderResource.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\spdLog.vcxproj">

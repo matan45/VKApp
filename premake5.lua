@@ -25,12 +25,14 @@ project "Editor"
    
    includedirs {
       "VKEngine/core/interface",          -- Core headers
-      "VKEngine/graphics/interface",      -- Graphics headers
-      "dependencies/glfw/include",        -- GLFW headers
+	  "dependencies/imgui",  
+	  "dependencies/ImGuizmo",   
+	  "dependencies/imgui-node-editor",
+	  "VKEngine/utilities" 
    }
 
    links {
-      "Core"                             -- Link Core project
+      "Core"                           -- Link Core project
    }
 
    defines { "_CRT_SECURE_NO_WARNINGS" }
@@ -54,13 +56,11 @@ project "Core"
    files { "VKEngine/core/**.hpp", "VKEngine/core/**.cpp" }
    
    includedirs {
-	  vulkanLibPath.."/Include",
-      "dependencies/glfw/include",
       "VKEngine/graphics/interface",   -- Graphics headers
       "VKEngine/utilities"             -- Utilities headers (if used in Core)
    }
 
-   links { "Graphics", "Utilities" }  -- Link against Graphics and Utilities
+   links { "Graphics" }  -- Link against Graphics and Utilities
    defines { "_CRT_SECURE_NO_WARNINGS" }
 
    filter "configurations:Debug"
@@ -84,6 +84,7 @@ project "Graphics"
    includedirs {
       "dependencies/glfw/include",
       "dependencies/spdlog/include",
+	  "dependencies/imgui",
       "dependencies/glm",
       "VKEngine/utilities",           -- Utilities headers
       vulkanLibPath.."/Include"
@@ -98,7 +99,7 @@ project "Graphics"
    links {
       "GLFW",
       "Utilities",                    -- Link against Utilities project
-      "vulkan-1.lib"
+	  "imgui"
    }
 
    filter "configurations:Debug"
@@ -206,6 +207,60 @@ project "spdLog"
    }
 
    defines { "SPDLOG_COMPILED_LIB" }
+
+   filter "configurations:Debug"
+      defines { "DEBUG" }
+      symbols "On"
+
+   filter "configurations:Release"
+      defines { "NDEBUG" }
+      optimize "On"
+
+-- Project: imgui (Moved under libs group)
+-- Project: imgui (Moved under libs group)
+project "imgui"
+   kind "StaticLib"
+   language "C++"
+   cppdialect "C++20"
+   targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
+
+   -- Only include core ImGui files and Vulkan backend
+   files {
+      "dependencies/imgui/*.h",
+      "dependencies/imgui/*.cpp",
+      "dependencies/imgui/backends/imgui_impl_vulkan.*",  -- Only Vulkan part
+      "dependencies/ImGuizmo/*.h",
+      "dependencies/ImGuizmo/*.cpp",
+      "dependencies/imgui-node-editor/*.h",
+      "dependencies/imgui-node-editor/*.cpp"
+   }
+
+   -- Exclude folders: misc and examples
+   removefiles {
+      "dependencies/imgui/misc/**",
+      "dependencies/imgui/examples/**",
+      "dependencies/ImGuizmo/examples/**",
+      "dependencies/ImGuizmo/vcpkg-example/**",
+      "dependencies/imgui-node-editor/external/**",
+      "dependencies/imgui-node-editor/misc/**",
+      "dependencies/imgui-node-editor/examples/**",
+   }
+
+   includedirs {
+      "dependencies/imgui",                       -- Core ImGui headers
+      "dependencies/imgui/backends",              -- Vulkan backend headers
+      "dependencies/ImGuizmo",              
+      "dependencies/imgui-node-editor",              
+      vulkanLibPath.."/Include"                   -- Vulkan SDK headers
+   }
+   
+   libdirs {
+      vulkanLibPath.."/Lib"
+   }
+   
+   links {
+      "vulkan-1.lib"
+   }
 
    filter "configurations:Debug"
       defines { "DEBUG" }

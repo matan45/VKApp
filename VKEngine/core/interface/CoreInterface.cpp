@@ -1,8 +1,13 @@
 #include "CoreInterface.hpp"
+#include "GraphicsInterface.hpp"
 
 
 namespace interface {
-	
+
+	CoreInterface::CoreInterface() : graphicsInterface{ new GraphicsInterface() }
+	{
+
+	}
 
 	void CoreInterface::init()
 	{
@@ -25,5 +30,10 @@ namespace interface {
 	void CoreInterface::cleanUp()
 	{
 		graphicsInterface->cleanup();
+	}
+
+	CoreInterface::~CoreInterface()
+	{
+		delete graphicsInterface;
 	}
 };

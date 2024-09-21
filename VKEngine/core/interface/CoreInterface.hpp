@@ -1,15 +1,15 @@
 #pragma once
-#include <memory>
-#include "GraphicsInterface.hpp"
 
 namespace interface {
+	class GraphicsInterface;
+
 	class CoreInterface
 	{
 	private:
-		std::unique_ptr<interface::GraphicsInterface> graphicsInterface{ std::make_unique<interface::GraphicsInterface>() };
+		GraphicsInterface* graphicsInterface;
 	public:
-		explicit CoreInterface() = default;
-		~CoreInterface() = default;
+		explicit CoreInterface();
+		~CoreInterface();
 
 		void init();
 		void run() const;

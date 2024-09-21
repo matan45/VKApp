@@ -11,10 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{1653CE33-0220-293F-2B39-17E717655ECD}</ProjectGuid>
+    <ProjectGuid>{0098A80F-6CAC-D0C0-352E-7420A101CDF1}</ProjectGuid>
     <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Graphics</RootNamespace>
+    <RootNamespace>imgui</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -40,23 +40,23 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>..\..\bin\Graphics\Debug\x64\</OutDir>
-    <IntDir>obj\x64\Debug\</IntDir>
-    <TargetName>Graphics</TargetName>
+    <OutDir>..\bin\imgui\Debug\x64\</OutDir>
+    <IntDir>obj\x64\Debug\imgui\</IntDir>
+    <TargetName>imgui</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>..\..\bin\Graphics\Release\x64\</OutDir>
-    <IntDir>obj\x64\Release\</IntDir>
-    <TargetName>Graphics</TargetName>
+    <OutDir>..\bin\imgui\Release\x64\</OutDir>
+    <IntDir>obj\x64\Release\imgui\</IntDir>
+    <TargetName>imgui</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\dependencies\glfw\include;..\..\dependencies\spdlog\include;..\..\dependencies\imgui;..\..\dependencies\glm;..\utilities;C:\VulkanSDK\1.3.290.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\dependencies\imgui;..\dependencies\imgui\backends;..\dependencies\ImGuizmo;..\dependencies\imgui-node-editor;C:\VulkanSDK\1.3.290.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -67,7 +67,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>shaderc_sharedd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\VulkanSDK\1.3.290.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
@@ -75,8 +75,8 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\dependencies\glfw\include;..\..\dependencies\spdlog\include;..\..\dependencies\imgui;..\..\dependencies\glm;..\utilities;C:\VulkanSDK\1.3.290.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\dependencies\imgui;..\dependencies\imgui\backends;..\dependencies\ImGuizmo;..\dependencies\imgui-node-editor;C:\VulkanSDK\1.3.290.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -91,42 +91,47 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Lib>
-      <AdditionalDependencies>shaderc_shared.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\VulkanSDK\1.3.290.0\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="core\CommandPool.hpp" />
-    <ClInclude Include="core\Device.hpp" />
-    <ClInclude Include="core\RenderManager.hpp" />
-    <ClInclude Include="core\Shader.hpp" />
-    <ClInclude Include="core\SwapChain.hpp" />
-    <ClInclude Include="core\Utilities.hpp" />
-    <ClInclude Include="interface\GraphicsInterface.hpp" />
-    <ClInclude Include="render\TriangleRenderer.hpp" />
-    <ClInclude Include="window\Window.hpp" />
+    <ClInclude Include="..\dependencies\ImGuizmo\GraphEditor.h" />
+    <ClInclude Include="..\dependencies\ImGuizmo\ImCurveEdit.h" />
+    <ClInclude Include="..\dependencies\ImGuizmo\ImGradient.h" />
+    <ClInclude Include="..\dependencies\ImGuizmo\ImGuizmo.h" />
+    <ClInclude Include="..\dependencies\ImGuizmo\ImSequencer.h" />
+    <ClInclude Include="..\dependencies\ImGuizmo\ImZoomSlider.h" />
+    <ClInclude Include="..\dependencies\imgui-node-editor\crude_json.h" />
+    <ClInclude Include="..\dependencies\imgui-node-editor\imgui_bezier_math.h" />
+    <ClInclude Include="..\dependencies\imgui-node-editor\imgui_canvas.h" />
+    <ClInclude Include="..\dependencies\imgui-node-editor\imgui_extra_math.h" />
+    <ClInclude Include="..\dependencies\imgui-node-editor\imgui_node_editor.h" />
+    <ClInclude Include="..\dependencies\imgui-node-editor\imgui_node_editor_internal.h" />
+    <ClInclude Include="..\dependencies\imgui\backends\imgui_impl_vulkan.h" />
+    <ClInclude Include="..\dependencies\imgui\imconfig.h" />
+    <ClInclude Include="..\dependencies\imgui\imgui.h" />
+    <ClInclude Include="..\dependencies\imgui\imgui_internal.h" />
+    <ClInclude Include="..\dependencies\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\dependencies\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\dependencies\imgui\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="core\CommandPool.cpp" />
-    <ClCompile Include="core\Device.cpp" />
-    <ClCompile Include="core\RenderManager.cpp" />
-    <ClCompile Include="core\Shader.cpp" />
-    <ClCompile Include="core\SwapChain.cpp" />
-    <ClCompile Include="core\Utilities.cpp" />
-    <ClCompile Include="interface\GraphicsInterface.cpp" />
-    <ClCompile Include="render\TriangleRenderer.cpp" />
-    <ClCompile Include="window\Window.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\GLFW.vcxproj">
-      <Project>{154B857C-0182-860D-AA6E-6C109684020F}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\utilities\Utilities.vcxproj">
-      <Project>{010A8043-6D74-34BA-B6B2-E55F225C120F}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\imgui.vcxproj">
-      <Project>{0098A80F-6CAC-D0C0-352E-7420A101CDF1}</Project>
-    </ProjectReference>
+    <ClCompile Include="..\dependencies\ImGuizmo\GraphEditor.cpp" />
+    <ClCompile Include="..\dependencies\ImGuizmo\ImCurveEdit.cpp" />
+    <ClCompile Include="..\dependencies\ImGuizmo\ImGradient.cpp" />
+    <ClCompile Include="..\dependencies\ImGuizmo\ImGuizmo.cpp" />
+    <ClCompile Include="..\dependencies\ImGuizmo\ImSequencer.cpp" />
+    <ClCompile Include="..\dependencies\imgui-node-editor\crude_json.cpp" />
+    <ClCompile Include="..\dependencies\imgui-node-editor\imgui_canvas.cpp" />
+    <ClCompile Include="..\dependencies\imgui-node-editor\imgui_node_editor.cpp" />
+    <ClCompile Include="..\dependencies\imgui-node-editor\imgui_node_editor_api.cpp" />
+    <ClCompile Include="..\dependencies\imgui\backends\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="..\dependencies\imgui\imgui.cpp" />
+    <ClCompile Include="..\dependencies\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\dependencies\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\dependencies\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\dependencies\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
