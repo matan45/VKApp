@@ -76,7 +76,7 @@ namespace render {
 		renderPassInfo.renderArea.extent = swapChain.getSwapchainExtent();
 
 		std::array<vk::ClearValue, 1> clearValues{};
-		clearValues[0].color = vk::ClearColorValue(std::array<float, 4>{0.1f, 0.1f, 0.3f, 1.0f});  // Sky color
+		clearValues[0].color = vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});  // Sky color
 		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 		renderPassInfo.pClearValues = clearValues.data();
 
@@ -235,7 +235,7 @@ namespace render {
 		vk::AttachmentDescription colorAttachment{};
 		colorAttachment.format = swapChain.getSwapchainImageFormat();
 		colorAttachment.samples = vk::SampleCountFlagBits::e1;
-		colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+		colorAttachment.loadOp = vk::AttachmentLoadOp::eDontCare;
 		colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
 		colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
 		colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;

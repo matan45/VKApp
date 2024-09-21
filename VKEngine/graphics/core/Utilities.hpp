@@ -34,6 +34,21 @@ namespace core {
 		static QueueFamilyIndices findQueueFamiliesFromDevice(const vk::PhysicalDevice& device, const vk::SurfaceKHR& surface);
 		static SwapchainSupportDetails querySwapchainSupport(const vk::PhysicalDevice& device, const vk::SurfaceKHR& surface);
 		static uint32_t findMemoryType(const vk::PhysicalDevice& device, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+
+		static void transitionImageLayout(
+			vk::CommandBuffer commandBuffer,
+			vk::Image image,
+			vk::ImageLayout oldLayout,
+			vk::ImageLayout newLayout
+		);
+
+		static void transitionDepthImageLayout(
+			vk::CommandBuffer commandBuffer,
+			vk::Image image,
+			vk::Format format,
+			vk::ImageLayout oldLayout,
+			vk::ImageLayout newLayout
+		);
 	};
 }
 

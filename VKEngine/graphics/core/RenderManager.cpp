@@ -18,6 +18,7 @@ namespace core {
 	RenderManager::~RenderManager()
 	{
 		delete commandPool;
+		delete triangleRenderer;
 	}
 
 	void RenderManager::init()
@@ -67,35 +68,8 @@ namespace core {
 		// Begin recording commands for the acquired image
 		commandBuffer.begin(vk::CommandBufferBeginInfo{});
 
-		// Transition the image to `VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL` for rendering
-		/**transitionImageLayout(
-			commandBuffer,
-			swapChain.getSwapchainImage(imageIndex),
-			swapChain.getSwapchainImageFormat(),
-			vk::ImageLayout::eUndefined,  // Could also be `ePresentSrcKHR`
-			vk::ImageLayout::eColorAttachmentOptimal  // Ready for rendering
-		);*/
-
-		// Transition the depth image layout for rendering
-		transitionDepthImageLayout(
-			commandBuffer,
-			swapChain.getDepthStencilImage(),
-			swapChain.getSwapchainDepthStencilFormat(),
-			vk::ImageLayout::eUndefined,  // Start with undefined layout
-			vk::ImageLayout::eDepthStencilAttachmentOptimal  // Ready for depth testing
-		);
-
 		// Render the scene using the command buffer for this swapchain image
 		draw(commandBuffer, imageIndex);
-
-		// Transition the image to `VK_IMAGE_LAYOUT_PRESENT_SRC_KHR` for presentation
-		/**transitionImageLayout(
-			commandPool->getCommandBuffer(imageIndex),
-			swapChain.getSwapchainImage(imageIndex),
-			swapChain.getSwapchainImageFormat(),
-			vk::ImageLayout::eColorAttachmentOptimal,  // After rendering
-			vk::ImageLayout::ePresentSrcKHR  // Ready for presentation
-		);*/
 
 		// End command buffer recording
 		commandPool->getCommandBuffer(imageIndex).end();
@@ -139,6 +113,7 @@ namespace core {
 	void RenderManager::cleanUp() const
 	{
 		device.getLogicalDevice().waitIdle();
+
 		triangleRenderer->cleanUp();
 
 		commandPool->cleanUp();
@@ -148,12 +123,12 @@ namespace core {
 		device.getLogicalDevice().destroyFence(renderFence);
 	}
 
-	void RenderManager::draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex)
+	void RenderManager::draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const
 	{
 		triangleRenderer->recordCommandBuffer(commandBuffer, imageIndex);
 	}
 
-	void RenderManager::present(uint32_t imageIndex)
+	void RenderManager::present(uint32_t imageIndex) const
 	{
 
 		// Present the image to the screen
@@ -171,90 +146,6 @@ namespace core {
 		if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
 			recreate(window.getHeight(), window.getWidth());
 		}
-	}
-
-	void RenderManager::transitionImageLayout(vk::CommandBuffer commandBuffer, vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const
-	{
-		vk::ImageMemoryBarrier barrier{};
-		barrier.oldLayout = oldLayout;
-		barrier.newLayout = newLayout;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = image;
-
-		// Transition for color images
-		barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
-
-		vk::PipelineStageFlags sourceStage;
-		vk::PipelineStageFlags destinationStage;
-
-		if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eColorAttachmentOptimal) {
-			barrier.srcAccessMask = vk::AccessFlagBits::eNoneKHR;
-			barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-
-			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
-			destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-		}
-		else if (oldLayout == vk::ImageLayout::eColorAttachmentOptimal && newLayout == vk::ImageLayout::ePresentSrcKHR) {
-			barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-			barrier.dstAccessMask = vk::AccessFlagBits::eNoneKHR;
-
-			sourceStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-			destinationStage = vk::PipelineStageFlagBits::eBottomOfPipe;
-		}
-		else {
-			throw std::invalid_argument("Unsupported layout transition!");
-		}
-
-		commandBuffer.pipelineBarrier(
-			sourceStage, destinationStage,
-			vk::DependencyFlags{},
-			nullptr, nullptr, barrier
-		);
-	}
-
-	void RenderManager::transitionDepthImageLayout(vk::CommandBuffer commandBuffer, vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const
-	{
-		vk::ImageMemoryBarrier barrier{};
-		barrier.oldLayout = oldLayout;
-		barrier.newLayout = newLayout;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = image;
-
-		barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth;
-		if (format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint) {
-			barrier.subresourceRange.aspectMask |= vk::ImageAspectFlagBits::eStencil;
-		}
-
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
-
-		vk::PipelineStageFlags sourceStage;
-		vk::PipelineStageFlags destinationStage;
-
-		if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
-			barrier.srcAccessMask = vk::AccessFlagBits::eNoneKHR;
-			barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-
-			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
-			destinationStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
-		}
-		else {
-			throw std::invalid_argument("Unsupported layout transition for depth image!");
-		}
-
-		commandBuffer.pipelineBarrier(
-			sourceStage, destinationStage,
-			vk::DependencyFlags{},
-			nullptr, nullptr, barrier
-		);
 	}
 
 }

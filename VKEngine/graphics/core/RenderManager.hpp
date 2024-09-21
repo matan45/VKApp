@@ -41,25 +41,9 @@ namespace core {
 		void cleanUp() const;
 
 	private:
-		void draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex);
+		void draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const;
 
-		void present(uint32_t imageIndex);
-
-		void transitionImageLayout(
-			vk::CommandBuffer commandBuffer,
-			vk::Image image,
-			vk::Format format,
-			vk::ImageLayout oldLayout,
-			vk::ImageLayout newLayout
-		) const;
-
-		void transitionDepthImageLayout(
-			vk::CommandBuffer commandBuffer,
-			vk::Image image,
-			vk::Format format,
-			vk::ImageLayout oldLayout,
-			vk::ImageLayout newLayout
-		)const;
+		void present(uint32_t imageIndex) const;
 	};
 }
 
