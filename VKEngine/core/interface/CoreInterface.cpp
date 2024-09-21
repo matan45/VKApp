@@ -13,9 +13,12 @@ namespace interface {
 	{
 		while (!graphicsInterface->windowShouldClose()) {
 			graphicsInterface->windowPollEvents();
+
 			if (graphicsInterface->isWindowResized()) {
 				graphicsInterface->reSize();
 			}
+
+			graphicsInterface->render();
 		}
 	}
 

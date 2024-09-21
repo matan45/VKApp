@@ -1,6 +1,9 @@
 #include "Shader.hpp"
 #include "Device.hpp"
 #include "log/Logger.hpp"
+#include <iostream>     // For input-output operations
+#include <fstream>      // For file handling (ifstream)
+#include <string>       // For using std::string to read lines
 
 namespace core {
 	Shader::Shader(Device& device) :device{ device }
@@ -8,10 +11,10 @@ namespace core {
 
 	}
 
-	void Shader::readShader(const std::string& sourceCode, vk::ShaderStageFlagBits stage, const std::string& shaderName)
+	void Shader::readShader(std::string_view path, vk::ShaderStageFlagBits stage, std::string_view shaderName)
 	{
 		// Compile GLSL to SPIR-V
-		std::vector<uint32_t> spirvCode = compileShaderToSPIRV(sourceCode, stage, shaderName);
+		std::vector<uint32_t> spirvCode = compileShaderToSPIRV(path, stage, shaderName);
 		// Create Vulkan shader module
 		createShaderModule(spirvCode);
 	}
@@ -25,8 +28,14 @@ namespace core {
 		return shaderStageInfo;
 	}
 
-	std::vector<uint32_t> Shader::compileShaderToSPIRV(const std::string& sourceCode, vk::ShaderStageFlagBits stage, const std::string& shaderName)
+	void Shader::cleanUp()
 	{
+		shaderModule.reset();
+	}
+
+	std::vector<uint32_t> Shader::compileShaderToSPIRV(std::string_view path, vk::ShaderStageFlagBits stage, std::string_view shaderName)
+	{
+		std::string fileContent = readFile(path);
 		shaderc_shader_kind kind;
 		stageShader = stage;
 
@@ -45,10 +54,11 @@ namespace core {
 
 		shaderc::Compiler compiler;
 		shaderc::CompileOptions options;
+		options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
 		options.SetOptimizationLevel(shaderc_optimization_level_performance);
 
 		// Compile GLSL to SPIR-V
-		shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(sourceCode, kind, shaderName.c_str(), options);
+		shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(fileContent, kind, shaderName.data(), options);
 
 		// Check for compilation errors
 		if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
@@ -67,6 +77,24 @@ namespace core {
 		createInfo.pCode = code.data();
 
 		shaderModule = device.getLogicalDevice().createShaderModuleUnique(createInfo);
+	}
+
+	std::string Shader::readFile(std::string_view path) const
+	{
+		std::ifstream file(path.data());  // Create input file stream
+		std::string file_content;
+		if (file.is_open()) {
+			std::stringstream buffer;
+			buffer << file.rdbuf();  // Read the entire file into a stringstream
+			file_content = buffer.str();  // Convert the stringstream to a string
+
+
+			file.close();  // Close the file when done
+		}
+		else {
+			std::cout << "Failed to open the file." << std::endl;
+		}
+		return file_content;
 	}
 
 }

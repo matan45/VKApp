@@ -53,6 +53,11 @@ namespace interface
 		window->resetResizeFlag();
 	}
 
+	void GraphicsInterface::render()
+	{
+		renderManager->render();
+	}
+
 	GraphicsInterface::~GraphicsInterface()
 	{
 		delete renderManager;

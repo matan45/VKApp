@@ -5,6 +5,10 @@ namespace window {
 	class Window;
 }
 
+namespace render {
+	class TriangleRenderer;
+}
+
 namespace core {
 	class Device;
 	class SwapChain;
@@ -17,6 +21,7 @@ namespace core {
 		SwapChain& swapChain;
 		window::Window& window;
 		CommandPool* commandPool{ nullptr };
+		render::TriangleRenderer* triangleRenderer{ nullptr };
 
 		vk::Semaphore imageAvailableSemaphore;
 		vk::Semaphore renderFinishedSemaphore;
@@ -36,7 +41,7 @@ namespace core {
 		void cleanUp() const;
 
 	private:
-		void draw(const vk::CommandBuffer& commandBuffer);
+		void draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex);
 
 		void present(uint32_t imageIndex);
 

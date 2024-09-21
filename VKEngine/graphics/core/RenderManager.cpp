@@ -4,7 +4,7 @@
 #include "CommandPool.hpp"
 #include "log/Logger.hpp"
 #include "../window/Window.hpp"
-
+#include "../render/TriangleRenderer.hpp"
 
 namespace core {
 
@@ -23,6 +23,9 @@ namespace core {
 	void RenderManager::init()
 	{
 		commandPool = new CommandPool(device, swapChain);
+		triangleRenderer = new render::TriangleRenderer(device, swapChain);
+
+		triangleRenderer->init();
 		// Create semaphores for synchronization
 		vk::SemaphoreCreateInfo semaphoreInfo{};
 
@@ -59,21 +62,23 @@ namespace core {
 
 		commandPool->resetCommandBuffer(imageIndex);
 
+		vk::CommandBuffer commandBuffer = commandPool->getCommandBuffer(imageIndex);
+
 		// Begin recording commands for the acquired image
-		commandPool->getCommandBuffer(imageIndex).begin(vk::CommandBufferBeginInfo{});
+		commandBuffer.begin(vk::CommandBufferBeginInfo{});
 
 		// Transition the image to `VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL` for rendering
-		transitionImageLayout(
-			commandPool->getCommandBuffer(imageIndex),
+		/**transitionImageLayout(
+			commandBuffer,
 			swapChain.getSwapchainImage(imageIndex),
 			swapChain.getSwapchainImageFormat(),
 			vk::ImageLayout::eUndefined,  // Could also be `ePresentSrcKHR`
 			vk::ImageLayout::eColorAttachmentOptimal  // Ready for rendering
-		);
+		);*/
 
 		// Transition the depth image layout for rendering
 		transitionDepthImageLayout(
-			commandPool->getCommandBuffer(imageIndex),
+			commandBuffer,
 			swapChain.getDepthStencilImage(),
 			swapChain.getSwapchainDepthStencilFormat(),
 			vk::ImageLayout::eUndefined,  // Start with undefined layout
@@ -81,16 +86,16 @@ namespace core {
 		);
 
 		// Render the scene using the command buffer for this swapchain image
-		draw(commandPool->getCommandBuffer(imageIndex));
+		draw(commandBuffer, imageIndex);
 
 		// Transition the image to `VK_IMAGE_LAYOUT_PRESENT_SRC_KHR` for presentation
-		transitionImageLayout(
+		/**transitionImageLayout(
 			commandPool->getCommandBuffer(imageIndex),
 			swapChain.getSwapchainImage(imageIndex),
 			swapChain.getSwapchainImageFormat(),
 			vk::ImageLayout::eColorAttachmentOptimal,  // After rendering
 			vk::ImageLayout::ePresentSrcKHR  // Ready for presentation
-		);
+		);*/
 
 		// End command buffer recording
 		commandPool->getCommandBuffer(imageIndex).end();
@@ -127,11 +132,15 @@ namespace core {
 	{
 		if (width == 0 || height == 0) return;  // Skip if minimized
 		commandPool->recreate();  // Reallocate command buffers if needed
+
+		triangleRenderer->recreate(width, height);
 	}
 
 	void RenderManager::cleanUp() const
 	{
 		device.getLogicalDevice().waitIdle();
+		triangleRenderer->cleanUp();
+
 		commandPool->cleanUp();
 
 		device.getLogicalDevice().destroySemaphore(imageAvailableSemaphore);
@@ -139,9 +148,9 @@ namespace core {
 		device.getLogicalDevice().destroyFence(renderFence);
 	}
 
-	void RenderManager::draw(const vk::CommandBuffer& commandBuffer)
+	void RenderManager::draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex)
 	{
-
+		triangleRenderer->recordCommandBuffer(commandBuffer, imageIndex);
 	}
 
 	void RenderManager::present(uint32_t imageIndex)

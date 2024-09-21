@@ -103,6 +103,7 @@
     <ClInclude Include="core\Utilities.hpp" />
     <ClInclude Include="core\Shader.hpp" />
     <ClInclude Include="core\RenderManager.hpp" />
+    <ClInclude Include="render\TriangleRenderer.hpp" />
     <ClInclude Include="window\Window.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -113,6 +114,7 @@
     <ClCompile Include="core\Utilities.cpp" />
     <ClCompile Include="core\Shader.cpp" />
     <ClCompile Include="core\RenderManager.cpp" />
+    <ClCompile Include="render\TriangleRenderer.cpp" />
     <ClCompile Include="window\Window.cpp" />
   </ItemGroup>
   <ItemGroup>

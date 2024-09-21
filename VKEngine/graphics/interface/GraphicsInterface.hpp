@@ -24,6 +24,7 @@ namespace interface {
 		~GraphicsInterface();
 
 		void init();
+		void render();
 		void cleanup();
 
 		void windowPollEvents() const;
