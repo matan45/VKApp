@@ -56,7 +56,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\dependencies\imgui;..\dependencies\imgui\backends;..\dependencies\ImGuizmo;..\dependencies\imgui-node-editor;C:\VulkanSDK\1.3.290.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\dependencies\imgui;..\dependencies\imgui\backends;..\dependencies\ImGuizmo;..\dependencies\imgui-node-editor;..\dependencies\glfw\include;C:\VulkanSDK\1.3.290.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -76,7 +76,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\dependencies\imgui;..\dependencies\imgui\backends;..\dependencies\ImGuizmo;..\dependencies\imgui-node-editor;C:\VulkanSDK\1.3.290.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\dependencies\imgui;..\dependencies\imgui\backends;..\dependencies\ImGuizmo;..\dependencies\imgui-node-editor;..\dependencies\glfw\include;C:\VulkanSDK\1.3.290.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -108,6 +108,7 @@
     <ClInclude Include="..\dependencies\imgui-node-editor\imgui_extra_math.h" />
     <ClInclude Include="..\dependencies\imgui-node-editor\imgui_node_editor.h" />
     <ClInclude Include="..\dependencies\imgui-node-editor\imgui_node_editor_internal.h" />
+    <ClInclude Include="..\dependencies\imgui\backends\imgui_impl_glfw.h" />
     <ClInclude Include="..\dependencies\imgui\backends\imgui_impl_vulkan.h" />
     <ClInclude Include="..\dependencies\imgui\imconfig.h" />
     <ClInclude Include="..\dependencies\imgui\imgui.h" />
@@ -126,6 +127,7 @@
     <ClCompile Include="..\dependencies\imgui-node-editor\imgui_canvas.cpp" />
     <ClCompile Include="..\dependencies\imgui-node-editor\imgui_node_editor.cpp" />
     <ClCompile Include="..\dependencies\imgui-node-editor\imgui_node_editor_api.cpp" />
+    <ClCompile Include="..\dependencies\imgui\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="..\dependencies\imgui\backends\imgui_impl_vulkan.cpp" />
     <ClCompile Include="..\dependencies\imgui\imgui.cpp" />
     <ClCompile Include="..\dependencies\imgui\imgui_demo.cpp" />

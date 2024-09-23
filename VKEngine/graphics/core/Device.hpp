@@ -51,6 +51,7 @@ namespace core {
 		void cleanUp();
 
 		const vk::SurfaceKHR& getSurface() const { return surface; }
+		const vk::Instance& getInstance() const { return instance.get(); }
 		const vk::PhysicalDevice& getPhysicalDevice() const { return physicalDevice; }
 		const vk::Device& getLogicalDevice() const { return logicalDevice; }
 		const QueueFamilyIndices& getQueueFamilyIndices() const { return queueFamilyIndices; }

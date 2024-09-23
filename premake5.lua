@@ -85,6 +85,7 @@ project "Graphics"
       "dependencies/glfw/include",
       "dependencies/spdlog/include",
 	  "dependencies/imgui",
+	  "dependencies/imgui/backends",
       "dependencies/glm",
       "VKEngine/utilities",           -- Utilities headers
       vulkanLibPath.."/Include"
@@ -216,7 +217,7 @@ project "spdLog"
       defines { "NDEBUG" }
       optimize "On"
 
--- Project: imgui (Moved under libs group)
+
 -- Project: imgui (Moved under libs group)
 project "imgui"
    kind "StaticLib"
@@ -229,6 +230,7 @@ project "imgui"
       "dependencies/imgui/*.h",
       "dependencies/imgui/*.cpp",
       "dependencies/imgui/backends/imgui_impl_vulkan.*",  -- Only Vulkan part
+      "dependencies/imgui/backends/imgui_impl_glfw.*",  -- Only Vulkan part
       "dependencies/ImGuizmo/*.h",
       "dependencies/ImGuizmo/*.cpp",
       "dependencies/imgui-node-editor/*.h",
@@ -250,7 +252,8 @@ project "imgui"
       "dependencies/imgui",                       -- Core ImGui headers
       "dependencies/imgui/backends",              -- Vulkan backend headers
       "dependencies/ImGuizmo",              
-      "dependencies/imgui-node-editor",              
+      "dependencies/imgui-node-editor", 
+	  "dependencies/glfw/include",	  
       vulkanLibPath.."/Include"                   -- Vulkan SDK headers
    }
    
