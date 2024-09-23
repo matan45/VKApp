@@ -102,7 +102,10 @@
     <ClInclude Include="core\Shader.hpp" />
     <ClInclude Include="core\SwapChain.hpp" />
     <ClInclude Include="core\Utilities.hpp" />
+    <ClInclude Include="imgui\ImguiRender.hpp" />
     <ClInclude Include="interface\GraphicsInterface.hpp" />
+    <ClInclude Include="imgui\OffScreenViewPort.hpp" />
+    <ClInclude Include="render\RenderPassHandler.hpp" />
     <ClInclude Include="render\TriangleRenderer.hpp" />
     <ClInclude Include="window\Window.hpp" />
   </ItemGroup>
@@ -113,7 +116,10 @@
     <ClCompile Include="core\Shader.cpp" />
     <ClCompile Include="core\SwapChain.cpp" />
     <ClCompile Include="core\Utilities.cpp" />
+    <ClCompile Include="imgui\ImguiRender.cpp" />
     <ClCompile Include="interface\GraphicsInterface.cpp" />
+    <ClCompile Include="imgui\OffScreenViewPort.cpp" />
+    <ClCompile Include="render\RenderPassHandler.cpp" />
     <ClCompile Include="render\TriangleRenderer.cpp" />
     <ClCompile Include="window\Window.cpp" />
   </ItemGroup>

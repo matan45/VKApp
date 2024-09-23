@@ -6,7 +6,7 @@ namespace window {
 }
 
 namespace render {
-	class TriangleRenderer;
+	class RenderPassHandler;
 }
 
 namespace core {
@@ -21,7 +21,7 @@ namespace core {
 		SwapChain& swapChain;
 		window::Window& window;
 		CommandPool* commandPool{ nullptr };
-		render::TriangleRenderer* triangleRenderer{ nullptr };
+		render::RenderPassHandler* renderPassHandler{ nullptr };
 
 		vk::Semaphore imageAvailableSemaphore;
 		vk::Semaphore renderFinishedSemaphore;

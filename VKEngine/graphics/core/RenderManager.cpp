@@ -4,7 +4,7 @@
 #include "CommandPool.hpp"
 #include "log/Logger.hpp"
 #include "../window/Window.hpp"
-#include "../render/TriangleRenderer.hpp"
+#include "../render/RenderPassHandler.hpp"
 
 namespace core {
 
@@ -18,15 +18,16 @@ namespace core {
 	RenderManager::~RenderManager()
 	{
 		delete commandPool;
-		delete triangleRenderer;
+		delete renderPassHandler;
 	}
 
 	void RenderManager::init()
 	{
 		commandPool = new CommandPool(device, swapChain);
-		triangleRenderer = new render::TriangleRenderer(device, swapChain);
 
-		triangleRenderer->init();
+		renderPassHandler = new render::RenderPassHandler(device, swapChain);
+		renderPassHandler->init();
+
 		// Create semaphores for synchronization
 		vk::SemaphoreCreateInfo semaphoreInfo{};
 
@@ -107,16 +108,16 @@ namespace core {
 		if (width == 0 || height == 0) return;  // Skip if minimized
 		commandPool->recreate();  // Reallocate command buffers if needed
 
-		triangleRenderer->recreate(width, height);
+		renderPassHandler->recreate(width, height);
 	}
 
 	void RenderManager::cleanUp() const
 	{
 		device.getLogicalDevice().waitIdle();
 
-		triangleRenderer->cleanUp();
-
 		commandPool->cleanUp();
+
+		renderPassHandler->cleanUp();
 
 		device.getLogicalDevice().destroySemaphore(imageAvailableSemaphore);
 		device.getLogicalDevice().destroySemaphore(renderFinishedSemaphore);
@@ -125,7 +126,9 @@ namespace core {
 
 	void RenderManager::draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const
 	{
-		triangleRenderer->recordCommandBuffer(commandBuffer, imageIndex);
+		//create a render pass class so we can use here and offscreen class
+		//here for now only use imgui render
+		renderPassHandler->draw(commandBuffer, imageIndex);
 	}
 
 	void RenderManager::present(uint32_t imageIndex) const

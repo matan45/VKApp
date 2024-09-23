@@ -34,10 +34,11 @@ namespace core {
 		void cleanUp();
 
 		uint32_t getImageCount() const { return static_cast<uint32_t>(swapchainImages.size()); }
-		vk::SwapchainKHR getSwapchain() const { return swapchain.get(); }
-		vk::Image getSwapchainImage(uint32_t imageIndex) const { return swapchainImages[imageIndex]; }
-		vk::ImageView getSwapchainImageView(uint32_t imageIndex) const { return swapchainImageViews[imageIndex]; }
-		vk::Image getDepthStencilImage() const { return swapchainDepthStencil.depthStencilImage.get(); }
+
+		const vk::SwapchainKHR& getSwapchain() const { return swapchain.get(); }
+		const vk::Image& getSwapchainImage(uint32_t imageIndex) const { return swapchainImages[imageIndex]; }
+		const vk::ImageView& getSwapchainImageView(uint32_t imageIndex) const { return swapchainImageViews[imageIndex]; }
+		const vk::Image& getDepthStencilImage() const { return swapchainDepthStencil.depthStencilImage.get(); }
 
 		vk::Format getSwapchainDepthStencilFormat() const { return swapchainDepthStencilFormat; }
 		vk::Format getSwapchainImageFormat() const { return swapchainImageFormat; }
