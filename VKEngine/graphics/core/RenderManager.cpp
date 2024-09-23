@@ -4,29 +4,29 @@
 #include "CommandPool.hpp"
 #include "log/Logger.hpp"
 #include "../window/Window.hpp"
-#include "../render/RenderPassHandler.hpp"
+#include "../imguiPass/ImguiRender.hpp"
 
 namespace core {
 
 
 	RenderManager::RenderManager(Device& device, SwapChain& swapChain, window::Window& window) : device{ device },
-		swapChain{ swapChain }, window{window}
+		swapChain{ swapChain }, window{ window }
 	{
-		
+
 	}
 
 	RenderManager::~RenderManager()
 	{
 		delete commandPool;
-		delete renderPassHandler;
+		delete imguiRender;
 	}
 
 	void RenderManager::init()
 	{
 		commandPool = new CommandPool(device, swapChain);
 
-		renderPassHandler = new render::RenderPassHandler(device, swapChain);
-		renderPassHandler->init();
+		imguiRender = new imguiPass::ImguiRender(device, swapChain, *commandPool, window);
+		imguiRender->init();
 
 		// Create semaphores for synchronization
 		vk::SemaphoreCreateInfo semaphoreInfo{};
@@ -108,7 +108,7 @@ namespace core {
 		if (width == 0 || height == 0) return;  // Skip if minimized
 		commandPool->recreate();  // Reallocate command buffers if needed
 
-		renderPassHandler->recreate(width, height);
+		imguiRender->recreate(width, height);
 	}
 
 	void RenderManager::cleanUp() const
@@ -117,7 +117,7 @@ namespace core {
 
 		commandPool->cleanUp();
 
-		renderPassHandler->cleanUp();
+		imguiRender->cleanUp();
 
 		device.getLogicalDevice().destroySemaphore(imageAvailableSemaphore);
 		device.getLogicalDevice().destroySemaphore(renderFinishedSemaphore);
@@ -128,7 +128,7 @@ namespace core {
 	{
 		//create a render pass class so we can use here and offscreen class
 		//here for now only use imgui render
-		renderPassHandler->draw(commandBuffer, imageIndex);
+		imguiRender->render(commandBuffer, imageIndex);
 	}
 
 	void RenderManager::present(uint32_t imageIndex) const

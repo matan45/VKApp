@@ -1,6 +1,10 @@
 #include "CoreInterface.hpp"
 #include "GraphicsInterface.hpp"
 
+#include <imgui.h>
+#include <imgui_impl_vulkan.h>
+#include <imgui_impl_glfw.h>
+
 
 namespace interface {
 
@@ -23,6 +27,10 @@ namespace interface {
 				graphicsInterface->reSize();
 			}
 
+			newFrame();
+			editorDraw();
+			endFrame();
+
 			graphicsInterface->render();
 		}
 	}
@@ -36,4 +44,23 @@ namespace interface {
 	{
 		delete graphicsInterface;
 	}
+
+	void CoreInterface::newFrame() const
+	{
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+	}
+
+	void CoreInterface::endFrame() const
+	{
+		ImGui::EndFrame();
+	}
+
+	void CoreInterface::editorDraw() const
+	{
+
+		ImGui::ShowDemoWindow();
+	}
+
 };

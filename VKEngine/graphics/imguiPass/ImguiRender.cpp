@@ -8,7 +8,7 @@
 #include "../window/Window.hpp"
 #include "log/Logger.hpp"
 
-namespace imgui {
+namespace imguiPass {
 
 	ImguiRender::ImguiRender(core::Device& device, core::SwapChain& swapChain, core::CommandPool& commandPool, window::Window& window) :
 		device{ device }, swapChain{ swapChain }, commandPool{ commandPool }, window{ window }
@@ -18,10 +18,13 @@ namespace imgui {
 
 	void ImguiRender::init()
 	{
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGui::StyleColorsDark();
+
 		createDescriptorPool();
 		createRenderPass();
 		createFrameBuffers();
-
 
 		// Setup Platform/Renderer back ends
 		ImGui_ImplGlfw_InitForVulkan(window.getWindowPtr(), true);
@@ -37,11 +40,8 @@ namespace imgui {
 		initInfo.ImageCount = swapChain.getImageCount();
 		initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 		initInfo.Allocator = VK_NULL_HANDLE;
+		initInfo.RenderPass = imGuiRenderPass;
 		ImGui_ImplVulkan_Init(&initInfo);
-
-		/*vk::CommandBuffer commandBuffer = renderer::Uitil::beginSingleTimeCommands(device, commandPool.getCommand());
-		ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-		renderer::Uitil::endSingleTimeCommands(device, commandPool.getCommand(), commandBuffer);*/
 
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
@@ -52,6 +52,10 @@ namespace imgui {
 
 	void ImguiRender::cleanUp() const
 	{
+		ImGui_ImplVulkan_Shutdown();
+		ImGui_ImplGlfw_Shutdown();
+		ImGui::DestroyContext();
+
 		for (auto framebuffer : imGuiFrameBuffers) {
 			device.getLogicalDevice().destroyFramebuffer(framebuffer);
 		}
@@ -159,9 +163,9 @@ namespace imgui {
 		vk::AttachmentDescription colorAttachment{};
 		colorAttachment.format = swapChain.getSwapchainImageFormat();
 		colorAttachment.samples = vk::SampleCountFlagBits::e1;
-		colorAttachment.loadOp = vk::AttachmentLoadOp::eDontCare;
+		colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
 		colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
-		colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+		colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eClear;
 		colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
 		colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
 		colorAttachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;

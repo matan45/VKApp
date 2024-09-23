@@ -9,6 +9,10 @@ namespace render {
 	class RenderPassHandler;
 }
 
+namespace imguiPass {
+	class ImguiRender;
+}
+
 namespace core {
 	class Device;
 	class SwapChain;
@@ -21,7 +25,8 @@ namespace core {
 		SwapChain& swapChain;
 		window::Window& window;
 		CommandPool* commandPool{ nullptr };
-		render::RenderPassHandler* renderPassHandler{ nullptr };
+		//render::RenderPassHandler* renderPassHandler{ nullptr };
+		imguiPass::ImguiRender* imguiRender{ nullptr };
 
 		vk::Semaphore imageAvailableSemaphore;
 		vk::Semaphore renderFinishedSemaphore;

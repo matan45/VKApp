@@ -8,11 +8,12 @@ namespace core{
 	class SwapChain;
 	class CommandPool;
 }
+
 namespace window {
 	class Window;
 }
 
-namespace imgui {
+namespace imguiPass {
 	class ImguiRender
 	{
 	private:
@@ -26,10 +27,10 @@ namespace imgui {
 		std::vector<vk::Framebuffer> imGuiFrameBuffers;
 
 	public:
-		void init();
 		explicit ImguiRender(core::Device& device, core::SwapChain& swapChain, core::CommandPool& commandPool, window::Window& window);
 		~ImguiRender() = default;
 
+		void init();
 		void cleanUp() const;
 		void recreate(uint32_t width, uint32_t height);
 		void render(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const;

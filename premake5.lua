@@ -57,7 +57,10 @@ project "Core"
    
    includedirs {
       "VKEngine/graphics/interface",   -- Graphics headers
-      "VKEngine/utilities"             -- Utilities headers (if used in Core)
+      "VKEngine/utilities",             -- Utilities headers (if used in Core)
+	  "dependencies/imgui",
+	  "dependencies/imgui/backends",
+	  vulkanLibPath.."/Include"	  
    }
 
    links { "Graphics" }  -- Link against Graphics and Utilities

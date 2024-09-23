@@ -1,5 +1,5 @@
 #pragma once
-namespace imgui {
+namespace imguiPass {
 	class OffScreenViewPort
 	{
 	};

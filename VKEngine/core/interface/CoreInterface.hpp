@@ -14,6 +14,11 @@ namespace interface {
 		void init();
 		void run() const;
 		void cleanUp();
+
+	private:
+		void newFrame() const;
+		void endFrame() const;
+		void editorDraw() const;
 	};
 }
 

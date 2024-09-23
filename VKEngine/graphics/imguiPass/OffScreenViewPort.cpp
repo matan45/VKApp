@@ -1,3 +1,3 @@
 #include "OffScreenViewPort.hpp"
-namespace imgui {
+namespace imguiPass {
 }

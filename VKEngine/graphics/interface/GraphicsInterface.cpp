@@ -7,9 +7,8 @@
 namespace interface
 {
 	GraphicsInterface::GraphicsInterface() :window{ new window::Window() },
-		device{ new core::Device(*window) },
-		swapChain{ new core::SwapChain(*device) }
-		, renderManager{ new core::RenderManager(*device,*swapChain,*window) }
+		device{ new core::Device(*window) },swapChain{ new core::SwapChain(*device) }
+		,renderManager{ new core::RenderManager(*device,*swapChain,*window) }
 	{
 
 	}
