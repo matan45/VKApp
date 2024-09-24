@@ -275,3 +275,32 @@ project "imgui"
    filter "configurations:Release"
       defines { "NDEBUG" }
       optimize "On"
+
+-- Project: JoltPhysics (Moved under libs group)	  
+project "jolt"
+   kind "StaticLib"
+   language "C++"
+   cppdialect "C++20"
+   targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
+
+   files {
+      "dependencies/JoltPhysics/Jolt/*.h",
+      "dependencies/JoltPhysics/Jolt/*.cpp"
+   }
+
+   includedirs {
+      "dependencies/JoltPhysics"            
+   }
+   
+
+   filter "configurations:Debug"
+      defines { "DEBUG" }
+      symbols "On"
+
+   filter "configurations:Release"
+      defines { "NDEBUG" }
+      optimize "On"
+
+
+
+-- Project: assimp and softal need to build with cmake...

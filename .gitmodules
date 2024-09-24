@@ -22,6 +22,6 @@
 [submodule "dependencies/entt"]
 	path = dependencies/entt
 	url = https://github.com/skypjack/entt.git
-[submodule "json"]
-	path = json
+[submodule "dependencies/json"]
+	path = dependencies/json
 	url = https://github.com/nlohmann/json.git
