@@ -4,18 +4,19 @@
 #include "../core/CommandPool.hpp"
 #include "../core/Utilities.hpp"
 #include "../render/RenderPassHandler.hpp"
+#include "log/Logger.hpp"
 
 
 namespace imguiPass {
 	OffScreenViewPort::OffScreenViewPort(core::Device& device, core::SwapChain& swapChain) :device{ device }
 		, swapChain{ swapChain }
 	{
-		commadPool = new core::CommandPool(device, swapChain);
+		commandPool = new core::CommandPool(device, swapChain);
 	}
 
 	OffScreenViewPort::~OffScreenViewPort()
 	{
-		delete commadPool;
+		delete commandPool;
 	}
 	void OffScreenViewPort::init()
 	{
@@ -31,7 +32,94 @@ namespace imguiPass {
 
 	vk::DescriptorSet OffScreenViewPort::render()
 	{
-		return vk::DescriptorSet();
+		// Acquire the next image from the swapchain
+		uint32_t imageIndex;
+		vk::Result result = device.getLogicalDevice().acquireNextImageKHR(
+			swapChain.getSwapchain(),
+			UINT64_MAX,
+			imageAvailableSemaphore,    // Wait on this semaphore for image acquisition
+			nullptr,
+			&imageIndex
+		);
+
+		// Get the command buffer for this frame
+		vk::CommandBuffer commandBuffer = commandPool->getCommandBuffer(imageIndex);
+
+		// Reset the fence before submission to allow synchronization
+		result = device.getLogicalDevice().resetFences(1, &renderFence);
+		if (result != vk::Result::eSuccess) {
+			loggerError("Failed to reset fence!");
+		}
+
+		// Reset the command buffer for reuse
+		commandBuffer.reset();
+
+		// Begin command buffer recording
+		vk::CommandBufferBeginInfo beginInfo{};
+		commandBuffer.begin(beginInfo);
+
+		// Transition the off-screen color image to COLOR_ATTACHMENT_OPTIMAL before rendering
+		core::Utilities::transitionImageLayout(
+			commandBuffer, offscreenResources[imageIndex].colorImage,
+			vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal,
+			vk::ImageAspectFlagBits::eColor
+		);
+
+		// Transition the off-screen depth image to DEPTH_STENCIL_ATTACHMENT_OPTIMAL before rendering
+		core::Utilities::transitionImageLayout(
+			commandBuffer, offscreenResources[imageIndex].depthImage,
+			vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal,
+			vk::ImageAspectFlagBits::eDepth
+		);
+
+		// Begin the render pass (record drawing commands here)
+		draw(commandBuffer, imageIndex);
+
+		// End the render pass
+		commandBuffer.endRenderPass();
+
+		// Transition the off-screen color image to SHADER_READ_ONLY_OPTIMAL after rendering
+		core::Utilities::transitionImageLayout(
+			commandBuffer, offscreenResources[imageIndex].colorImage,
+			vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal,
+			vk::ImageAspectFlagBits::eColor
+		);
+
+		// Optional: Transition the depth image to SHADER_READ_ONLY_OPTIMAL if used later in a shader
+		 core::Utilities::transitionImageLayout(
+		     commandBuffer, offscreenResources[imageIndex].depthImage,
+		     vk::ImageLayout::eDepthStencilAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal,
+		     vk::ImageAspectFlagBits::eDepth
+		 );
+
+		// End command buffer recording
+		commandBuffer.end();
+
+		// Prepare to submit the command buffer to the graphics queue
+		vk::SubmitInfo submitInfo{};
+		std::array<vk::Semaphore, 1> waitSemaphores = { imageAvailableSemaphore };
+		std::array<vk::PipelineStageFlags, 1> waitStages = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
+		std::array<vk::Semaphore, 1> signalSemaphores = { renderFinishedSemaphore };
+
+		submitInfo.waitSemaphoreCount = static_cast<uint32_t>(waitSemaphores.size());
+		submitInfo.pWaitSemaphores = waitSemaphores.data();
+		submitInfo.pWaitDstStageMask = waitStages.data();
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffer;
+		submitInfo.signalSemaphoreCount = static_cast<uint32_t>(signalSemaphores.size());
+		submitInfo.pSignalSemaphores = signalSemaphores.data();
+
+		// Submit the command buffer for rendering and signal the fence when done
+		device.getGraphicsQueue().submit(submitInfo, renderFence);
+
+		// Wait for the GPU to finish executing the command buffer before continuing
+		result = device.getLogicalDevice().waitForFences(1, &renderFence, VK_TRUE, UINT64_MAX);
+		if (result != vk::Result::eSuccess) {
+			loggerError("Failed to wait for fence!");
+		}
+
+		// Return the descriptor set for ImGui rendering
+		return offscreenResources[imageIndex].descriptorSet;
 	}
 
 	void OffScreenViewPort::cleanUp() const
@@ -40,7 +128,7 @@ namespace imguiPass {
 
 		renderPassHandler->cleanUp();
 
-		commadPool->cleanUp();
+		commandPool->cleanUp();
 
 		device.getLogicalDevice().destroySampler(sampler);
 

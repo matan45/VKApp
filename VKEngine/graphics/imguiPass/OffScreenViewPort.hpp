@@ -31,7 +31,7 @@ namespace imguiPass {
 	private:
 		core::Device& device;
 		core::SwapChain& swapChain;
-		core::CommandPool* commadPool{ nullptr };
+		core::CommandPool* commandPool{ nullptr };
 
 		render::RenderPassHandler* renderPassHandler{ nullptr };
 

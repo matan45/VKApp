@@ -38,20 +38,7 @@ namespace core {
 		static vk::UniqueCommandBuffer beginSingleTimeCommands(const vk::Device& device, const vk::CommandPool& commandPool);
 		static void endSingleTimeCommands(const vk::Queue& queue, const vk::CommandPool& commandPool, const vk::UniqueCommandBuffer& commandBuffer);
 
-		static void transitionImageLayout(
-			vk::CommandBuffer commandBuffer,
-			vk::Image image,
-			vk::ImageLayout oldLayout,
-			vk::ImageLayout newLayout
-		);
-
-		static void transitionDepthImageLayout(
-			vk::CommandBuffer commandBuffer,
-			vk::Image image,
-			vk::Format format,
-			vk::ImageLayout oldLayout,
-			vk::ImageLayout newLayout
-		);
+		static void transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageAspectFlags aspectMask);
 	};
 }
 

@@ -70,90 +70,6 @@ namespace core {
 		return 0;
 	}
 
-	void Utilities::transitionImageLayout(vk::CommandBuffer commandBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
-	{
-		vk::ImageMemoryBarrier barrier{};
-		barrier.oldLayout = oldLayout;
-		barrier.newLayout = newLayout;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = image;
-
-		// Transition for color images
-		barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
-
-		vk::PipelineStageFlags sourceStage;
-		vk::PipelineStageFlags destinationStage;
-
-		if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eColorAttachmentOptimal) {
-			barrier.srcAccessMask = vk::AccessFlagBits::eNoneKHR;
-			barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-
-			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
-			destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-		}
-		else if (oldLayout == vk::ImageLayout::eColorAttachmentOptimal && newLayout == vk::ImageLayout::ePresentSrcKHR) {
-			barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-			barrier.dstAccessMask = vk::AccessFlagBits::eNoneKHR;
-
-			sourceStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-			destinationStage = vk::PipelineStageFlagBits::eBottomOfPipe;
-		}
-		else {
-			throw std::invalid_argument("Unsupported layout transition!");
-		}
-
-		commandBuffer.pipelineBarrier(
-			sourceStage, destinationStage,
-			vk::DependencyFlags{},
-			nullptr, nullptr, barrier
-		);
-	}
-
-	void Utilities::transitionDepthImageLayout(vk::CommandBuffer commandBuffer, vk::Image image, vk::Format format, vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
-	{
-		vk::ImageMemoryBarrier barrier{};
-		barrier.oldLayout = oldLayout;
-		barrier.newLayout = newLayout;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = image;
-
-		barrier.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eDepth;
-		if (format == vk::Format::eD32SfloatS8Uint || format == vk::Format::eD24UnormS8Uint) {
-			barrier.subresourceRange.aspectMask |= vk::ImageAspectFlagBits::eStencil;
-		}
-
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
-
-		vk::PipelineStageFlags sourceStage;
-		vk::PipelineStageFlags destinationStage;
-
-		if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
-			barrier.srcAccessMask = vk::AccessFlagBits::eNoneKHR;
-			barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-
-			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
-			destinationStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
-		}
-		else {
-			throw std::invalid_argument("Unsupported layout transition for depth image!");
-		}
-
-		commandBuffer.pipelineBarrier(
-			sourceStage, destinationStage,
-			vk::DependencyFlags{},
-			nullptr, nullptr, barrier
-		);
-	}
-
 	vk::UniqueCommandBuffer Utilities::beginSingleTimeCommands(const vk::Device& device, const vk::CommandPool& commandPool) {
 		vk::CommandBufferAllocateInfo allocInfo{};
 		allocInfo.commandPool = commandPool;
@@ -192,6 +108,59 @@ namespace core {
 			loggerError("Failed to submit command buffer: {}", err.what());
 			throw;
 		}
+	}
+
+	void Utilities::transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageAspectFlags aspectMask)
+	{
+		vk::ImageMemoryBarrier barrier{};
+		barrier.oldLayout = oldLayout;
+		barrier.newLayout = newLayout;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.image = image;
+
+		barrier.subresourceRange.aspectMask = aspectMask;
+		barrier.subresourceRange.baseMipLevel = 0;
+		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.baseArrayLayer = 0;
+		barrier.subresourceRange.layerCount = 1;
+
+		vk::PipelineStageFlags sourceStage;
+		vk::PipelineStageFlags destinationStage;
+
+		if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eColorAttachmentOptimal) {
+			barrier.srcAccessMask = vk::AccessFlagBits::eNoneKHR;
+			barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
+			destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+
+		}
+		else if (oldLayout == vk::ImageLayout::eColorAttachmentOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
+			barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+			barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+			sourceStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+
+		}
+		else if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
+			barrier.srcAccessMask = vk::AccessFlagBits::eNoneKHR;
+			barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
+			destinationStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
+
+		}
+		else if (oldLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
+			barrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+			barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+			sourceStage = vk::PipelineStageFlagBits::eLateFragmentTests;
+			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+		}
+
+		commandBuffer.pipelineBarrier(
+			sourceStage, destinationStage,
+			vk::DependencyFlags{},
+			nullptr, nullptr, barrier
+		);
 	}
 
 }

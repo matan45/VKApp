@@ -240,7 +240,7 @@ namespace render {
 		colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
 		colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
 		colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
-		colorAttachment.finalLayout = vk::ImageLayout::ePresentSrcKHR;
+		colorAttachment.finalLayout = vk::ImageLayout::eColorAttachmentOptimal;
 
 		vk::AttachmentReference colorAttachmentRef{};
 		colorAttachmentRef.attachment = 0;
