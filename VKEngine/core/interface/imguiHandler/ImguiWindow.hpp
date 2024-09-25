@@ -1,0 +1,14 @@
+#pragma once
+// getting the pointer from editor and do the draw in new frame and end frame then render the pipline
+namespace interface::imguiHandler {
+	
+		class ImguiWindow
+		{
+		public:
+			virtual void draw() = 0;
+			virtual ~ImguiWindow() = default;
+		};
+
+	
+
+};

@@ -1,12 +1,15 @@
 #pragma once
 
+namespace core {
+	class MainLoop;
+}
+
 namespace interface {
-	class GraphicsInterface;
 
 	class CoreInterface
 	{
 	private:
-		GraphicsInterface* graphicsInterface;
+		core::MainLoop* mainLoop;
 	public:
 		explicit CoreInterface();
 		~CoreInterface();
@@ -15,10 +18,6 @@ namespace interface {
 		void run() const;
 		void cleanUp();
 
-	private:
-		void newFrame() const;
-		void endFrame() const;
-		void editorDraw() const;
 	};
 }
 

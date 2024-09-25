@@ -88,6 +88,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="log\EditorLogger.hpp" />
     <ClInclude Include="log\Logger.hpp" />
     <ClInclude Include="math\MathHelper.hpp" />
     <ClInclude Include="resource\ShaderResource.hpp" />

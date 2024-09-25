@@ -56,7 +56,7 @@ project "Core"
    files { "VKEngine/core/**.hpp", "VKEngine/core/**.cpp" }
    
    includedirs {
-      "VKEngine/graphics/interface",   -- Graphics headers
+      "VKEngine/graphics/controllers",   -- Graphics headers
       "VKEngine/utilities",             -- Utilities headers (if used in Core)
 	  "dependencies/imgui",
 	  "dependencies/imgui/backends",

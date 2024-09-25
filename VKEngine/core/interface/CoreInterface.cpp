@@ -1,66 +1,33 @@
 #include "CoreInterface.hpp"
-#include "GraphicsInterface.hpp"
-
-#include <imgui.h>
-#include <imgui_impl_vulkan.h>
-#include <imgui_impl_glfw.h>
-
+#include "../core/MainLoop.hpp"
 
 namespace interface {
 
-	CoreInterface::CoreInterface() : graphicsInterface{ new GraphicsInterface() }
+	CoreInterface::CoreInterface() : mainLoop{ new core::MainLoop() }
 	{
 
 	}
 
 	void CoreInterface::init()
 	{
-		graphicsInterface->init();
+		mainLoop->init();
 	}
 
 	void CoreInterface::run() const
 	{
-		while (!graphicsInterface->windowShouldClose()) {
-			graphicsInterface->windowPollEvents();
-
-			if (graphicsInterface->isWindowResized()) {
-				graphicsInterface->reSize();
-			}
-
-			newFrame();
-			editorDraw();
-			endFrame();
-
-			graphicsInterface->render();
-		}
+		mainLoop->run();
 	}
 
 	void CoreInterface::cleanUp()
 	{
-		graphicsInterface->cleanup();
+		mainLoop->cleanUp();
 	}
 
 	CoreInterface::~CoreInterface()
 	{
-		delete graphicsInterface;
+		delete mainLoop;
 	}
 
-	void CoreInterface::newFrame() const
-	{
-		ImGui_ImplVulkan_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-	}
 
-	void CoreInterface::endFrame() const
-	{
-		ImGui::EndFrame();
-	}
-
-	void CoreInterface::editorDraw() const
-	{
-
-		ImGui::ShowDemoWindow();
-	}
 
 };
