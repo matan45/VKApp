@@ -154,5 +154,45 @@ namespace core {
 		);
 	}
 
+	vk::UniqueCommandBuffer Utilities::beginSingleTimeCommands(const vk::Device& device, const vk::CommandPool& commandPool) {
+		vk::CommandBufferAllocateInfo allocInfo{};
+		allocInfo.commandPool = commandPool;
+		allocInfo.level = vk::CommandBufferLevel::ePrimary;
+		allocInfo.commandBufferCount = 1;
+
+		vk::UniqueCommandBuffer commandBuffer;
+		try {
+			commandBuffer = std::move(device.allocateCommandBuffersUnique(allocInfo).front());
+		}
+		catch (const vk::SystemError& err) {
+			loggerError("Failed to allocate command buffer: {}", err.what());
+			throw;
+		}
+
+		vk::CommandBufferBeginInfo beginInfo{};
+		beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
+
+		commandBuffer->begin(beginInfo);
+
+		return commandBuffer;
+	}
+
+	void Utilities::endSingleTimeCommands(const vk::Queue& queue, const vk::CommandPool& commandPool, const vk::UniqueCommandBuffer& commandBuffer)
+	{
+		commandBuffer->end();
+
+		vk::SubmitInfo submitInfo{};
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &(*commandBuffer);
+
+		try {
+			queue.submit(submitInfo, nullptr);
+		}
+		catch (const vk::SystemError& err) {
+			loggerError("Failed to submit command buffer: {}", err.what());
+			throw;
+		}
+	}
+
 }
 

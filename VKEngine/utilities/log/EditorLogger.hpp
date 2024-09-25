@@ -9,11 +9,12 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
+#include <vector>
 
 
-#define eloggerInfo(...) util::infoLog(__VA_ARGS__)
-#define eloggerWarning(...) util::warningLog(__VA_ARGS__)
-#define eloggerError(...) util::infoError(__VA_ARGS__)
+#define vfLogInfo(...) util::infoLog(__VA_ARGS__)
+#define vfLogWarning(...) util::warningLog(__VA_ARGS__)
+#define vfLogError(...) util::infoError(__VA_ARGS__)
 
 
 namespace util {
@@ -34,7 +35,7 @@ namespace util {
 	}
 
 	// Buffer to store log messages for ImGui console
-	std::vector<std::string> imguiConsoleBuffer;
+	inline std::vector<std::string> imguiConsoleBuffer;
 
 	// Append log message to ImGui buffer
 	inline void appendToImGuiConsole(const std::string& message) {

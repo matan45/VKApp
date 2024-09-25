@@ -6,6 +6,7 @@
 #include "../core/SwapChain.hpp"
 #include "../core/CommandPool.hpp"
 #include "../window/Window.hpp"
+#include "../core/Utilities.hpp"
 #include "log/Logger.hpp"
 
 namespace imguiPass {
@@ -46,6 +47,15 @@ namespace imguiPass {
 		ImGuiIO& io = ImGui::GetIO();
 		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+
+		// Load a custom font
+		const ImFont* customFont = io.Fonts->AddFontFromFileTTF("../../resources/editor/Roboto-Regular.ttf", 18.0f);
+		if (!customFont) {
+			loggerError("Failed to load font!");
+		}
+
+		// Create font texture
+		ImGui_ImplVulkan_CreateFontsTexture();
 
 		theme();
 	}

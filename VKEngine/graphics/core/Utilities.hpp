@@ -35,6 +35,9 @@ namespace core {
 		static SwapchainSupportDetails querySwapchainSupport(const vk::PhysicalDevice& device, const vk::SurfaceKHR& surface);
 		static uint32_t findMemoryType(const vk::PhysicalDevice& device, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
+		static vk::UniqueCommandBuffer beginSingleTimeCommands(const vk::Device& device, const vk::CommandPool& commandPool);
+		static void endSingleTimeCommands(const vk::Queue& queue, const vk::CommandPool& commandPool, const vk::UniqueCommandBuffer& commandBuffer);
+
 		static void transitionImageLayout(
 			vk::CommandBuffer commandBuffer,
 			vk::Image image,

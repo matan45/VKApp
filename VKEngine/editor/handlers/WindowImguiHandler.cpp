@@ -6,6 +6,7 @@
 #include "../windows/SceneGraph.hpp"
 #include "../windows/ViewPort.hpp"
 
+
 namespace handlers {
 	void WindowImguiHandler::init() const
 	{
@@ -15,7 +16,10 @@ namespace handlers {
 		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::Details>());
 		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::SceneGraph>());
 		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ViewPort>());
+
+
 	}
+
 	void WindowImguiHandler::cleanUp() const
 	{
 		interface::imguiHandler::ImguiWindowHandler::cleanUp();
