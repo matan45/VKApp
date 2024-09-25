@@ -91,6 +91,7 @@ project "Graphics"
 	  "dependencies/imgui",
 	  "dependencies/imgui/backends",
       "dependencies/glm",
+      "dependencies/stb",
       "VKEngine/utilities",           -- Utilities headers
       vulkanLibPath.."/Include"
    }

@@ -2,6 +2,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <vulkan/vulkan.hpp>
 #include "GLFW/glfw3.h"
+#include <string_view>
 
 namespace window {
 	class Window
@@ -32,6 +33,9 @@ namespace window {
 		uint32_t getHeight() const { return height; }
 
 		GLFWwindow* getWindowPtr() const { return window;}
+
+	private:
+		void setWindowIcon(std::string_view iconPath);
 	};
 }
 
