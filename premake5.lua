@@ -1,7 +1,7 @@
-workspace "VulkanApp"
+workspace "VertexForge"
    configurations { "Debug", "Release" }
    platforms { "x64" }
-   location "VKEngine"  -- Specify where to place generated files
+   location "VFEngine"  -- Specify where to place generated files
    startproject "Editor"  -- Set the default startup project
 
 -- Check if the Vulkan SDK environment variable is set
@@ -18,17 +18,17 @@ project "Editor"
    kind "ConsoleApp"
    language "C++"
    cppdialect "C++20"
-   location "VKEngine/editor"
+   location "VFEngine/editor"
    targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
-   files { "VKEngine/editor/**.hpp", "VKEngine/editor/**.cpp" }
+   files { "VFEngine/editor/**.hpp", "VFEngine/editor/**.cpp" }
    
    includedirs {
-      "VKEngine/core/interface",          -- Core headers
+      "VFEngine/core/interface",          -- Core headers
 	  "dependencies/imgui",  
 	  "dependencies/ImGuizmo",   
 	  "dependencies/imgui-node-editor",
-	  "VKEngine/utilities",
+	  "VFEngine/utilities",
 	  "dependencies/spdlog/include"
    }
 
@@ -51,14 +51,14 @@ project "Core"
    kind "StaticLib"
    language "C++"
    cppdialect "C++20"
-   location "VKEngine/core"
+   location "VFEngine/core"
    targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
-   files { "VKEngine/core/**.hpp", "VKEngine/core/**.cpp" }
+   files { "VFEngine/core/**.hpp", "VFEngine/core/**.cpp" }
    
    includedirs {
-      "VKEngine/graphics/controllers",   -- Graphics headers
-      "VKEngine/utilities",             -- Utilities headers (if used in Core)
+      "VFEngine/graphics/controllers",   -- Graphics headers
+      "VFEngine/utilities",             -- Utilities headers (if used in Core)
 	  "dependencies/imgui",
 	  "dependencies/imgui/backends",
 	  vulkanLibPath.."/Include"	  
@@ -80,10 +80,10 @@ project "Graphics"
    kind "StaticLib"
    language "C++"
    cppdialect "C++20"
-   location "VKEngine/graphics"
+   location "VFEngine/graphics"
    targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
-   files { "VKEngine/graphics/**.hpp", "VKEngine/graphics/**.cpp" }
+   files { "VFEngine/graphics/**.hpp", "VFEngine/graphics/**.cpp" }
 
    includedirs {
       "dependencies/glfw/include",
@@ -92,7 +92,7 @@ project "Graphics"
 	  "dependencies/imgui/backends",
       "dependencies/glm",
       "dependencies/stb",
-      "VKEngine/utilities",           -- Utilities headers
+      "VFEngine/utilities",           -- Utilities headers
       vulkanLibPath.."/Include"
    }
 
@@ -123,14 +123,14 @@ project "Runtime"
    kind "ConsoleApp"
    language "C++"
    cppdialect "C++20"
-   location "VKEngine/runtime"
+   location "VFEngine/runtime"
    targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
-   files { "VKEngine/runtime/**.hpp", "VKEngine/runtime/**.cpp" }
+   files { "VFEngine/runtime/**.hpp", "VFEngine/runtime/**.cpp" }
 
    includedirs {
-      "VKEngine/core/interface",
-      "VKEngine/graphics/interface"
+      "VFEngine/core/interface",
+      "VFEngine/graphics/interface"
    }
 
    links { "Core"}  -- Link against Core and Graphics
@@ -148,10 +148,10 @@ project "Utilities"
    kind "StaticLib"
    language "C++"
    cppdialect "C++20"
-   location "VKEngine/utilities"
+   location "VFEngine/utilities"
    targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
-   files { "VKEngine/utilities/**.hpp", "VKEngine/utilities/**.cpp" }
+   files { "VFEngine/utilities/**.hpp", "VFEngine/utilities/**.cpp" }
 
    includedirs {
       "dependencies/spdlog/include",
