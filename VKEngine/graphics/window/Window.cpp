@@ -11,8 +11,9 @@ namespace window {
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+		glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
-		window = glfwCreateWindow(width, height, "engine test", nullptr, nullptr);
+		window = glfwCreateWindow(width, height, "VertexForge", nullptr, nullptr);
 
 		if (window == nullptr) {
 			loggerError("Failed to create GLFW window");

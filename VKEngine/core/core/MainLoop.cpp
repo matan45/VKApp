@@ -1,6 +1,7 @@
 #include "MainLoop.hpp"
 #include "Graphics.hpp"
 #include "WindowController.hpp"
+#include "../interface/imguiHandler/ImguiWindowHandler.hpp"
 
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
@@ -57,7 +58,7 @@ namespace core {
 
 	void MainLoop::editorDraw() const
 	{
-		ImGui::ShowDemoWindow();
+		interface::imguiHandler::ImguiWindowHandler::draw();
 	}
 
 }

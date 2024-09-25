@@ -1,10 +1,10 @@
 #pragma once
-#include "CoreInterface.hpp"
+#include "../handlers/EditorHandler.hpp"
 
 int main(int argc, char* argv[]) {
-	interface::CoreInterface coreInterface;
-	coreInterface.init();
-	coreInterface.run();
-	coreInterface.cleanUp();
+	handlers::EditorHandler editorHandler;
+	editorHandler.init();
+	editorHandler.run();
+	editorHandler.cleanUp();
 	return 0;
 }

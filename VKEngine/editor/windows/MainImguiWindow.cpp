@@ -1,0 +1,55 @@
+#include "MainImguiWindow.hpp"
+
+namespace windows {
+	MainImguiWindow::MainImguiWindow() :isOpen{true}
+	{
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBackground;
+		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+		windowFlags = window_flags;
+	}
+
+	void MainImguiWindow::draw()
+	{
+		const ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(viewport->WorkPos);
+		ImGui::SetNextWindowSize(viewport->WorkSize);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+		if (ImGui::Begin("Vulkan Engine", &isOpen, windowFlags)) {
+			ImGui::PopStyleVar(1);
+
+			ImGui::DockSpace(ImGui::GetID("MyDockSpace"), ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_None);
+
+			menuBar();
+		}
+		ImGui::End();
+	}
+
+	void MainImguiWindow::menuBar()
+	{
+		if (ImGui::BeginMainMenuBar()) {
+			if (ImGui::BeginMenu("File")) {
+				if (ImGui::MenuItem("New Scene")) {}
+				else if (ImGui::MenuItem("Open Scene")) {}
+				else if (ImGui::MenuItem("Save Scene")) {}
+				else if (ImGui::MenuItem("Exit")) {
+					isOpen = false;
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Settings")) {
+				if (ImGui::MenuItem("Editor Camera")) {}
+				else if (ImGui::MenuItem("Layout Style")) {}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Import")) {
+				if (ImGui::MenuItem("Meshes")) {}
+				else if (ImGui::MenuItem("Textures")) {}
+				else if (ImGui::MenuItem("Audio")) {}
+				else if (ImGui::MenuItem("Animation")) {}
+				ImGui::EndMenu();
+			}
+			ImGui::EndMainMenuBar();
+		}
+	}
+}

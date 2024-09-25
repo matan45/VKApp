@@ -28,7 +28,8 @@ project "Editor"
 	  "dependencies/imgui",  
 	  "dependencies/ImGuizmo",   
 	  "dependencies/imgui-node-editor",
-	  "VKEngine/utilities" 
+	  "VKEngine/utilities",
+	  "dependencies/spdlog/include"
    }
 
    links {

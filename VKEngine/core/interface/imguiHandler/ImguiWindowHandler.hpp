@@ -8,7 +8,7 @@ namespace interface::imguiHandler {
 	class ImguiWindowHandler
 	{
 	private:
-		static std::vector<std::shared_ptr< ImguiWindow>> imguiWindows;
+		inline static std::vector<std::shared_ptr<ImguiWindow>> imguiWindows;
 	public:
 		explicit ImguiWindowHandler() = default;
 		~ImguiWindowHandler() = default;

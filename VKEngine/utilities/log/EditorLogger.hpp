@@ -3,12 +3,12 @@
 #undef APIENTRY
 #endif
 
+#include "spdlog/spdlog.h"
+#include "spdlog/fmt/bundled/core.h"  // fmt library used by spdlog
+
 #include <chrono>
 #include <iomanip>
 #include <sstream>
-
-#include "spdlog/spdlog.h"
-#include "spdlog/fmt/bundled/core.h"  // fmt library used by spdlog
 
 
 #define eloggerInfo(...) util::infoLog(__VA_ARGS__)
