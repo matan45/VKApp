@@ -29,7 +29,9 @@ project "Editor"
 	  "dependencies/ImGuizmo",   
 	  "dependencies/imgui-node-editor",
 	  "VFEngine/utilities",
-	  "dependencies/spdlog/include"
+	  "dependencies/spdlog/include",
+	  "dependencies/glm",
+	  "dependencies/entt/single_include"
    }
 
    links {
@@ -155,7 +157,8 @@ project "Utilities"
 
    includedirs {
       "dependencies/spdlog/include",
-      "dependencies/glm"
+      "dependencies/glm",
+	  "dependencies/entt/single_include"
    }
 
    links { "spdLog" }

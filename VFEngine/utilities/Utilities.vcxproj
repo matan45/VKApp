@@ -56,7 +56,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\dependencies\spdlog\include;..\..\dependencies\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\dependencies\spdlog\include;..\..\dependencies\glm;..\..\dependencies\entt\single_include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -72,7 +72,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\dependencies\spdlog\include;..\..\dependencies\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\dependencies\spdlog\include;..\..\dependencies\glm;..\..\dependencies\entt\single_include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -88,14 +88,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="components\Components.hpp" />
+    <ClInclude Include="scene\Entity.hpp" />
     <ClInclude Include="log\EditorLogger.hpp" />
     <ClInclude Include="log\Logger.hpp" />
     <ClInclude Include="math\MathHelper.hpp" />
     <ClInclude Include="resource\ShaderResource.hpp" />
+    <ClInclude Include="scene\EntityRegistry.hpp" />
+    <ClInclude Include="scene\SceneGraph.hpp" />
+    <ClInclude Include="serialization\SceneSerialization.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="scene\Entity.cpp" />
     <ClCompile Include="math\MathHelper.cpp" />
     <ClCompile Include="resource\ShaderResource.cpp" />
+    <ClCompile Include="scene\SceneGraph.cpp" />
+    <ClCompile Include="serialization\SceneSerialization.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\spdLog.vcxproj">

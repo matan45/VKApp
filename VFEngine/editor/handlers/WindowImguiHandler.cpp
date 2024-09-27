@@ -2,7 +2,6 @@
 #include "../windows/ConsoleLog.hpp"
 #include "../windows/MainImguiWindow.hpp"
 #include "../windows/ContentBrowser.hpp"
-#include "../windows/Details.hpp"
 #include "../windows/SceneGraph.hpp"
 #include "../windows/ViewPort.hpp"
 
@@ -10,10 +9,12 @@
 namespace handlers {
 	void WindowImguiHandler::init() const
 	{
+		//TODO level class
+		//scene::SceneGraph mySceneGraph;  // Your SceneGraph object that manages entities
+
 		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::MainImguiWindow>());
 		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ConsoleLog>());
 		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ContentBrowser>());
-		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::Details>());
 		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::SceneGraph>());
 		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ViewPort>());
 
