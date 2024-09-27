@@ -1,14 +1,14 @@
 #include "SceneSerialization.hpp"
-#include "../scene/SceneGraph.hpp"
+#include "../scene/SceneGraphSystem.hpp"
 
 namespace serialization {
 
-	scene::SceneGraph SceneSerialization::loadScene(std::string_view filename)
+	scene::SceneGraphSystem SceneSerialization::loadScene(std::string_view filename)
 	{
-		return scene::SceneGraph();
+		return scene::SceneGraphSystem();
 	}
 
-	void SceneSerialization::saveScene(const scene::SceneGraph& sceneGraph, std::string_view filename)
+	void SceneSerialization::saveScene(const scene::SceneGraphSystem& sceneGraph, std::string_view filename)
 	{
 
 	}

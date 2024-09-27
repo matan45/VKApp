@@ -3,9 +3,20 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <string>
 
+#include <entt/entt.hpp>
 namespace components {
-	struct WorldTransform {
+
+	struct WorldTransform
+	{
 		glm::mat4 worldMatrix;
+	};
+
+	struct ParentComponent {
+		entt::entity parent = entt::null; // Parent entity handle
+	};
+
+	struct ChildrenComponent {
+		std::vector<entt::entity> children; // List of child entity handles
 	};
 
 	struct Name {

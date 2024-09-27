@@ -3,15 +3,14 @@
 #include "components/Components.hpp"
 
 namespace windows {
-	SceneGraph::SceneGraph()
-	{
-	}
 
 	void SceneGraph::draw()
 	{
 		if (ImGui::Begin("SceneGraph")) {
-			// Start with the root entity
-			//drawEntityNode(sceneGraph.GetRoot());
+			// Start with the root entity (this assumes you have a SceneGraph object with a root)
+			if (scene::EntityRegistry::getRegistry().valid(sceneGraphSystem->GetRoot().getHandle())) {
+				drawEntityNode(sceneGraphSystem->GetRoot().getHandle());
+			}
 		}
 		ImGui::End();
 
@@ -23,57 +22,94 @@ namespace windows {
 		}
 		ImGui::End();
 	}
-	void SceneGraph::drawEntityNode(entt::entity entity)
-	{
-		/*auto& registry = sceneGraph.GetRegistry();
-		auto test = registry.create();
-		registry.emplace<components::Name>(test, "test");
-		auto nameComponent = registry.get<components::Name>(test);
+	
+	void SceneGraph::drawEntityNode(entt::entity entity) {
+		auto const& registry = scene::EntityRegistry::getRegistry();
+		auto entityObject = scene::Entity(entity);  // Wrap entity handle in an Entity object
 
-		// Display the entity in the tree view
-		ImGuiTreeNodeFlags flags = (selected == entity ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow;
+		std::string entityName = entityObject.getName(); // Get entity name
 
-		if (ImGui::TreeNodeEx((void*)(intptr_t)entity, flags, "%s", nameComponent.name.c_str())) {
-			// If the entity is clicked, mark it as selected
-			if (ImGui::IsItemClicked()) {
-				selected = entity;
+		ImGuiTreeNodeFlags flags = (selected == entity) ? ImGuiTreeNodeFlags_Selected : 0;
+		flags |= ImGuiTreeNodeFlags_OpenOnArrow;
+
+		bool nodeOpen = ImGui::TreeNodeEx((void*)(uint64_t)entity, flags, "%s", entityName.c_str());
+
+		// Select the entity when clicked
+		if (ImGui::IsItemClicked()) {
+			selected = entity;
+		}
+
+		// Drag source: Start dragging the entity
+		if (ImGui::BeginDragDropSource()) {
+			ImGui::SetDragDropPayload("DND_ENTITY", &entity, sizeof(entt::entity));  // Tag it with "DND_ENTITY"
+			ImGui::Text("Move %s", entityName.c_str());  // Show name of entity being dragged
+			ImGui::EndDragDropSource();
+		}
+
+		// Drag target: Drop onto this entity (to make it a parent)
+		drawDragDropTarget(entity);
+
+		// If the entity has children, recursively draw them
+		if (nodeOpen) {
+			if (entityObject.hasComponent<components::ChildrenComponent>()) {
+				for (auto child : entityObject.getChildren()) {
+					drawEntityNode(child.getHandle());  // Recursively draw child nodes
+				}
 			}
-
-			// Recursively display child entities
-			auto const& hierarchy = registry.get<scene::Hierarchy>(entity);
-			entt::entity child = hierarchy.firstChild;
-			while (child != entt::null) {
-				drawEntityNode(child);  // Recursive call for each child
-				child = registry.get<scene::Hierarchy>(child).nextSibling;
-			}
-
 			ImGui::TreePop();
-		}*/
+		}
 	}
-	void SceneGraph::drawDetails(entt::entity entity)
-	{
-		/*auto& registry = sceneGraph.GetRegistry();
 
-		// Display the Name component if it exists
-		if (registry.all_of<components::Name>(entity)) {
-			auto& nameComponent = registry.get<components::Name>(entity);
+	void SceneGraph::drawDragDropTarget(entt::entity entity) {
+		auto entityObject = scene::Entity(entity);
+
+		if (ImGui::BeginDragDropTarget()) {
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_ENTITY")) {
+				// Retrieve the dropped entity handle
+				entt::entity droppedEntity = *(entt::entity*)payload->Data;
+
+				// Set the parent-child relationship
+				if (droppedEntity != entity) {
+					auto droppedEntityObj = scene::Entity(droppedEntity);
+					droppedEntityObj.addOrReplaceComponent<components::ParentComponent>().parent = entity;
+					entityObject.addChildren(droppedEntityObj);  // Make this entity the new parent
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
+	}
+
+	void SceneGraph::drawDetails(entt::entity entity) {
+		auto& registry = scene::EntityRegistry::getRegistry();
+		auto entityObject = scene::Entity(entity);
+
+		// Display the name component first if it exists
+		if (entityObject.hasComponent<components::Name>()) {
+			auto& nameComponent = entityObject.getComponent<components::Name>();
 			char buffer[256];
 			strcpy(buffer, nameComponent.name.c_str());
-
-			// Allow renaming the entity
 			if (ImGui::InputText("Name", buffer, sizeof(buffer))) {
-				nameComponent.name = buffer;
+				entityObject.setName(buffer);  // Update the name
 			}
 		}
 
-		// Display and allow editing the Transform component if it exists
-		if (registry.all_of<components::Transform>(entity)) {
-			auto& transformComponent = registry.get<components::Transform>(entity);
+		ImGui::Separator(); // Separate components
 
-			ImGui::Text("Transform");
-			ImGui::DragFloat3("Position", &transformComponent.position.x, 0.1f);
-			ImGui::DragFloat3("Rotation", &transformComponent.rotation.x, 0.1f);
-			ImGui::DragFloat3("Scale", &transformComponent.scale.x, 0.1f);
-		}*/
+		// Dynamically iterate over all attached components
+		drawDynamicComponent(entity);
 	}
+
+	void SceneGraph::drawDynamicComponent(entt::entity entity) {
+		auto& registry = scene::EntityRegistry::getRegistry();
+
+		// Handle known component types
+		if (registry.all_of<components::Transform>(entity)) {
+			auto& transform = registry.get<components::Transform>(entity);
+			ImGui::DragFloat3("Position", &transform.position.x, 0.1f);
+			ImGui::DragFloat3("Rotation", &transform.rotation.x, 0.1f);
+			ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f);
+			transform.isDirty = true;
+		}
+	}
+
 }

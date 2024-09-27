@@ -6,8 +6,6 @@
 #include <entt/entt.hpp>
 #include <string>
 #include <vector>
-#include <ranges>  // C++20 ranges
-#include <algorithm> // std::ranges::remove
 
 
 namespace scene {
@@ -15,12 +13,15 @@ namespace scene {
 	{
 	private:
 		entt::entity entityHandle{ entt::null };  // Entity handle
-		std::string name;
-		std::vector<Entity> childrens;
 
 	public:
+		explicit Entity(entt::entity handle)
+			: entityHandle(handle) {}
+
 		explicit Entity(const std::string& name)
-			: entityHandle(EntityRegistry::getRegistry().create()), name(name) {
+		{
+			entityHandle = EntityRegistry::getRegistry().create();
+			addComponent<components::Name>(name); // Set the name on creation
 			addComponent<components::Transform>();
 		}
 
@@ -96,27 +97,68 @@ namespace scene {
 		}
 
 		// Get the entity name
-		const std::string& getName() const {
-			return name;
+		std::string getName() {
+			if (hasComponent<components::Name>()) {
+				return getComponent<components::Name>().name; // Access the 'name' field
+			}
+			else {
+				return "Unnamed Entity"; // Return a default name if the entity doesn't have a Name component
+			}
 		}
 
 		// Set the entity name
 		void setName(std::string_view newName) {
-			name = newName;
+			addOrReplaceComponent<components::Name>(std::string(newName));
 		}
 
-		void addChildren(const Entity& entity) {
-			childrens.push_back(entity);
+		// Add a child entity
+		void addChildren(Entity& child) {
+			// Add to the current entity's ChildrenComponent
+			auto& childrenComponent = addOrReplaceComponent<components::ChildrenComponent>();
+			childrenComponent.children.push_back(child.getHandle());
+
+			// Set the child's ParentComponent
+			child.addOrReplaceComponent<components::ParentComponent>().parent = this->entityHandle;
 		}
 
-		void removeChildren(const Entity& entity) {
-			auto new_end = std::ranges::remove(childrens, entity);
-			childrens.erase(new_end.begin(), childrens.end());
+		// Remove a child entity
+		void removeChildren(Entity& child) {
+			if (!hasComponent<components::ChildrenComponent>()) {
+				vfLogError("This entity does not have any children to remove.");
+				return;
+			}
+
+			auto& childrenComponent = getComponent<components::ChildrenComponent>();
+			auto new_end = std::remove(childrenComponent.children.begin(), childrenComponent.children.end(), child.getHandle());
+			childrenComponent.children.erase(new_end, childrenComponent.children.end());
+
+			// Remove the child's ParentComponent
+			if (child.hasComponent<components::ParentComponent>()) {
+				child.removeComponent<components::ParentComponent>();
+			}
 		}
 
-		// Get the list of children
-		const std::vector<Entity>& getChildren() const {
-			return childrens;
+		// Get parent entity
+		Entity getParent() {
+			if (hasComponent<components::ParentComponent>()) {
+				entt::entity parentHandle = getComponent<components::ParentComponent>().parent;
+				return Entity(parentHandle);
+			}
+			return Entity(); // Return an invalid entity if no parent exists
+		}
+
+		// Get children entities
+		std::vector<Entity> getChildren() {
+			std::vector<Entity> childEntities;
+
+			if (hasComponent<components::ChildrenComponent>()) {
+				auto& childrenHandles = getComponent<components::ChildrenComponent>().children;
+				for (auto& childHandle : childrenHandles) {
+					childEntities.emplace_back(childHandle);
+				}
+			}
+
+			return childEntities;
 		}
 	};
 }
