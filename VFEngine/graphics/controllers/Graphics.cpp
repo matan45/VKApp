@@ -2,6 +2,7 @@
 #include "../window/Window.hpp"
 #include "../core/Device.hpp"
 #include "../core/SwapChain.hpp"
+#include "log/Logger.hpp"
 
 
 namespace controllers
@@ -11,7 +12,7 @@ namespace controllers
 		window->initWindow();
 		device->init();
 		swapChain->init(window->getWidth(), window->getHeight());
-		
+
 	}
 
 	void Graphics::cleanup()
@@ -41,16 +42,19 @@ namespace controllers
 
 	window::Window& Graphics::getWindow()
 	{
+		loggerAssert(window == nullptr, "window is not initiated");
 		return *window;
 	}
 
 	core::Device& Graphics::getDevice()
 	{
+		loggerAssert(device == nullptr, "device is not initiated");
 		return *device;
 	}
 
 	core::SwapChain& Graphics::getSwapChain()
 	{
+		loggerAssert(swapChain == nullptr, "swapChain is not initiated");
 		return *swapChain;
 	}
 
