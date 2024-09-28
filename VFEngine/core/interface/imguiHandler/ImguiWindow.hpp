@@ -5,7 +5,7 @@ namespace interface::imguiHandler {
 		class ImguiWindow
 		{
 		public:
-			virtual void draw() = 0;
+			virtual void draw() = 0; // add dt
 			virtual ~ImguiWindow() = default;
 		};
 

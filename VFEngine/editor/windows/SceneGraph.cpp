@@ -7,6 +7,7 @@ namespace windows {
 	void SceneGraph::draw()
 	{
 		if (ImGui::Begin("SceneGraph")) {
+			//TODO when right click add/remove selected entity
 			// Start with the root entity (this assumes you have a SceneGraph object with a root)
 			if (scene::EntityRegistry::getRegistry().valid(sceneGraphSystem->GetRoot().getHandle())) {
 				drawEntityNode(sceneGraphSystem->GetRoot().getHandle());
@@ -24,7 +25,6 @@ namespace windows {
 	}
 	
 	void SceneGraph::drawEntityNode(entt::entity entity) {
-		auto const& registry = scene::EntityRegistry::getRegistry();
 		auto entityObject = scene::Entity(entity);  // Wrap entity handle in an Entity object
 
 		std::string entityName = entityObject.getName(); // Get entity name
@@ -60,7 +60,7 @@ namespace windows {
 		}
 	}
 
-	void SceneGraph::drawDragDropTarget(entt::entity entity) {
+	void SceneGraph::drawDragDropTarget(entt::entity entity) const {
 		auto entityObject = scene::Entity(entity);
 
 		if (ImGui::BeginDragDropTarget()) {
@@ -80,12 +80,11 @@ namespace windows {
 	}
 
 	void SceneGraph::drawDetails(entt::entity entity) {
-		auto& registry = scene::EntityRegistry::getRegistry();
 		auto entityObject = scene::Entity(entity);
 
 		// Display the name component first if it exists
 		if (entityObject.hasComponent<components::Name>()) {
-			auto& nameComponent = entityObject.getComponent<components::Name>();
+			auto const& nameComponent = entityObject.getComponent<components::Name>();
 			char buffer[256];
 			strcpy(buffer, nameComponent.name.c_str());
 			if (ImGui::InputText("Name", buffer, sizeof(buffer))) {
@@ -99,9 +98,9 @@ namespace windows {
 		drawDynamicComponent(entity);
 	}
 
-	void SceneGraph::drawDynamicComponent(entt::entity entity) {
+	void SceneGraph::drawDynamicComponent(entt::entity entity) const {
 		auto& registry = scene::EntityRegistry::getRegistry();
-
+		//TODO when right click add/remove components
 		// Handle known component types
 		if (registry.all_of<components::Transform>(entity)) {
 			auto& transform = registry.get<components::Transform>(entity);

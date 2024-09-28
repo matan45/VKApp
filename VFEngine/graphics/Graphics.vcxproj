@@ -105,7 +105,9 @@
     <ClInclude Include="core\SwapChain.hpp" />
     <ClInclude Include="core\Utilities.hpp" />
     <ClInclude Include="imguiPass\ImguiRender.hpp" />
+    <ClInclude Include="imguiPass\OffScreen.hpp" />
     <ClInclude Include="imguiPass\OffScreenViewPort.hpp" />
+    <ClInclude Include="controllers\OffScreenController.hpp" />
     <ClInclude Include="render\RenderPassHandler.hpp" />
     <ClInclude Include="render\TriangleRenderer.hpp" />
     <ClInclude Include="window\Window.hpp" />
@@ -121,6 +123,7 @@
     <ClCompile Include="core\Utilities.cpp" />
     <ClCompile Include="imguiPass\ImguiRender.cpp" />
     <ClCompile Include="imguiPass\OffScreenViewPort.cpp" />
+    <ClCompile Include="controllers\OffScreenController.cpp" />
     <ClCompile Include="render\RenderPassHandler.cpp" />
     <ClCompile Include="render\TriangleRenderer.cpp" />
     <ClCompile Include="window\Window.cpp" />

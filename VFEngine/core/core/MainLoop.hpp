@@ -11,7 +11,7 @@ namespace core {
 	private:
 		controllers::WindowController* windowController;
 	public:
-		explicit MainLoop() = default;
+		explicit MainLoop();
 		~MainLoop();
 
 		void init();

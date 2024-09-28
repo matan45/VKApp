@@ -90,6 +90,7 @@ namespace imguiPass {
 
 	void ImguiRender::render(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const
 	{
+
 		ImGui::Render();
 		ImDrawData* drawData = ImGui::GetDrawData();
 

@@ -42,6 +42,7 @@ namespace core {
 
 		void recreate(uint32_t width, uint32_t height) const;
 
+		inline static uint32_t imageIndex;
 
 		void cleanUp() const;
 
@@ -49,6 +50,11 @@ namespace core {
 		void draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const;
 
 		void present(uint32_t imageIndex) const;
+
+		void endImageBarrier(const vk::CommandBuffer& commandBuffer, const vk::ImageSubresourceRange& subresourceRange, const vk::Image& image)const;
+		void endImageBarrierDepthStencilBarrier(const vk::CommandBuffer& commandBuffer, const vk::ImageSubresourceRange& subresourceRange, const vk::Image& image)const;
+		void beginImageBarrier(const vk::CommandBuffer& commandBuffer, const vk::ImageSubresourceRange& subresourceRange, const vk::Image& image)const;
+		void beginImageDepthStencilBarrier(const vk::CommandBuffer& commandBuffer, const vk::ImageSubresourceRange& subresourceRange, const vk::Image& image) const;
 	};
 }
 

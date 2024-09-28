@@ -7,6 +7,10 @@
 
 
 namespace handlers {
+	WindowImguiHandler::WindowImguiHandler(interface::OffScreen& offscreen) :offscreen{ offscreen }
+	{
+	}
+
 	void WindowImguiHandler::init() const
 	{
 		//TODO level class
@@ -16,7 +20,7 @@ namespace handlers {
 		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ConsoleLog>());
 		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ContentBrowser>());
 		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::SceneGraph>());
-		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ViewPort>());
+		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ViewPort>(offscreen));
 
 
 	}

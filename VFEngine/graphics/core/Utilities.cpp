@@ -155,6 +155,12 @@ namespace core {
 			sourceStage = vk::PipelineStageFlagBits::eLateFragmentTests;
 			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
 		}
+		else if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
+			barrier.srcAccessMask = vk::AccessFlagBits::eNoneKHR;
+			barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
+			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+		}
 
 		commandBuffer.pipelineBarrier(
 			sourceStage, destinationStage,

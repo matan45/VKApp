@@ -1,5 +1,5 @@
 #pragma once
-#include "vulkan/vulkan.hpp"
+#include "OffScreen.hpp"
 #include <vector>
 
 namespace core {
@@ -13,18 +13,7 @@ namespace render {
 }
 
 namespace imguiPass {
-	struct OffscreenResources {
-		vk::Image colorImage;
-		vk::DeviceMemory colorImageMemory;
-		vk::ImageView colorImageView;
-
-		vk::Image depthImage;
-		vk::DeviceMemory depthImageMemory;
-		vk::ImageView depthImageView;
-
-		vk::Framebuffer framebuffer;
-		vk::DescriptorSet descriptorSet;
-	};
+	
 
 	class OffScreenViewPort
 	{
@@ -35,15 +24,8 @@ namespace imguiPass {
 
 		render::RenderPassHandler* renderPassHandler{ nullptr };
 
-		vk::RenderPass renderPass;
-		vk::DescriptorPool descriptorPool;
-		vk::DescriptorSetLayout descriptorSetLayout;
 		vk::Sampler sampler;
 		std::vector<OffscreenResources> offscreenResources;
-
-		vk::Semaphore imageAvailableSemaphore;
-		vk::Semaphore renderFinishedSemaphore;
-		vk::Fence renderFence;
 
 	public:
 		explicit OffScreenViewPort(core::Device& device, core::SwapChain& swapChain);
@@ -59,10 +41,7 @@ namespace imguiPass {
 		void createOffscreenResources();
 		void createImage(vk::Format format, vk::ImageUsageFlags usage, vk::Image& image, vk::DeviceMemory& deviceMemory) const;
 		void createImageView(const vk::Image& image, vk::Format format, vk::ImageAspectFlags aspectFlags, vk::ImageView& imageView) const;
-		void createRenderPass();
-		void createDescriptorSet();
-		void createFramebuffer(vk::Framebuffer& framebuffer);
-		void createSyncObjects();
+		void updateDescriptorSets(vk::DescriptorSet& descriptorSet, const vk::ImageView& imageView) const;
 		void createSampler();
 	};
 }

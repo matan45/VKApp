@@ -4,10 +4,10 @@
 #include "TriangleRenderer.hpp"
 
 namespace render {
-	RenderPassHandler::RenderPassHandler(core::Device& device, core::SwapChain& swapChain) : device{ device },
-		swapChain{ swapChain }
+	RenderPassHandler::RenderPassHandler(core::Device& device, core::SwapChain& swapChain, std::vector<imguiPass::OffscreenResources>& offscreenResources) : device{ device },
+		swapChain{ swapChain }, offscreenResources{ offscreenResources }
 	{
-
+		triangleRenderer = new TriangleRenderer(device, swapChain, offscreenResources);
 	}
 
 	RenderPassHandler::~RenderPassHandler()
@@ -17,7 +17,6 @@ namespace render {
 
 	void RenderPassHandler::init()
 	{
-		triangleRenderer = new TriangleRenderer(device, swapChain);
 		triangleRenderer->init();
 	}
 

@@ -3,8 +3,11 @@
 #include "../core/SwapChain.hpp"
 #include "../core/CommandPool.hpp"
 #include "../core/Utilities.hpp"
+#include "../core/RenderManager.hpp"
 #include "../render/RenderPassHandler.hpp"
 #include "log/Logger.hpp"
+
+#include <imgui_impl_vulkan.h>
 
 
 namespace imguiPass {
@@ -17,109 +20,45 @@ namespace imguiPass {
 	OffScreenViewPort::~OffScreenViewPort()
 	{
 		delete commandPool;
+		delete renderPassHandler;  // Properly clean up the render pass handler
 	}
+
 	void OffScreenViewPort::init()
 	{
-		renderPassHandler = new render::RenderPassHandler(device, swapChain);
-		renderPassHandler->init();
-
 		createSampler();
-		createRenderPass();
 		createOffscreenResources();
-		createDescriptorSet();
-		createSyncObjects();
+
+		renderPassHandler = new render::RenderPassHandler(device, swapChain, offscreenResources);
+		renderPassHandler->init();
 	}
 
 	vk::DescriptorSet OffScreenViewPort::render()
 	{
-		// Acquire the next image from the swapchain
-		uint32_t imageIndex;
-		vk::Result result = device.getLogicalDevice().acquireNextImageKHR(
-			swapChain.getSwapchain(),
-			UINT64_MAX,
-			imageAvailableSemaphore,    // Wait on this semaphore for image acquisition
-			nullptr,
-			&imageIndex
-		);
-
+		
 		// Get the command buffer for this frame
-		vk::CommandBuffer commandBuffer = commandPool->getCommandBuffer(imageIndex);
-
-		// Reset the fence before submission to allow synchronization
-		result = device.getLogicalDevice().resetFences(1, &renderFence);
-		if (result != vk::Result::eSuccess) {
-			loggerError("Failed to reset fence!");
-		}
+		vk::CommandBuffer commandBuffer = commandPool->getCommandBuffer(core::RenderManager::imageIndex);
 
 		// Reset the command buffer for reuse
 		commandBuffer.reset();
 
-		// Begin command buffer recording
-		vk::CommandBufferBeginInfo beginInfo{};
-		commandBuffer.begin(beginInfo);
+		// Begin recording commands for the acquired image
+		commandBuffer.begin(vk::CommandBufferBeginInfo{});
 
-		// Transition the off-screen color image to COLOR_ATTACHMENT_OPTIMAL before rendering
 		core::Utilities::transitionImageLayout(
-			commandBuffer, offscreenResources[imageIndex].colorImage,
+			commandBuffer, offscreenResources[core::RenderManager::imageIndex].colorImage,
 			vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal,
 			vk::ImageAspectFlagBits::eColor
 		);
 
-		// Transition the off-screen depth image to DEPTH_STENCIL_ATTACHMENT_OPTIMAL before rendering
-		core::Utilities::transitionImageLayout(
-			commandBuffer, offscreenResources[imageIndex].depthImage,
-			vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal,
-			vk::ImageAspectFlagBits::eDepth
-		);
-
 		// Begin the render pass (record drawing commands here)
-		draw(commandBuffer, imageIndex);
-
-		// End the render pass
-		commandBuffer.endRenderPass();
-
-		// Transition the off-screen color image to SHADER_READ_ONLY_OPTIMAL after rendering
-		core::Utilities::transitionImageLayout(
-			commandBuffer, offscreenResources[imageIndex].colorImage,
-			vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal,
-			vk::ImageAspectFlagBits::eColor
-		);
-
-		// Optional: Transition the depth image to SHADER_READ_ONLY_OPTIMAL if used later in a shader
-		 core::Utilities::transitionImageLayout(
-		     commandBuffer, offscreenResources[imageIndex].depthImage,
-		     vk::ImageLayout::eDepthStencilAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal,
-		     vk::ImageAspectFlagBits::eDepth
-		 );
+		draw(commandBuffer, core::RenderManager::imageIndex);
 
 		// End command buffer recording
-		commandBuffer.end();
+		commandPool->getCommandBuffer(core::RenderManager::imageIndex).end();
 
-		// Prepare to submit the command buffer to the graphics queue
-		vk::SubmitInfo submitInfo{};
-		std::array<vk::Semaphore, 1> waitSemaphores = { imageAvailableSemaphore };
-		std::array<vk::PipelineStageFlags, 1> waitStages = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
-		std::array<vk::Semaphore, 1> signalSemaphores = { renderFinishedSemaphore };
-
-		submitInfo.waitSemaphoreCount = static_cast<uint32_t>(waitSemaphores.size());
-		submitInfo.pWaitSemaphores = waitSemaphores.data();
-		submitInfo.pWaitDstStageMask = waitStages.data();
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer;
-		submitInfo.signalSemaphoreCount = static_cast<uint32_t>(signalSemaphores.size());
-		submitInfo.pSignalSemaphores = signalSemaphores.data();
-
-		// Submit the command buffer for rendering and signal the fence when done
-		device.getGraphicsQueue().submit(submitInfo, renderFence);
-
-		// Wait for the GPU to finish executing the command buffer before continuing
-		result = device.getLogicalDevice().waitForFences(1, &renderFence, VK_TRUE, UINT64_MAX);
-		if (result != vk::Result::eSuccess) {
-			loggerError("Failed to wait for fence!");
-		}
 
 		// Return the descriptor set for ImGui rendering
-		return offscreenResources[imageIndex].descriptorSet;
+		return offscreenResources[core::RenderManager::imageIndex].descriptorSet;
 	}
 
 	void OffScreenViewPort::cleanUp() const
@@ -132,10 +71,6 @@ namespace imguiPass {
 
 		device.getLogicalDevice().destroySampler(sampler);
 
-		device.getLogicalDevice().destroySemaphore(imageAvailableSemaphore);
-		device.getLogicalDevice().destroySemaphore(renderFinishedSemaphore);
-		device.getLogicalDevice().destroyFence(renderFence);
-
 		for (auto const& resources : offscreenResources) {
 			device.getLogicalDevice().destroyImageView(resources.colorImageView);
 			device.getLogicalDevice().destroyImageView(resources.depthImageView);
@@ -143,10 +78,7 @@ namespace imguiPass {
 			device.getLogicalDevice().destroyImage(resources.depthImage);
 			device.getLogicalDevice().freeMemory(resources.colorImageMemory);
 			device.getLogicalDevice().freeMemory(resources.depthImageMemory);
-			device.getLogicalDevice().destroyFramebuffer(resources.framebuffer);
 		}
-
-		device.getLogicalDevice().destroyRenderPass(renderPass);
 	}
 
 	void OffScreenViewPort::draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const
@@ -156,7 +88,7 @@ namespace imguiPass {
 
 	void OffScreenViewPort::createOffscreenResources()
 	{
-		vk::Format colorFormat = vk::Format::eR8G8B8A8Unorm;
+		vk::Format colorFormat = swapChain.getSwapchainImageFormat();
 		vk::Format depthFormat = swapChain.getSwapchainDepthStencilFormat();
 
 		for (size_t i = 0; i < swapChain.getImageCount(); i++) {
@@ -171,7 +103,7 @@ namespace imguiPass {
 			createImageView(resources.depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth, resources.depthImageView);
 
 			// Create framebuffer
-			createFramebuffer(resources.framebuffer);
+			updateDescriptorSets(resources.descriptorSet, resources.colorImageView);
 
 			// Store resources
 			offscreenResources.push_back(std::move(resources));
@@ -220,132 +152,21 @@ namespace imguiPass {
 		imageView = device.getLogicalDevice().createImageView(viewInfo);
 	}
 
-	void OffScreenViewPort::createRenderPass()
+	void OffScreenViewPort::updateDescriptorSets(vk::DescriptorSet& descriptorSet,const vk::ImageView& imageView) const
 	{
-		vk::AttachmentDescription colorAttachment{};
-		colorAttachment.format = vk::Format::eR8G8B8A8Unorm;
-		colorAttachment.samples = vk::SampleCountFlagBits::e1;
-		colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-		colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
-		colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
-		colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-		colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
-		colorAttachment.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;  // Ready for ImGui
-
-		vk::AttachmentDescription depthAttachment{};
-		depthAttachment.format = swapChain.getSwapchainDepthStencilFormat();
-		depthAttachment.samples = vk::SampleCountFlagBits::e1;
-		depthAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-		depthAttachment.storeOp = vk::AttachmentStoreOp::eDontCare;
-		depthAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
-		depthAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-		depthAttachment.initialLayout = vk::ImageLayout::eUndefined;
-		depthAttachment.finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-
-		vk::AttachmentReference colorAttachmentRef{};
-		colorAttachmentRef.attachment = 0;
-		colorAttachmentRef.layout = vk::ImageLayout::eColorAttachmentOptimal;
-
-		vk::AttachmentReference depthAttachmentRef{};
-		depthAttachmentRef.attachment = 1;
-		depthAttachmentRef.layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-
-		vk::SubpassDescription subpass{};
-		subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &colorAttachmentRef;
-		subpass.pDepthStencilAttachment = &depthAttachmentRef;
-
-		vk::SubpassDependency dependency{};
-		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependency.dstSubpass = 0;
-		dependency.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests;
-		dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests;
-		dependency.srcAccessMask = vk::AccessFlagBits::eNoneKHR;
-		dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-
-		std::array<vk::AttachmentDescription, 2> attachments = { colorAttachment, depthAttachment };
-
-		vk::RenderPassCreateInfo renderPassInfo{};
-		renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-		renderPassInfo.pAttachments = attachments.data();
-		renderPassInfo.subpassCount = 1;
-		renderPassInfo.pSubpasses = &subpass;
-		renderPassInfo.dependencyCount = 1;
-		renderPassInfo.pDependencies = &dependency;
-
-		renderPass = device.getLogicalDevice().createRenderPass(renderPassInfo);
-	}
-
-	void OffScreenViewPort::createDescriptorSet()
-	{
-		vk::DescriptorSetAllocateInfo allocInfo{};
-		allocInfo.descriptorPool = descriptorPool;
-		allocInfo.descriptorSetCount = 1;
-		allocInfo.pSetLayouts = &descriptorSetLayout;
-
-		for (auto& resources : offscreenResources) {
-			resources.descriptorSet = device.getLogicalDevice().allocateDescriptorSets(allocInfo)[0];
-
-			vk::DescriptorImageInfo imageInfo{};
-			imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-			imageInfo.imageView = resources.colorImageView;
-			imageInfo.sampler = sampler;
-
-			vk::WriteDescriptorSet descriptorWrite{};
-			descriptorWrite.dstSet = resources.descriptorSet;
-			descriptorWrite.dstBinding = 0;
-			descriptorWrite.dstArrayElement = 0;
-			descriptorWrite.descriptorType = vk::DescriptorType::eCombinedImageSampler;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pImageInfo = &imageInfo;
-
-			device.getLogicalDevice().updateDescriptorSets(1, &descriptorWrite, 0, nullptr);
-		}
-	}
-
-	void OffScreenViewPort::createFramebuffer(vk::Framebuffer& framebuffer)
-	{
-		std::array<vk::ImageView, 2> attachments = {
-			offscreenResources.back().colorImageView,
-			offscreenResources.back().depthImageView
-		};
-
-		vk::FramebufferCreateInfo framebufferInfo{};
-		framebufferInfo.renderPass = renderPass;
-		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-		framebufferInfo.pAttachments = attachments.data();
-		framebufferInfo.width = swapChain.getSwapchainExtent().width;
-		framebufferInfo.height = swapChain.getSwapchainExtent().height;
-		framebufferInfo.layers = 1;
-
-		framebuffer = device.getLogicalDevice().createFramebuffer(framebufferInfo);
-	}
-
-	void OffScreenViewPort::createSyncObjects()
-	{
-		// Create semaphores for synchronization
-		vk::SemaphoreCreateInfo semaphoreInfo{};
-		imageAvailableSemaphore = device.getLogicalDevice().createSemaphore(semaphoreInfo);
-		renderFinishedSemaphore = device.getLogicalDevice().createSemaphore(semaphoreInfo);
-
-		// Create a fence for GPU-CPU synchronization
-		vk::FenceCreateInfo fenceInfo{};
-		renderFence = device.getLogicalDevice().createFence(fenceInfo);
+		descriptorSet = ImGui_ImplVulkan_AddTexture(sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	void OffScreenViewPort::createSampler()
 	{
 		vk::SamplerCreateInfo samplerInfo{};
+		samplerInfo.magFilter = vk::Filter::eLinear;
+		samplerInfo.minFilter = vk::Filter::eLinear;
+		samplerInfo.addressModeU = vk::SamplerAddressMode::eRepeat;
+		samplerInfo.addressModeV = vk::SamplerAddressMode::eRepeat;
+		samplerInfo.addressModeW = vk::SamplerAddressMode::eRepeat;
 
-		// Filtering mode (how the texture is sampled)
-		samplerInfo.magFilter = vk::Filter::eLinear;  // Magnification filter
-		samplerInfo.minFilter = vk::Filter::eLinear;  // Minification filter
-
-		// Addressing mode (what happens when sampling outside [0, 1] UV range)
-		samplerInfo.addressModeU = vk::SamplerAddressMode::eClampToEdge;
-		samplerInfo.addressModeV = vk::SamplerAddressMode::eClampToEdge;
-		samplerInfo.addressModeW = vk::SamplerAddressMode::eClampToEdge;
+		samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;
 
 		vk::PhysicalDeviceProperties properties = device.getPhysicalDevice().getProperties();
 
@@ -360,11 +181,6 @@ namespace imguiPass {
 		samplerInfo.compareEnable = VK_FALSE;
 		samplerInfo.compareOp = vk::CompareOp::eAlways;
 
-		// Mipmap settings
-		samplerInfo.mipmapMode = vk::SamplerMipmapMode::eLinear;  // Linear mipmap interpolation
-		samplerInfo.mipLodBias = 0.0f;  // No mipmap level of detail bias
-		samplerInfo.minLod = 0.0f;  // Minimum LOD (mipmap level)
-		samplerInfo.maxLod = 0.0f;  // Maximum LOD (since we're not using mipmaps, keep this at 0)
 
 		// Create the sampler
 		sampler = device.getLogicalDevice().createSampler(samplerInfo);

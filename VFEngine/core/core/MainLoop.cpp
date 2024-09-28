@@ -9,10 +9,14 @@
 
 namespace core {
 
-	void MainLoop::init()
+	MainLoop::MainLoop()
 	{
 		controllers::Graphics::createContext();
 		windowController = new controllers::WindowController();
+	}
+
+	void MainLoop::init()
+	{
 		windowController->init();
 	}
 
@@ -38,6 +42,7 @@ namespace core {
 		windowController->cleanUp();
 		controllers::Graphics::destroyContext();
 	}
+
 
 	MainLoop::~MainLoop()
 	{

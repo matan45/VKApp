@@ -6,8 +6,8 @@
 #include "log/Logger.hpp"
 
 namespace render {
-	TriangleRenderer::TriangleRenderer(core::Device& device, core::SwapChain& swapChain) : device{ device },
-		swapChain{ swapChain }
+	TriangleRenderer::TriangleRenderer(core::Device& device, core::SwapChain& swapChain, std::vector<imguiPass::OffscreenResources>& offscreenResources) : device{ device },
+		swapChain{ swapChain }, offscreenResources{ offscreenResources }
 	{
 	}
 
@@ -213,10 +213,10 @@ namespace render {
 
 	void TriangleRenderer::createFramebuffers()
 	{
-		framebuffers.resize(swapChain.getImageCount());
+		framebuffers.resize(offscreenResources.size());
 
 		for (uint32_t i = 0; i < framebuffers.size(); i++) {
-			vk::ImageView viewImage = swapChain.getSwapchainImageView(i);
+			vk::ImageView viewImage = offscreenResources[i].colorImageView;
 
 			vk::FramebufferCreateInfo framebufferInfo{};
 			framebufferInfo.renderPass = renderPass;
