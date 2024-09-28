@@ -44,18 +44,35 @@ namespace imguiPass {
 		// Begin recording commands for the acquired image
 		commandBuffer.begin(vk::CommandBufferBeginInfo{});
 
-		core::Utilities::transitionImageLayout(
+		// Transition from Color Attachment to Shader Read Only
+		/*core::Utilities::transitionImageLayout(
 			commandBuffer, offscreenResources[core::RenderManager::imageIndex].colorImage,
-			vk::ImageLayout::eUndefined, vk::ImageLayout::eColorAttachmentOptimal,
+			vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal,
 			vk::ImageAspectFlagBits::eColor
 		);
+*/
 
 		// Begin the render pass (record drawing commands here)
 		draw(commandBuffer, core::RenderManager::imageIndex);
 
-		// End command buffer recording
-		commandPool->getCommandBuffer(core::RenderManager::imageIndex).end();
+		// Transition back to Color Attachment layout
+		/*core::Utilities::transitionImageLayout(
+			commandBuffer, offscreenResources[core::RenderManager::imageIndex].colorImage,
+			vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal,
+			vk::ImageAspectFlagBits::eColor
+		);*/
 
+		// End command buffer recording
+		commandBuffer.end();
+
+		// Submit the command buffer to the compute queue
+			vk::SubmitInfo submitInfo(
+				0, nullptr, nullptr,
+				1, &commandBuffer,
+				0, nullptr
+			);
+		device.getGraphicsQueue().submit(submitInfo, nullptr);
+		device.getGraphicsQueue().waitIdle();
 
 		// Return the descriptor set for ImGui rendering
 		return offscreenResources[core::RenderManager::imageIndex].descriptorSet;

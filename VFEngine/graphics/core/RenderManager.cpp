@@ -82,6 +82,7 @@ namespace core {
 		std::array < vk::Semaphore, 1> signalSemaphores = { renderFinishedSemaphore };
 		std::array < vk::PipelineStageFlags, 1> waitStages = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
 
+		//need also get here the offscreen command buffer
 		vk::CommandBuffer cmdBuffer = commandPool->getCommandBuffer(imageIndex);
 		submitInfo.waitSemaphoreCount = static_cast<uint32_t>(waitSemaphores.size());
 		submitInfo.pWaitSemaphores = waitSemaphores.data();

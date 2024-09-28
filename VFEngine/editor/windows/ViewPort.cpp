@@ -10,7 +10,7 @@ namespace windows {
 	{
 		if (ImGui::Begin("ViewPort")) {
 			ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
-			//ImGui::Image(offscreen.render(), ImVec2{viewportPanelSize.x, viewportPanelSize.y});
+			ImGui::Image(offscreen.render(), ImVec2{viewportPanelSize.x, viewportPanelSize.y});
 		}
 		ImGui::End();
 	}
