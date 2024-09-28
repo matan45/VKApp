@@ -15,6 +15,7 @@ namespace handlers {
 
 	void EditorHandler::init() const
 	{
+		//need also to load the level here
 		coreInterface->init();
 		windowImguiHandler->init();
 		offScreenInterface->init();

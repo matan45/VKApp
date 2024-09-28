@@ -32,6 +32,8 @@ namespace imguiPass {
 		~OffScreenViewPort();
 
 		void init();
+		//use std::founction for draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex)
+		//but we cant because of the images
 		vk::DescriptorSet render();
 		void cleanUp() const;
 

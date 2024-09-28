@@ -34,7 +34,7 @@ namespace imguiPass {
 
 	vk::DescriptorSet OffScreenViewPort::render()
 	{
-		
+
 		// Get the command buffer for this frame
 		vk::CommandBuffer commandBuffer = commandPool->getCommandBuffer(core::RenderManager::imageIndex);
 
@@ -44,33 +44,18 @@ namespace imguiPass {
 		// Begin recording commands for the acquired image
 		commandBuffer.begin(vk::CommandBufferBeginInfo{});
 
-		// Transition from Color Attachment to Shader Read Only
-		/*core::Utilities::transitionImageLayout(
-			commandBuffer, offscreenResources[core::RenderManager::imageIndex].colorImage,
-			vk::ImageLayout::eColorAttachmentOptimal, vk::ImageLayout::eShaderReadOnlyOptimal,
-			vk::ImageAspectFlagBits::eColor
-		);
-*/
-
 		// Begin the render pass (record drawing commands here)
 		draw(commandBuffer, core::RenderManager::imageIndex);
-
-		// Transition back to Color Attachment layout
-		/*core::Utilities::transitionImageLayout(
-			commandBuffer, offscreenResources[core::RenderManager::imageIndex].colorImage,
-			vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageLayout::eColorAttachmentOptimal,
-			vk::ImageAspectFlagBits::eColor
-		);*/
 
 		// End command buffer recording
 		commandBuffer.end();
 
 		// Submit the command buffer to the compute queue
-			vk::SubmitInfo submitInfo(
-				0, nullptr, nullptr,
-				1, &commandBuffer,
-				0, nullptr
-			);
+		vk::SubmitInfo submitInfo(
+			0, nullptr, nullptr,
+			1, &commandBuffer,
+			0, nullptr
+		);
 		device.getGraphicsQueue().submit(submitInfo, nullptr);
 		device.getGraphicsQueue().waitIdle();
 
@@ -169,7 +154,7 @@ namespace imguiPass {
 		imageView = device.getLogicalDevice().createImageView(viewInfo);
 	}
 
-	void OffScreenViewPort::updateDescriptorSets(vk::DescriptorSet& descriptorSet,const vk::ImageView& imageView) const
+	void OffScreenViewPort::updateDescriptorSets(vk::DescriptorSet& descriptorSet, const vk::ImageView& imageView) const
 	{
 		descriptorSet = ImGui_ImplVulkan_AddTexture(sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}

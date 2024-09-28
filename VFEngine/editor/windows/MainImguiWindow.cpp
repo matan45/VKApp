@@ -29,11 +29,11 @@ namespace windows {
 	{
 		if (ImGui::BeginMainMenuBar()) {
 			if (ImGui::BeginMenu("File")) {
-				if (ImGui::MenuItem("New Scene")) {}
-				else if (ImGui::MenuItem("Open Scene")) {}
-				else if (ImGui::MenuItem("Save Scene")) {}
+				if (ImGui::MenuItem("New Level")) {}
+				else if (ImGui::MenuItem("Open Level")) {}
+				else if (ImGui::MenuItem("Save Level")) {}
 				else if (ImGui::MenuItem("Exit")) {
-					isOpen = false;
+					isOpen = false;//add close window support
 				}
 				ImGui::EndMenu();
 			}

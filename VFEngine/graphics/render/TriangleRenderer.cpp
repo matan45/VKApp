@@ -26,7 +26,7 @@ namespace render {
 		createFramebuffers();
 		createGraphicsPipeline();
 	}
-
+	//TODO remove width and height
 	void TriangleRenderer::recreate(uint32_t width, uint32_t height)
 	{
 		for (auto framebuffer : framebuffers) {
@@ -235,7 +235,7 @@ namespace render {
 		vk::AttachmentDescription colorAttachment{};
 		colorAttachment.format = swapChain.getSwapchainImageFormat();
 		colorAttachment.samples = vk::SampleCountFlagBits::e1;
-		colorAttachment.loadOp = vk::AttachmentLoadOp::eDontCare;
+		colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
 		colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
 		colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
 		colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;

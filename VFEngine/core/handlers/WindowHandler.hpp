@@ -1,14 +1,12 @@
 #pragma once
 
-namespace controllers {
-	class WindowController;
-}
 
+// make this input handler
 namespace handlers {
 	class WindowHandler
 	{
 	private:
-		controllers::WindowController* windowController;
+		
 
 	public:
 		explicit WindowHandler();

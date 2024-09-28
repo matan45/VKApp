@@ -1,11 +1,11 @@
 #include "SceneGraph.hpp"
-#include <iostream>
 #include "components/Components.hpp"
 
 namespace windows {
 
 	void SceneGraph::draw()
 	{
+		//add some styling here
 		if (ImGui::Begin("SceneGraph")) {
 			//TODO when right click add/remove selected entity
 			// Start with the root entity (this assumes you have a SceneGraph object with a root)
@@ -63,6 +63,7 @@ namespace windows {
 	void SceneGraph::drawDragDropTarget(entt::entity entity) const {
 		auto entityObject = scene::Entity(entity);
 
+		//root node should not move and the root name need to be quince
 		if (ImGui::BeginDragDropTarget()) {
 			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_ENTITY")) {
 				// Retrieve the dropped entity handle
@@ -79,9 +80,9 @@ namespace windows {
 		}
 	}
 
-	void SceneGraph::drawDetails(entt::entity entity) {
+	void SceneGraph::drawDetails(entt::entity entity) const {
 		auto entityObject = scene::Entity(entity);
-
+		//maybe need pushID here
 		// Display the name component first if it exists
 		if (entityObject.hasComponent<components::Name>()) {
 			auto const& nameComponent = entityObject.getComponent<components::Name>();
@@ -100,9 +101,10 @@ namespace windows {
 
 	void SceneGraph::drawDynamicComponent(entt::entity entity) const {
 		auto& registry = scene::EntityRegistry::getRegistry();
-		//TODO when right click add/remove components
+		//TODO when right click add/remove components also maybe need pushID here
 		// Handle known component types
 		if (registry.all_of<components::Transform>(entity)) {
+			//TODO add collapsingHeader
 			auto& transform = registry.get<components::Transform>(entity);
 			ImGui::DragFloat3("Position", &transform.position.x, 0.1f);
 			ImGui::DragFloat3("Rotation", &transform.rotation.x, 0.1f);
