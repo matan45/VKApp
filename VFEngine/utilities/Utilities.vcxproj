@@ -89,8 +89,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="components\Components.hpp" />
-    <ClInclude Include="scene\Entity.hpp" />
     <ClInclude Include="log\EditorLogger.hpp" />
+    <ClInclude Include="scene\Entity.hpp" />
     <ClInclude Include="log\Logger.hpp" />
     <ClInclude Include="math\MathHelper.hpp" />
     <ClInclude Include="resource\ShaderResource.hpp" />
