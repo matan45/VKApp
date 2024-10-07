@@ -2,7 +2,7 @@
 #include "Device.hpp"
 #include "SwapChain.hpp"
 #include "CommandPool.hpp"
-#include "log/Logger.hpp"
+#include "print/Logger.hpp"
 #include "../window/Window.hpp"
 #include "../imguiPass/ImguiRender.hpp"
 

@@ -7,7 +7,7 @@ namespace windows {
 	{
 		if (ImGui::Begin("Content Folder")) {
 			// Show current path and navigation options
-			ImGui::Text("Current Path: %s", currentPath.wstring().c_str());
+			ImGui::Text("Current Path: %s", StringUtil::wstringToUtf8(currentPath.wstring()).c_str());
 
 			if (ImGui::Button("Up")) {
 				auto parentPath = currentPath.parent_path();

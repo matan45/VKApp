@@ -25,8 +25,9 @@ namespace windows {
 	}
 	
 	void SceneGraph::drawEntityNode(entt::entity entity) {
+		ImGui::PushID(static_cast<int>(entity));
 		auto entityObject = scene::Entity(entity);  // Wrap entity handle in an Entity object
-
+		
 		std::string entityName = entityObject.getName(); // Get entity name
 
 		ImGuiTreeNodeFlags flags = (selected == entity) ? ImGuiTreeNodeFlags_Selected : 0;
@@ -58,6 +59,7 @@ namespace windows {
 			}
 			ImGui::TreePop();
 		}
+		ImGui::PopID();
 	}
 
 	void SceneGraph::drawDragDropTarget(entt::entity entity) const {

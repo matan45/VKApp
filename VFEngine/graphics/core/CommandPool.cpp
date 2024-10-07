@@ -1,7 +1,7 @@
 #include "CommandPool.hpp"
 #include "Device.hpp"
 #include "SwapChain.hpp"
-#include "log/Logger.hpp"
+#include "print/Logger.hpp"
 
 namespace core {
 

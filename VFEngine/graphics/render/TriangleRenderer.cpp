@@ -3,7 +3,7 @@
 #include "../core/SwapChain.hpp"
 #include "../core/Shader.hpp"
 #include "../core/Utilities.hpp"
-#include "log/Logger.hpp"
+#include "print/Logger.hpp"
 
 namespace render {
 	TriangleRenderer::TriangleRenderer(core::Device& device, core::SwapChain& swapChain, std::vector<imguiPass::OffscreenResources>& offscreenResources) : device{ device },

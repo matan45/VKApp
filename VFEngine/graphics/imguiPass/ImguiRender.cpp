@@ -7,7 +7,7 @@
 #include "../core/CommandPool.hpp"
 #include "../window/Window.hpp"
 #include "../core/Utilities.hpp"
-#include "log/Logger.hpp"
+#include "print/Logger.hpp"
 
 namespace imguiPass {
 

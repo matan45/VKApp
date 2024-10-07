@@ -1,5 +1,5 @@
 #include "Utilities.hpp"
-#include "log/Logger.hpp"
+#include "print/Logger.hpp"
 
 namespace core {
 

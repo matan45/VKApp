@@ -1,6 +1,6 @@
 
 #include "Device.hpp"
-#include "log/Logger.hpp"
+#include "print/Logger.hpp"
 #include "../window/Window.hpp"
 
 #include <unordered_set>

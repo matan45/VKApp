@@ -1,5 +1,5 @@
 #include "ConsoleLog.hpp"
-#include "log/EditorLogger.hpp"
+#include "print/EditorLogger.hpp"
 
 namespace windows {
 	void ConsoleLog::draw()

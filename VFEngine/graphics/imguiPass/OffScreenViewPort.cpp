@@ -5,7 +5,7 @@
 #include "../core/Utilities.hpp"
 #include "../core/RenderManager.hpp"
 #include "../render/RenderPassHandler.hpp"
-#include "log/Logger.hpp"
+#include "print/Logger.hpp"
 
 #include <imgui_impl_vulkan.h>
 

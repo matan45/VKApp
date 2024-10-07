@@ -1,6 +1,6 @@
 #include "Shader.hpp"
 #include "Device.hpp"
-#include "log/Logger.hpp"
+#include "print/Logger.hpp"
 #include <iostream>     // For input-output operations
 #include <fstream>      // For file handling (ifstream)
 #include <string>       // For using std::string to read lines

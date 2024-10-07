@@ -2,7 +2,7 @@
 #include "../window/Window.hpp"
 #include "../core/Device.hpp"
 #include "../core/SwapChain.hpp"
-#include "log/Logger.hpp"
+#include "print/Logger.hpp"
 
 
 namespace controllers
