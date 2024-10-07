@@ -50,11 +50,6 @@ namespace core {
 		void draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const;
 
 		void present(uint32_t imageIndex) const;
-
-		void endImageBarrier(const vk::CommandBuffer& commandBuffer, const vk::ImageSubresourceRange& subresourceRange, const vk::Image& image)const;
-		void endImageBarrierDepthStencilBarrier(const vk::CommandBuffer& commandBuffer, const vk::ImageSubresourceRange& subresourceRange, const vk::Image& image)const;
-		void beginImageBarrier(const vk::CommandBuffer& commandBuffer, const vk::ImageSubresourceRange& subresourceRange, const vk::Image& image)const;
-		void beginImageDepthStencilBarrier(const vk::CommandBuffer& commandBuffer, const vk::ImageSubresourceRange& subresourceRange, const vk::Image& image) const;
 	};
 }
 

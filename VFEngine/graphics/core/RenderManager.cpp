@@ -153,54 +153,5 @@ namespace core {
 		}
 	}
 
-	void RenderManager::beginImageBarrier(const vk::CommandBuffer& commandBuffer, const vk::ImageSubresourceRange& subresourceRange, const vk::Image& image)const
-	{
-
-		vk::ImageMemoryBarrier beginImageMemoryBarrier{};
-		beginImageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-		beginImageMemoryBarrier.oldLayout = vk::ImageLayout::eUndefined;
-		beginImageMemoryBarrier.newLayout = vk::ImageLayout::eColorAttachmentOptimal;
-		beginImageMemoryBarrier.image = image;
-		beginImageMemoryBarrier.subresourceRange = subresourceRange;
-
-		commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eTopOfPipe, vk::DependencyFlags(), nullptr, nullptr, beginImageMemoryBarrier);
-	}
-
-	void RenderManager::beginImageDepthStencilBarrier(const vk::CommandBuffer& commandBuffer, const vk::ImageSubresourceRange& subresourceRange, const vk::Image& image) const
-	{
-		vk::ImageMemoryBarrier beginImageDepthStencilMemoryBarrier{};
-		beginImageDepthStencilMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-		beginImageDepthStencilMemoryBarrier.oldLayout = vk::ImageLayout::eUndefined;
-		beginImageDepthStencilMemoryBarrier.newLayout = vk::ImageLayout::eDepthAttachmentOptimal;
-		beginImageDepthStencilMemoryBarrier.image = image;
-		beginImageDepthStencilMemoryBarrier.subresourceRange = subresourceRange;
-
-		commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests, vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests, vk::DependencyFlags(), nullptr, nullptr, beginImageDepthStencilMemoryBarrier);
-	}
-
-	void RenderManager::endImageBarrier(const vk::CommandBuffer& commandBuffer, const vk::ImageSubresourceRange& subresourceRange, const vk::Image& image)const
-	{
-		vk::ImageMemoryBarrier endImageMemoryBarrier{};
-		endImageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-		endImageMemoryBarrier.oldLayout = vk::ImageLayout::eColorAttachmentOptimal;
-		endImageMemoryBarrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
-		endImageMemoryBarrier.image = image;
-		endImageMemoryBarrier.subresourceRange = subresourceRange;
-
-		commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::PipelineStageFlagBits::eBottomOfPipe, vk::DependencyFlags(), nullptr, nullptr, endImageMemoryBarrier);
-	}
-
-	void RenderManager::endImageBarrierDepthStencilBarrier(const vk::CommandBuffer& commandBuffer, const vk::ImageSubresourceRange& subresourceRange, const vk::Image& image)const
-	{
-		vk::ImageMemoryBarrier endImageMemoryBarrier{};
-		endImageMemoryBarrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-		endImageMemoryBarrier.oldLayout = vk::ImageLayout::eDepthAttachmentOptimal;
-		endImageMemoryBarrier.newLayout = vk::ImageLayout::ePresentSrcKHR;
-		endImageMemoryBarrier.image = image;
-		endImageMemoryBarrier.subresourceRange = subresourceRange;
-
-		commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests, vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests, vk::DependencyFlags(), nullptr, nullptr, endImageMemoryBarrier);
-	}
-
 }
 
