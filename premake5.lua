@@ -1,7 +1,7 @@
-workspace "VulkanApp"
+workspace "VertexForge"
    configurations { "Debug", "Release" }
    platforms { "x64" }
-   location "VKEngine"  -- Specify where to place generated files
+   location "VFEngine"  -- Specify where to place generated files
    startproject "Editor"  -- Set the default startup project
 
 -- Check if the Vulkan SDK environment variable is set
@@ -18,17 +18,20 @@ project "Editor"
    kind "ConsoleApp"
    language "C++"
    cppdialect "C++20"
-   location "VKEngine/editor"
+   location "VFEngine/editor"
    targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
-   files { "VKEngine/editor/**.hpp", "VKEngine/editor/**.cpp" }
+   files { "VFEngine/editor/**.hpp", "VFEngine/editor/**.cpp" }
    
    includedirs {
-      "VKEngine/core/interface",          -- Core headers
+      "VFEngine/core/interface",          -- Core headers
 	  "dependencies/imgui",  
 	  "dependencies/ImGuizmo",   
 	  "dependencies/imgui-node-editor",
-	  "VKEngine/utilities" 
+	  "VFEngine/utilities",
+	  "dependencies/spdlog/include",
+	  "dependencies/glm",
+	  "dependencies/entt/single_include"
    }
 
    links {
@@ -50,14 +53,17 @@ project "Core"
    kind "StaticLib"
    language "C++"
    cppdialect "C++20"
-   location "VKEngine/core"
+   location "VFEngine/core"
    targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
-   files { "VKEngine/core/**.hpp", "VKEngine/core/**.cpp" }
+   files { "VFEngine/core/**.hpp", "VFEngine/core/**.cpp" }
    
    includedirs {
-      "VKEngine/graphics/interface",   -- Graphics headers
-      "VKEngine/utilities"             -- Utilities headers (if used in Core)
+      "VFEngine/graphics/controllers",   -- Graphics headers
+      "VFEngine/utilities",             -- Utilities headers (if used in Core)
+	  "dependencies/imgui",
+	  "dependencies/imgui/backends",
+	  vulkanLibPath.."/Include"	  
    }
 
    links { "Graphics" }  -- Link against Graphics and Utilities
@@ -76,17 +82,19 @@ project "Graphics"
    kind "StaticLib"
    language "C++"
    cppdialect "C++20"
-   location "VKEngine/graphics"
+   location "VFEngine/graphics"
    targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
-   files { "VKEngine/graphics/**.hpp", "VKEngine/graphics/**.cpp" }
+   files { "VFEngine/graphics/**.hpp", "VFEngine/graphics/**.cpp" }
 
    includedirs {
       "dependencies/glfw/include",
       "dependencies/spdlog/include",
 	  "dependencies/imgui",
+	  "dependencies/imgui/backends",
       "dependencies/glm",
-      "VKEngine/utilities",           -- Utilities headers
+      "dependencies/stb",
+      "VFEngine/utilities",           -- Utilities headers
       vulkanLibPath.."/Include"
    }
 
@@ -117,14 +125,14 @@ project "Runtime"
    kind "ConsoleApp"
    language "C++"
    cppdialect "C++20"
-   location "VKEngine/runtime"
+   location "VFEngine/runtime"
    targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
-   files { "VKEngine/runtime/**.hpp", "VKEngine/runtime/**.cpp" }
+   files { "VFEngine/runtime/**.hpp", "VFEngine/runtime/**.cpp" }
 
    includedirs {
-      "VKEngine/core/interface",
-      "VKEngine/graphics/interface"
+      "VFEngine/core/interface",
+      "VFEngine/graphics/interface"
    }
 
    links { "Core"}  -- Link against Core and Graphics
@@ -142,14 +150,15 @@ project "Utilities"
    kind "StaticLib"
    language "C++"
    cppdialect "C++20"
-   location "VKEngine/utilities"
+   location "VFEngine/utilities"
    targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
-   files { "VKEngine/utilities/**.hpp", "VKEngine/utilities/**.cpp" }
+   files { "VFEngine/utilities/**.hpp", "VFEngine/utilities/**.cpp" }
 
    includedirs {
       "dependencies/spdlog/include",
-      "dependencies/glm"
+      "dependencies/glm",
+	  "dependencies/entt/single_include"
    }
 
    links { "spdLog" }
@@ -216,7 +225,7 @@ project "spdLog"
       defines { "NDEBUG" }
       optimize "On"
 
--- Project: imgui (Moved under libs group)
+
 -- Project: imgui (Moved under libs group)
 project "imgui"
    kind "StaticLib"
@@ -229,6 +238,7 @@ project "imgui"
       "dependencies/imgui/*.h",
       "dependencies/imgui/*.cpp",
       "dependencies/imgui/backends/imgui_impl_vulkan.*",  -- Only Vulkan part
+      "dependencies/imgui/backends/imgui_impl_glfw.*",  -- Only Vulkan part
       "dependencies/ImGuizmo/*.h",
       "dependencies/ImGuizmo/*.cpp",
       "dependencies/imgui-node-editor/*.h",
@@ -250,7 +260,8 @@ project "imgui"
       "dependencies/imgui",                       -- Core ImGui headers
       "dependencies/imgui/backends",              -- Vulkan backend headers
       "dependencies/ImGuizmo",              
-      "dependencies/imgui-node-editor",              
+      "dependencies/imgui-node-editor", 
+	  "dependencies/glfw/include",	  
       vulkanLibPath.."/Include"                   -- Vulkan SDK headers
    }
    
@@ -269,3 +280,32 @@ project "imgui"
    filter "configurations:Release"
       defines { "NDEBUG" }
       optimize "On"
+
+-- Project: JoltPhysics (Moved under libs group)	  
+project "jolt"
+   kind "StaticLib"
+   language "C++"
+   cppdialect "C++20"
+   targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
+
+   files {
+      "dependencies/JoltPhysics/Jolt/*.h",
+      "dependencies/JoltPhysics/Jolt/*.cpp"
+   }
+
+   includedirs {
+      "dependencies/JoltPhysics"            
+   }
+   
+
+   filter "configurations:Debug"
+      defines { "DEBUG" }
+      symbols "On"
+
+   filter "configurations:Release"
+      defines { "NDEBUG" }
+      optimize "On"
+
+
+
+-- Project: assimp and softal need to build with cmake...
