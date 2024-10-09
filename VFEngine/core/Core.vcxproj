@@ -92,17 +92,17 @@
     <ClInclude Include="handlers\GraphicesHandler.hpp" />
     <ClInclude Include="handlers\WindowHandler.hpp" />
     <ClInclude Include="interface\CoreInterface.hpp" />
+    <ClInclude Include="interface\OffScreen.hpp" />
     <ClInclude Include="interface\imguiHandler\ImguiWindow.hpp" />
     <ClInclude Include="interface\imguiHandler\ImguiWindowHandler.hpp" />
-    <ClInclude Include="interface\OffScreen.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\MainLoop.cpp" />
     <ClCompile Include="handlers\GraphicesHandler.cpp" />
     <ClCompile Include="handlers\WindowHandler.cpp" />
     <ClCompile Include="interface\CoreInterface.cpp" />
-    <ClCompile Include="interface\imguiHandler\ImguiWindowHandler.cpp" />
     <ClCompile Include="interface\OffScreen.cpp" />
+    <ClCompile Include="interface\imguiHandler\ImguiWindowHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\graphics\Graphics.vcxproj">

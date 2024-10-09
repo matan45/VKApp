@@ -97,6 +97,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="controllers\Graphics.hpp" />
+    <ClInclude Include="controllers\OffScreenController.hpp" />
     <ClInclude Include="controllers\WindowController.hpp" />
     <ClInclude Include="core\CommandPool.hpp" />
     <ClInclude Include="core\Device.hpp" />
@@ -107,13 +108,13 @@
     <ClInclude Include="imguiPass\ImguiRender.hpp" />
     <ClInclude Include="imguiPass\OffScreen.hpp" />
     <ClInclude Include="imguiPass\OffScreenViewPort.hpp" />
-    <ClInclude Include="controllers\OffScreenController.hpp" />
     <ClInclude Include="render\RenderPassHandler.hpp" />
     <ClInclude Include="render\TriangleRenderer.hpp" />
     <ClInclude Include="window\Window.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="controllers\Graphics.cpp" />
+    <ClCompile Include="controllers\OffScreenController.cpp" />
     <ClCompile Include="controllers\WindowController.cpp" />
     <ClCompile Include="core\CommandPool.cpp" />
     <ClCompile Include="core\Device.cpp" />
@@ -123,7 +124,6 @@
     <ClCompile Include="core\Utilities.cpp" />
     <ClCompile Include="imguiPass\ImguiRender.cpp" />
     <ClCompile Include="imguiPass\OffScreenViewPort.cpp" />
-    <ClCompile Include="controllers\OffScreenController.cpp" />
     <ClCompile Include="render\RenderPassHandler.cpp" />
     <ClCompile Include="render\TriangleRenderer.cpp" />
     <ClCompile Include="window\Window.cpp" />

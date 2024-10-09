@@ -19,3 +19,11 @@
 	WideCharToMultiByte(CP_UTF8, 0, wstr.data(), (int)wstr.size(), result.data(), size_needed, nullptr, nullptr);
 	return result;
 }
+
+ std::string StringUtil::WideStringToString(PWSTR wideStr)
+ {
+	 int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, wideStr, -1, NULL, 0, NULL, NULL);
+	 std::string strTo(sizeNeeded, 0);
+	 WideCharToMultiByte(CP_UTF8, 0, wideStr, -1, &strTo[0], sizeNeeded, NULL, NULL);
+	 return strTo;
+ }
