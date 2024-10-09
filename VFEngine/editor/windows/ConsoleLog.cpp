@@ -1,5 +1,6 @@
 #include "ConsoleLog.hpp"
 #include "print/EditorLogger.hpp"
+#include "time/Timer.hpp"
 
 namespace windows {
 	void ConsoleLog::draw()
@@ -8,13 +9,12 @@ namespace windows {
 			if (ImGui::Button("clear"))
 				util::imguiConsoleBuffer.clear();
 
-			//TODO fps counter
-			/**
+			
 			ImGui::SameLine();
-			ImGui::Text("FPS: %.2f", utilities::resource::Time::getNumberFrame());
+			ImGui::Text("FPS: %.2f", engineTime::Timer::getFPS());
 			ImGui::SameLine();
-			ImGui::Text("Delta Time: %.4f", utilities::resource::Time::getDeltaTime());
-			ImGui::Separator();*/
+			ImGui::Text("Delta Time: %.4f", engineTime::Timer::getDeltaTime());
+
 			ImGui::Separator();
 			ImGui::PushStyleColor(ImGuiCol_ChildBg, { 0, 0, 0 ,255 });
 			ImGui::BeginChild("ScrollingRegion", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar);

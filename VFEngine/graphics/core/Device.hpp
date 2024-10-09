@@ -10,7 +10,7 @@ namespace window {
 }
 
 namespace core {
-
+	// TODO DeviceManager class for handle the Device and SwapChain
 	class Device
 	{
 	private:

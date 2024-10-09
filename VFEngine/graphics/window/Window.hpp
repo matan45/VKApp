@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.hpp>
 #include "GLFW/glfw3.h"
 #include <string_view>
-
+//TODO extrect to onther lib
 namespace window {
 	class Window
 	{

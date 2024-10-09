@@ -90,6 +90,9 @@
   <ItemGroup>
     <ClInclude Include="components\Components.hpp" />
     <ClInclude Include="print\EditorLogger.hpp" />
+    <ClInclude Include="time\Clock.hpp" />
+    <ClInclude Include="time\Timer.hpp" />
+    <ClInclude Include="time\Profiler.hpp" />
     <ClInclude Include="scene\Entity.hpp" />
     <ClInclude Include="print\Logger.hpp" />
     <ClInclude Include="math\MathHelper.hpp" />
@@ -100,6 +103,8 @@
     <ClInclude Include="string\StringUtil.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="time\Timer.cpp" />
+    <ClCompile Include="time\Profiler.cpp" />
     <ClCompile Include="scene\Entity.cpp" />
     <ClCompile Include="math\MathHelper.cpp" />
     <ClCompile Include="resource\ShaderResource.cpp" />

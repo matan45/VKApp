@@ -2,6 +2,7 @@
 #include "Graphics.hpp"
 #include "WindowController.hpp"
 #include "../interface/imguiHandler/ImguiWindowHandler.hpp"
+#include "time/Timer.hpp"
 
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
@@ -18,12 +19,15 @@ namespace core {
 	void MainLoop::init()
 	{
 		windowController->init();
+		engineTime::Timer::initialize();
 	}
 
 	void MainLoop::run()
 	{
 		while (!windowController->windowShouldClose()) {
 			windowController->windowPollEvents();
+
+			engineTime::Timer::update();
 
 			if (windowController->isWindowResized()) {
 				windowController->reSize();
