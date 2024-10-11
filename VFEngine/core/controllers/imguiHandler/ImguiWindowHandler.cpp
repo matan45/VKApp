@@ -2,7 +2,7 @@
 #include <ranges>  // C++20 ranges
 #include <algorithm> // std::ranges::remove
 
-namespace interface::imguiHandler {
+namespace controllers::imguiHandler {
 	void ImguiWindowHandler::add(const std::shared_ptr< ImguiWindow>& imguiWindow)
 	{
 		imguiWindows.push_back(imguiWindow);

@@ -1,7 +1,7 @@
 #include "OffScreen.hpp"
 #include "OffScreenController.hpp"
 
-namespace interface {
+namespace controllers {
 	OffScreen::OffScreen()
 	{
 		offScreenController = new controllers::OffScreenController();

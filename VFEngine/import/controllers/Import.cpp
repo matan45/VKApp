@@ -4,7 +4,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-namespace controller {
+namespace controllers {
 
 	void Import::importFiles(const std::vector<std::string>& paths)
 	{

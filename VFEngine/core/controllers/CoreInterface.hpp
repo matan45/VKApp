@@ -4,7 +4,7 @@ namespace core {
 	class MainLoop;
 }
 
-namespace interface {
+namespace controllers {
 
 	class CoreInterface
 	{

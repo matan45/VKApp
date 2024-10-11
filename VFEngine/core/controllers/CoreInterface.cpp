@@ -1,7 +1,7 @@
 #include "CoreInterface.hpp"
 #include "../core/MainLoop.hpp"
 
-namespace interface {
+namespace controllers {
 
 	CoreInterface::CoreInterface() : mainLoop{ new core::MainLoop() }
 	{

@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace windows {
-	class SceneGraph : public interface::imguiHandler::ImguiWindow
+	class SceneGraph : public controllers::imguiHandler::ImguiWindow
 	{
 	private:
 		entt::entity selected = entt::null;  // Currently selected entity

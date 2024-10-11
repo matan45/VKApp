@@ -16,7 +16,7 @@ namespace windows {
 	};
 
 
-	class ContentBrowser : public interface::imguiHandler::ImguiWindow
+	class ContentBrowser : public controllers::imguiHandler::ImguiWindow
 	{
 	private:
 		std::vector<Asset> assets;

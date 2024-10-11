@@ -3,7 +3,7 @@
 #include <memory>
 #include "ImguiWindow.hpp"
 
-namespace interface::imguiHandler {
+namespace controllers::imguiHandler {
 
 	class ImguiWindowHandler
 	{

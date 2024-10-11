@@ -24,15 +24,15 @@ project "Editor"
    files { "VFEngine/editor/**.hpp", "VFEngine/editor/**.cpp" }
    
    includedirs {
-      "VFEngine/core/interface",          -- Core headers need to fix this
 	  "dependencies/imgui",  
 	  "dependencies/ImGuizmo",   
 	  "dependencies/imgui-node-editor",
-	  "VFEngine/utilities",
 	  "dependencies/spdlog/include",
 	  "dependencies/glm",
 	  "dependencies/entt/single_include",
-	  "VFEngine/import/controller"
+	  "VFEngine/utilities",
+	  "VFEngine/core/controllers",     
+	  "VFEngine/import/controllers"
    }
 
    links {

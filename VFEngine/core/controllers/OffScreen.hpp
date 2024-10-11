@@ -1,9 +1,8 @@
 #pragma once
-namespace controllers {
-	class OffScreenController;
-}
 
-namespace interface {
+namespace controllers {
+
+	class OffScreenController;
 
 	class OffScreen
 	{

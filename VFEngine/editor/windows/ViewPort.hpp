@@ -7,12 +7,12 @@
 
 
 namespace windows {
-	class ViewPort : public interface::imguiHandler::ImguiWindow
+	class ViewPort : public controllers::imguiHandler::ImguiWindow
 	{
 	private:
-		interface::OffScreen& offscreen;
+		controllers::OffScreen& offscreen;
 	public:
-		explicit ViewPort(interface::OffScreen& offscreen);
+		explicit ViewPort(controllers::OffScreen& offscreen);
 		~ViewPort() override = default;
 
 		void draw() override;

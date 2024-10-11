@@ -3,7 +3,7 @@
 #include "imgui.h"
 
 namespace windows {
-	class MainImguiWindow : public interface::imguiHandler::ImguiWindow
+	class MainImguiWindow : public controllers::imguiHandler::ImguiWindow
 	{
 	private:
 		int windowFlags;

@@ -4,7 +4,7 @@
 
 struct aiScene;
 
-namespace controller {
+namespace controllers {
 	class Import
 	{
 	public:

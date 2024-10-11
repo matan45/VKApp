@@ -8,8 +8,8 @@ namespace handlers {
 	class EditorHandler
 	{
 	private:
-		std::unique_ptr<interface::CoreInterface> coreInterface;
-		interface::OffScreen* offScreenInterface;
+		std::unique_ptr<controllers::CoreInterface> coreInterface;
+		controllers::OffScreen* offScreenInterface;
 
 		std::unique_ptr<WindowImguiHandler> windowImguiHandler;
 
