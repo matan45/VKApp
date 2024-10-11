@@ -1,4 +1,5 @@
 #include "MainImguiWindow.hpp"
+#include "Import.hpp"
 
 namespace windows {
 	MainImguiWindow::MainImguiWindow() :isOpen{true}
@@ -43,7 +44,9 @@ namespace windows {
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Import")) {
-				if (ImGui::MenuItem("Meshes")) {}
+				if (ImGui::MenuItem("Meshes")) {
+					controller::Import::importFiles({});
+				}
 				else if (ImGui::MenuItem("Textures")) {}
 				else if (ImGui::MenuItem("Audio")) {}
 				else if (ImGui::MenuItem("Animation")) {}

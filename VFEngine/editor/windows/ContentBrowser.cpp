@@ -5,6 +5,7 @@
 namespace windows {
 	void ContentBrowser::draw()
 	{
+		//TODO also support right click add new file\folder etc
 		if (ImGui::Begin("Content Folder")) {
 			// Show current path and navigation options
 			ImGui::Text("Current Path: %s", StringUtil::wstringToUtf8(currentPath.wstring()).c_str());

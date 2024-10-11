@@ -25,6 +25,6 @@
 [submodule "dependencies/json"]
 	path = dependencies/json
 	url = https://github.com/nlohmann/json.git
-[submodule "dr_libs"]
-	path = dr_libs
+[submodule "dependencies/dr_libs"]
+	path = dependencies/dr_libs
 	url = https://github.com/mackron/dr_libs.git
