@@ -89,11 +89,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="components\Components.hpp" />
+    <ClInclude Include="config\Config.hpp" />
     <ClInclude Include="math\MathHelper.hpp" />
     <ClInclude Include="nfd\FileDialog.hpp" />
     <ClInclude Include="print\EditorLogger.hpp" />
     <ClInclude Include="print\Logger.hpp" />
     <ClInclude Include="resource\ShaderResource.hpp" />
+    <ClInclude Include="resource\Types.hpp" />
     <ClInclude Include="scene\Entity.hpp" />
     <ClInclude Include="scene\EntityRegistry.hpp" />
     <ClInclude Include="scene\SceneGraphSystem.hpp" />
