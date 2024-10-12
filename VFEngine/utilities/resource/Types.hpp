@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 #include <cstdint>
 #include <string>
@@ -29,6 +30,12 @@ namespace resource {
 		std::vector<uint32_t> indices;
 	};
 
+	struct Bone {
+		std::string name;                // Name of the bone
+		glm::mat4 offsetMatrix;          // Inverse Bind Pose Matrix (Bone's offset matrix)
+		std::vector<std::pair<uint32_t, float>> weights;  // Vertex index and weight pairs
+	};
+
 	struct Keyframe {
 		float time;
 		glm::vec3 position;
@@ -49,6 +56,7 @@ namespace resource {
 		float ticksPerSecond;
 		uint32_t numBones;
 		std::vector <BoneAnimation> boneAnimations;
+		std::vector<Bone> bones;
 	};
 
 	struct AudioData {

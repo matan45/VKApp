@@ -40,9 +40,9 @@ namespace scene {
 		EntityRegistry::getRegistry().destroy(entity.getHandle());
 	}
 
-	void SceneGraphSystem::moveEntity(Entity& entity, Entity& newParent)
+	void SceneGraphSystem::moveEntity(Entity& entity, Entity& newParent) const
 	{
-		if (!entity.isValid() || !newParent.isValid()) {
+		if (isDescendant(entity, newParent)) {
 			vfLogError("Invalid entity or parent.");
 			return;
 		}
@@ -113,6 +113,22 @@ namespace scene {
 				updateChildWorldTransforms(child, parentWorldTransform);
 			}
 		}
+	}
+
+	bool SceneGraphSystem::isDescendant(scene::Entity& parent, scene::Entity& child) const
+	{
+		if (!parent.isValid() || !child.isValid()) {
+			return false;
+		}
+
+		// Recursively check if any of the parent's children is the child or one of its descendants
+		for (auto& childEntity : parent.getChildren()) {
+			if (childEntity == child || isDescendant(childEntity, child)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 }

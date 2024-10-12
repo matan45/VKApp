@@ -14,7 +14,7 @@ namespace scene {
 		entt::entity addChild(Entity& parent,Entity& child) const;
 		void removeEntity(Entity& entity);
 
-		void moveEntity(Entity& entity, Entity& newParent);
+		void moveEntity(Entity& entity, Entity& newParent) const;
 
 		std::vector<Entity> findAllEntitiesByName(std::string_view name) const;
 
@@ -28,6 +28,8 @@ namespace scene {
 		void markTransformDirty(Entity& entity) const;
 
 		void updateChildWorldTransforms(Entity& parent, const glm::mat4& parentWorldTransform);
+
+		bool isDescendant(scene::Entity& parent,scene::Entity& child) const;
 	};
 
 }

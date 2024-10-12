@@ -26,7 +26,6 @@ namespace types {
 		// Store texture information
 		textureData.width = static_cast<uint32_t>(width);
 		textureData.height = static_cast<uint32_t>(height);
-		textureData.version = { 1, 0, 0 }; // Set version (modify as needed)
 
 		// Determine texture format based on channels
 		switch (channels) {

@@ -114,10 +114,16 @@ namespace scene {
 		// Add a child entity
 		void addChildren(Entity& child) {
 			// Add to the current entity's ChildrenComponent
-			auto& childrenComponent = addOrReplaceComponent<components::ChildrenComponent>();
-			childrenComponent.children.push_back(child.getHandle());
-
-			// Set the child's ParentComponent
+			if (hasComponent<components::ChildrenComponent>()) {
+				auto& childrenComponent = getComponent<components::ChildrenComponent>();
+				childrenComponent.children.push_back(child.getHandle());
+			}
+			else
+			{
+				auto& childrenComponent = addOrReplaceComponent<components::ChildrenComponent>();
+				childrenComponent.children.push_back(child.getHandle());
+			}
+			
 			child.addOrReplaceComponent<components::ParentComponent>().parent = this->entityHandle;
 		}
 

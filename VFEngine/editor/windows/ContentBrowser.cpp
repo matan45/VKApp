@@ -14,7 +14,8 @@ namespace windows {
 				auto parentPath = currentPath.parent_path();
 				navigateTo(parentPath);
 			}
-
+			//TODO open new window for animation mesh and texture
+			// also add icons
 			// Display contents of the current directory
 			for (const auto& asset : assets) {
 				switch (asset.type) {

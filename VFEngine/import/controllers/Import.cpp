@@ -1,50 +1,58 @@
 #include "Import.hpp"
+#include <filesystem> 
+#include <algorithm>
 #include <iostream>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
+
+namespace fs = std::filesystem;
 
 namespace controllers {
 
 	void Import::importFiles(const std::vector<std::string>& paths)
 	{
-		// Initialize the Assimp Importer
-		Assimp::Importer importer;
-
-		// Load a 3D model file (e.g., model.obj) with post-processing flags
-		const aiScene* scene = importer.ReadFile("../../resources/barrel.obj",
-			aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices);
-
-		// Check if the import was successful
-		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-			std::cerr << "Error importing model: " << importer.GetErrorString() << std::endl;
-			return;
-		}
-
-		// Print some basic information about the model's meshes
-		printMeshInfo(scene);
-	}
-
-	void Import::printMeshInfo(const aiScene* scene) {
-		if (!scene) {
-			std::cerr << "Error: No scene data available.\n";
-			return;
-		}
-
-		// Loop over all the meshes in the loaded scene
-		for (unsigned int i = 0; i < scene->mNumMeshes; ++i) {
-			const aiMesh* mesh = scene->mMeshes[i];
-			std::cout << "Mesh " << i << ": " << mesh->mName.C_Str() << std::endl;
-			std::cout << "Number of vertices: " << mesh->mNumVertices << std::endl;
-
-			// Print out positions of the first few vertices
-			std::cout << "First few vertex positions:\n";
-			for (unsigned int v = 0; v < std::min(mesh->mNumVertices, 5u); ++v) {
-				const aiVector3D& pos = mesh->mVertices[v];
-				std::cout << "  Vertex " << v << ": (" << pos.x << ", " << pos.y << ", " << pos.z << ")\n";
-			}
+		for (const auto& path : paths) {
+			//TODO should be anysc
+			processPath(path);
 		}
 	}
 
+	void Import::processPath(const std::string& path)
+	{
+		// Convert the string path to a std::filesystem::path object
+		fs::path fsPath(path);
+
+		// Get the file name
+		std::string fileName = fsPath.filename().string();
+		std::cout << "File name: " << fileName << std::endl;
+
+		// Get the file extension
+		std::string extension = fsPath.extension().string();
+		std::ranges::transform(extension.begin(), extension.end(), extension.begin(), ::tolower); // Convert to lowercase
+
+		if (extension.empty()) {
+			std::cerr << "No file extension found for path: " << path << std::endl;
+			return;
+		}
+
+		// Get the parent directory (path without file name and extension)
+		std::string directoryPath = fsPath.parent_path().string();
+		std::cout << "Directory path: " << directoryPath << std::endl;
+
+		// Use if-else to handle different file types
+		if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".hdr") {
+			// Handle texture files
+			//processTexture(path);
+		}
+		else if (extension == ".obj" || extension == ".fbx" || extension == ".dae" || extension == ".glTF") {
+			// Handle model and animations files
+			//processModel(path);
+		}
+		else if (extension == ".wav" || extension == ".mp3" || extension == ".ogg") {
+			// Handle model files
+			//processModel(path);
+		}
+		else {
+			std::cerr << "Unknown file extension: " << extension << std::endl;
+		}
+	}
 
 }

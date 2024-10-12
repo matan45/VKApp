@@ -140,7 +140,7 @@ namespace imguiPass {
 		style.Colors[ImGuiCol_Button] = ImVec4(0.15f, 0.15f, 0.30f, 1.00f);          // Midnight blue button
 		style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.25f, 0.25f, 0.50f, 1.00f);   // Brighter on hover
 		style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.90f, 0.75f, 0.10f, 1.00f);    // Gold when active
-		style.Colors[ImGuiCol_Header] = ImVec4(0.10f, 0.10f, 0.25f, 1.00f);          // Midnight blue header
+		style.Colors[ImGuiCol_Header] = ImVec4(0.9f, 0.3f, 0.3f, 0.8f);          // Midnight blue header
 		style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.20f, 0.20f, 0.40f, 1.00f);   // Lighter blue on hover
 		style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.90f, 0.75f, 0.10f, 1.00f);    // Gold when active
 		style.Colors[ImGuiCol_Separator] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);       // Default separator color
