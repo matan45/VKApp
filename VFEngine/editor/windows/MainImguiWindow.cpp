@@ -45,10 +45,31 @@ namespace windows {
 			}
 			if (ImGui::BeginMenu("Import")) {
 				if (ImGui::MenuItem("Meshes")) {
+					//TODO use glfw glfwSetDropCallback(window, drop_callback);
+					/* for import settings
+					if (ImGui::Button("Show Modal Popup"))
+			{
+				ImGui::OpenPopup("Modal Popup");
+			}
+
+			if (ImGui::BeginPopupModal("Modal Popup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				ImGui::Text("This is a modal popup!");
+
+				if (ImGui::Button("Close"))
+				{
+					ImGui::CloseCurrentPopup();
+				}
+
+				ImGui::EndPopup();
+			}
+					*/
 					controllers::Import::importFiles({});
 				}
-				else if (ImGui::MenuItem("Textures")) {}
-				else if (ImGui::MenuItem("Audio")) {}
+				else if (ImGui::MenuItem("Textures")) {
+				}
+				else if (ImGui::MenuItem("Audio")) {
+				}
 				else if (ImGui::MenuItem("Animation")) {}
 				ImGui::EndMenu();
 			}

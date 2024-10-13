@@ -7,6 +7,7 @@ namespace windows {
 	{
 		//add some styling here
 		if (ImGui::Begin("SceneGraph")) {
+
 			// Start with the root entity (this assumes you have a SceneGraph object with a root)
 			if (scene::EntityRegistry::getRegistry().valid(sceneGraphSystem->GetRoot().getHandle())) {
 				drawEntityNode(sceneGraphSystem->GetRoot());

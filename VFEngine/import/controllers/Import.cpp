@@ -40,6 +40,7 @@ namespace controllers {
 		// Use if-else to handle different file types
 		if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".hdr") {
 			// Handle texture files
+			// the path should be the path on context browser
 			//processTexture(path);
 		}
 		else if (extension == ".obj" || extension == ".fbx" || extension == ".dae" || extension == ".glTF") {
