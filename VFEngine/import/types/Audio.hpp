@@ -6,13 +6,13 @@ namespace types {
 	class Audio
 	{
 	public:
-		void loadFromFile(std::string_view path) const;
+		void loadFromFile(std::string_view path, std::string_view fileName, std::string_view extension, std::string_view location) const;
 
 	private:
-		void loadOggFile(std::string_view path) const;
-		void loadWavFile(std::string_view path) const;
-		void loadMp3File(std::string_view path) const;
-		void saveToFile(std::string_view path, const resource::AudioData& audioData) const;
+		void loadOggFile(std::string_view path, std::string_view fileName, std::string_view location) const;
+		void loadWavFile(std::string_view path, std::string_view fileName, std::string_view location) const;
+		void loadMp3File(std::string_view path, std::string_view fileName, std::string_view location) const;
+		void saveToFile(std::string_view location, std::string_view fileName, const resource::AudioData& audioData) const;
 	};
 }
 

@@ -1,21 +1,33 @@
 #include "Audio.hpp"
-#define STB_VORBIS_HEADER_ONLY
-#include <stb_vorbis.c>
-#define DR_MP3_IMPLEMENTATION
-#include <dr_mp3.h>
-#define DR_WAV_IMPLEMENTATION
-#include <dr_wav.h>
+
 #include <iostream>
 #include <vector>
 #include <fstream>
 #include <bit>  // For std::bit_cast
+#include <filesystem> 
+
+#define DR_MP3_IMPLEMENTATION
+#include <dr_mp3.h>
+#define DR_WAV_IMPLEMENTATION
+#include <dr_wav.h>
+#include <stb_vorbis.c>
+
 
 namespace types {
-	void Audio::loadFromFile(std::string_view path) const
+	void Audio::loadFromFile(std::string_view path, std::string_view fileName, std::string_view extension, std::string_view location) const
 	{
+		if (extension == "ogg") {
+			loadOggFile(path, fileName, location);
+		}
+		else if (extension == "wav") {
+			loadWavFile(path, fileName, location);
+		}
+		else if (extension == "mp3") {
+			loadMp3File(path, fileName, location);
+		}
 	}
 
-	void Audio::loadOggFile(std::string_view path) const
+	void Audio::loadOggFile(std::string_view path, std::string_view fileName, std::string_view location) const
 	{
 		resource::AudioData audioData;
 
@@ -41,13 +53,15 @@ namespace types {
 		audioData.data.resize(totalSamples);
 		stb_vorbis_get_samples_short_interleaved(vorbis, info.channels, audioData.data.data(), totalSamples);
 
+		saveToFile(location, fileName, audioData);
+
 		// Cleanup
 		stb_vorbis_close(vorbis);
 
 		std::cout << "Ogg Vorbis file loaded successfully!" << std::endl;
 	}
 
-	void Audio::loadWavFile(std::string_view path) const
+	void Audio::loadWavFile(std::string_view path, std::string_view fileName, std::string_view location) const
 	{
 		resource::AudioData audioData;
 
@@ -69,13 +83,15 @@ namespace types {
 		audioData.data.resize(wav.totalPCMFrameCount * wav.channels);
 		drwav_read_pcm_frames_s16(&wav, wav.totalPCMFrameCount, audioData.data.data());
 
+		saveToFile(location, fileName, audioData);
+
 		// Cleanup
 		drwav_uninit(&wav);
 
 		std::cout << "WAV file loaded successfully!" << std::endl;
 	}
 
-	void Audio::loadMp3File(std::string_view path) const
+	void Audio::loadMp3File(std::string_view path, std::string_view fileName, std::string_view location) const
 	{
 		resource::AudioData audioData;
 
@@ -100,17 +116,21 @@ namespace types {
 		audioData.data.resize(totalFrames * mp3.channels);
 		drmp3_read_pcm_frames_s16(&mp3, totalFrames, audioData.data.data());
 
+		saveToFile(location, fileName, audioData);
+
 		// Cleanup
 		drmp3_uninit(&mp3);
 
 		std::cout << "MP3 file loaded successfully!" << std::endl;
 	}
 
-	void Audio::saveToFile(std::string_view path, const resource::AudioData& audioData) const
+	void Audio::saveToFile(std::string_view location, std::string_view fileName, const resource::AudioData& audioData) const
 	{
-		std::ofstream outFile(path.data(), std::ios::binary);
+		// Open the file in binary mode
+		std::filesystem::path newFileLocation = std::filesystem::path(location) / (std::string(fileName) + FileExtension::audio);
+		std::ofstream outFile(newFileLocation, std::ios::binary);
 		if (!outFile) {
-			std::cerr << "Failed to open file for writing: " << path << std::endl;
+			std::cerr << "Failed to open file for writing: " << newFileLocation << std::endl;
 			return;
 		}
 
@@ -132,7 +152,7 @@ namespace types {
 
 		outFile.close();
 
-		std::cout << "Audio data saved to " << path << std::endl;
+		std::cout << "Audio data saved to " << newFileLocation << std::endl;
 	}
 }
 

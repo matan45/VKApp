@@ -3,13 +3,13 @@
 #include "resource/Types.hpp"
 
 namespace types {
-	class Textures
+	class Texture
 	{
 	public:
-		void loadFromFile(std::string_view path) const;
+		void loadFromFile(std::string_view path, std::string_view fileName, std::string_view location) const;
 
 	private:
-		void saveToFile(std::string_view path, const resource::TextureData& textureData) const;
+		void saveToFile(std::string_view fileName, std::string_view location, const resource::TextureData& textureData) const;
 	};
 }
 

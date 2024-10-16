@@ -15,6 +15,11 @@ namespace controllers {
 		}
 	}
 
+	void Import::setLocation(const std::string& newLocation)
+	{
+		location = newLocation;
+	}
+
 	void Import::processPath(const std::string& path)
 	{
 		// Convert the string path to a std::filesystem::path object
@@ -33,27 +38,36 @@ namespace controllers {
 			return;
 		}
 
-		// Get the parent directory (path without file name and extension)
-		std::string directoryPath = fsPath.parent_path().string();
-		std::cout << "Directory path: " << directoryPath << std::endl;
-
 		// Use if-else to handle different file types
 		if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".hdr") {
 			// Handle texture files
-			// the path should be the path on context browser
-			//processTexture(path);
+			processTexture(path, fileName, location);
 		}
 		else if (extension == ".obj" || extension == ".fbx" || extension == ".dae" || extension == ".glTF") {
 			// Handle model and animations files
-			//processModel(path);
+			processModel(path, fileName, extension, location);
 		}
 		else if (extension == ".wav" || extension == ".mp3" || extension == ".ogg") {
 			// Handle model files
-			//processModel(path);
+			processAudio(path, fileName, extension, location);
 		}
 		else {
 			std::cerr << "Unknown file extension: " << extension << std::endl;
 		}
+	}
+
+	void Import::processTexture(std::string_view path, std::string_view fileName, std::string_view location)
+	{
+		texture.loadFromFile(path, fileName, location);
+	}
+
+	void Import::processModel(std::string_view path, std::string_view fileName, std::string_view extension, std::string_view location)
+	{
+	}
+
+	void Import::processAudio(std::string_view path, std::string_view fileName, std::string_view extension, std::string_view location)
+	{
+		audio.loadFromFile(path, fileName, extension, location);
 	}
 
 }

@@ -4,11 +4,13 @@
 #include <vector>
 #include <fstream>
 #include <bit>  // For std::bit_cast
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include <stb_image.h>
+#include <filesystem> 
+
+#include "config/Config.hpp"
 
 namespace types {
-	void Textures::loadFromFile(std::string_view path) const
+	void Texture::loadFromFile(std::string_view path, std::string_view fileName, std::string_view location) const
 	{
 		resource::TextureData textureData;
 
@@ -20,7 +22,7 @@ namespace types {
 
 		if (!imageData) {
 			std::cerr << "Failed to load texture: " << path << std::endl;
-			return ; // Return
+			return; // Return
 		}
 
 		// Store texture information
@@ -29,7 +31,7 @@ namespace types {
 
 		// Determine texture format based on channels
 		switch (channels) {
-			case 1: textureData.textureFormat = "R"; break; // Red channel only
+			case 1: textureData.textureFormat = "R"; break; 
 			case 3: textureData.textureFormat = "RGB"; break;
 			case 4: textureData.textureFormat = "RGBA"; break;
 			default: textureData.textureFormat = "Unknown"; break;
@@ -41,16 +43,17 @@ namespace types {
 		// Free the image data once copied to the structure
 		stbi_image_free(imageData);
 
-		saveToFile(path, textureData);
+		saveToFile(fileName, location, textureData);
 	}
 
-	void Textures::saveToFile(std::string_view path, const resource::TextureData& textureData) const
+	void Texture::saveToFile(std::string_view fileName, std::string_view location, const resource::TextureData& textureData) const
 	{
 		// Open the file in binary mode
-		std::ofstream outFile(path.data(), std::ios::binary);
+		std::filesystem::path newFileLocation = std::filesystem::path(location) / (std::string(fileName) + FileExtension::textrue);
+		std::ofstream outFile(newFileLocation, std::ios::binary);
 
 		if (!outFile) {
-			std::cerr << "Failed to open file for writing: " << path << std::endl;
+			std::cerr << "Failed to open file for writing: " << newFileLocation << std::endl;
 			return;
 		}
 
@@ -76,6 +79,6 @@ namespace types {
 		// Close the file
 		outFile.close();
 
-		std::cout << "Texture data successfully saved to " << path << std::endl;
+		std::cout << "Texture data successfully saved to " << newFileLocation << std::endl;
 	}
 }
