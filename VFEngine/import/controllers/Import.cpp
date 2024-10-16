@@ -26,11 +26,12 @@ namespace controllers {
 		fs::path fsPath(path);
 
 		// Get the file name
-		std::string fileName = fsPath.filename().string();
+		std::string fileName = fsPath.stem().string();
 		std::cout << "File name: " << fileName << std::endl;
 
 		// Get the file extension
 		std::string extension = fsPath.extension().string();
+		extension.erase(std::find(extension.begin(), extension.end(), '\0'), extension.end());
 		std::ranges::transform(extension.begin(), extension.end(), extension.begin(), ::tolower); // Convert to lowercase
 
 		if (extension.empty()) {
@@ -45,7 +46,7 @@ namespace controllers {
 		}
 		else if (extension == ".obj" || extension == ".fbx" || extension == ".dae" || extension == ".glTF") {
 			// Handle model and animations files
-			processModel(path, fileName, extension, location);
+			processModel(path, fileName, location);
 		}
 		else if (extension == ".wav" || extension == ".mp3" || extension == ".ogg") {
 			// Handle model files
@@ -61,13 +62,13 @@ namespace controllers {
 		texture.loadFromFile(path, fileName, location);
 	}
 
-	void Import::processModel(std::string_view path, std::string_view fileName, std::string_view extension, std::string_view location)
+	void Import::processModel(std::string_view path, std::string_view fileName, std::string_view location)
 	{
+		mesh.loadFromFile(path, fileName, location);
 	}
 
 	void Import::processAudio(std::string_view path, std::string_view fileName, std::string_view extension, std::string_view location)
 	{
 		audio.loadFromFile(path, fileName, extension, location);
 	}
-
 }

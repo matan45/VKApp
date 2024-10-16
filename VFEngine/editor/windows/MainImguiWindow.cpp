@@ -1,5 +1,4 @@
 #include "MainImguiWindow.hpp"
-#include "Import.hpp"
 
 namespace windows {
 	MainImguiWindow::MainImguiWindow() :isOpen{true}
@@ -64,9 +63,17 @@ namespace windows {
 				ImGui::EndPopup();
 			}
 					*/
-					controllers::Import::importFiles({});
+					
 				}
 				else if (ImGui::MenuItem("Textures")) {
+				/*	std::vector<std::pair<std::wstring, std::wstring>> fileTypes = {
+						{ L"Text Files (*.txt)", L"*.txt" },
+						{ L"Image Files (*.png;*.jpg;*.bmp)", L"*.png;*.jpg;*.bmp" },
+						{ L"All Files (*.*)", L"*.*" }
+					};
+					std::vector<std::string> bla;
+					bla.push_back(fileDialog.openFileDialog(fileTypes));
+					controllers::Import::importFiles(bla);*/
 				}
 				else if (ImGui::MenuItem("Audio")) {
 				}

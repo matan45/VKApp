@@ -127,7 +127,7 @@ namespace types {
 	void Audio::saveToFile(std::string_view location, std::string_view fileName, const resource::AudioData& audioData) const
 	{
 		// Open the file in binary mode
-		std::filesystem::path newFileLocation = std::filesystem::path(location) / (std::string(fileName) + FileExtension::audio);
+		std::filesystem::path newFileLocation = std::filesystem::path(location) / (std::string(fileName) + "." + FileExtension::audio);
 		std::ofstream outFile(newFileLocation, std::ios::binary);
 		if (!outFile) {
 			std::cerr << "Failed to open file for writing: " << newFileLocation << std::endl;

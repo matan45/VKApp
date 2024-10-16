@@ -1,6 +1,7 @@
 #pragma once
 #include "imguiHandler/ImguiWindow.hpp"
 #include "imgui.h"
+#include "Import.hpp"
 
 
 #include <string>
@@ -33,6 +34,7 @@ namespace windows {
 		void navigateTo(const fs::path& path) {
 			if (fs::exists(path) && fs::is_directory(path)) {
 				currentPath = path;
+				controllers::Import::setLocation(currentPath.string());
 				loadDirectory(currentPath);
 			}
 		}

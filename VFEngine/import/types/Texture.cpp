@@ -31,10 +31,10 @@ namespace types {
 
 		// Determine texture format based on channels
 		switch (channels) {
-			case 1: textureData.textureFormat = "R"; break; 
-			case 3: textureData.textureFormat = "RGB"; break;
-			case 4: textureData.textureFormat = "RGBA"; break;
-			default: textureData.textureFormat = "Unknown"; break;
+		case 1: textureData.textureFormat = "R"; break;
+		case 3: textureData.textureFormat = "RGB"; break;
+		case 4: textureData.textureFormat = "RGBA"; break;
+		default: textureData.textureFormat = "Unknown"; break;
 		}
 
 		// Store raw texture data into the vector
@@ -49,7 +49,7 @@ namespace types {
 	void Texture::saveToFile(std::string_view fileName, std::string_view location, const resource::TextureData& textureData) const
 	{
 		// Open the file in binary mode
-		std::filesystem::path newFileLocation = std::filesystem::path(location) / (std::string(fileName) + FileExtension::textrue);
+		std::filesystem::path newFileLocation = std::filesystem::path(location) / (std::string(fileName) + "." + FileExtension::textrue);
 		std::ofstream outFile(newFileLocation, std::ios::binary);
 
 		if (!outFile) {

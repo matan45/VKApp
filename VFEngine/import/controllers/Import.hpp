@@ -21,7 +21,7 @@ namespace controllers {
 	private:
 		static void processPath(const std::string& path); 
 		static void processTexture(std::string_view path, std::string_view fileName, std::string_view location);
-		static void processModel(std::string_view path, std::string_view fileName, std::string_view extension, std::string_view location);
+		static void processModel(std::string_view path, std::string_view fileName, std::string_view location);
 		static void processAudio(std::string_view path, std::string_view fileName, std::string_view extension, std::string_view location);
 	};
 }
