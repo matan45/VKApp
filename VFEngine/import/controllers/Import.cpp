@@ -44,7 +44,7 @@ namespace controllers {
 			// Handle texture files
 			processTexture(path, fileName, location);
 		}
-		else if (extension == ".obj" || extension == ".fbx" || extension == ".dae" || extension == ".glTF") {
+		else if (extension == ".obj" || extension == ".fbx" || extension == ".dae" || extension == ".gltf") {
 			// Handle model and animations files
 			processModel(path, fileName, location);
 		}

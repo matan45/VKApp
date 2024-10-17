@@ -1,4 +1,6 @@
 #include "MainImguiWindow.hpp"
+#include "Import.hpp"
+#include "print/EditorLogger.hpp"
 
 namespace windows {
 	MainImguiWindow::MainImguiWindow() :isOpen{true}
@@ -27,6 +29,11 @@ namespace windows {
 
 	void MainImguiWindow::menuBar()
 	{
+		if (openModal) {
+			ImGui::OpenPopup("Import Model");
+		}
+		
+		importModel();
 		if (ImGui::BeginMainMenuBar()) {
 			if (ImGui::BeginMenu("File")) {
 				if (ImGui::MenuItem("New Level")) {}
@@ -38,49 +45,65 @@ namespace windows {
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Settings")) {
-				if (ImGui::MenuItem("Editor Camera")) {}
+				if (ImGui::MenuItem("Import")) {
+					files.clear();
+					std::vector<std::pair<std::wstring, std::wstring>> fileTypes = {
+							{ L"Model Files (*.obj;*.fbx;*.dae;*.gltf)", L"*.obj;*.fbx;*.dae;*.gltf" },
+							{ L"Image Files (*.png;*.jpg;*.jpeg;*.hdr)", L"*.png;*.jpg;*.jpeg;*.hdr" },
+							{ L"Audio Files (*.wav;*.ogg:*.mp3)", L"*.wav;*.ogg;*.mp3" }
+					};
+					try
+					{
+						files.push_back(fileDialog.openFileDialog(fileTypes));
+						if (!files.empty()) {
+							openModal = true;
+						}
+					}
+					catch (...)
+					{
+						vfLogInfo("native file dalog close");
+					}
+					
+				}
+				else if (ImGui::MenuItem("Editor Camera")) {}
 				else if (ImGui::MenuItem("Layout Style")) {}
 				ImGui::EndMenu();
 			}
-			if (ImGui::BeginMenu("Import")) {
-				if (ImGui::MenuItem("Meshes")) {
-					//TODO use glfw glfwSetDropCallback(window, drop_callback);
-					/* for import settings
-					if (ImGui::Button("Show Modal Popup"))
-			{
-				ImGui::OpenPopup("Modal Popup");
-			}
-
-			if (ImGui::BeginPopupModal("Modal Popup", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-			{
-				ImGui::Text("This is a modal popup!");
-
-				if (ImGui::Button("Close"))
-				{
-					ImGui::CloseCurrentPopup();
-				}
-
-				ImGui::EndPopup();
-			}
-					*/
-					
-				}
-				else if (ImGui::MenuItem("Textures")) {
-				/*	std::vector<std::pair<std::wstring, std::wstring>> fileTypes = {
-						{ L"Text Files (*.txt)", L"*.txt" },
-						{ L"Image Files (*.png;*.jpg;*.bmp)", L"*.png;*.jpg;*.bmp" },
-						{ L"All Files (*.*)", L"*.*" }
-					};
-					std::vector<std::string> bla;
-					bla.push_back(fileDialog.openFileDialog(fileTypes));
-					controllers::Import::importFiles(bla);*/
-				}
-				else if (ImGui::MenuItem("Audio")) {
-				}
-				else if (ImGui::MenuItem("Animation")) {}
-				ImGui::EndMenu();
-			}
+			
 			ImGui::EndMainMenuBar();
 		}
+	}
+	void MainImguiWindow::importModel()
+	{
+		// Check if the popup modal is open
+		if (ImGui::BeginPopupModal("Import Model", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::Text("Files Dropped:");
+
+			// Display the dropped files in the modal popup
+			for (const auto& file : files)
+			{
+				ImGui::BulletText("%s", file.c_str());
+			}
+
+			if (ImGui::Button("Continue"))
+			{
+				controllers::Import::importFiles(files);
+				ImGui::CloseCurrentPopup(); // Close the popup
+				openModal = false; // Reset the flag
+			}
+
+			ImGui::SameLine();
+			ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Close").x - ImGui::GetStyle().FramePadding.x * 2);
+
+			if (ImGui::Button("Close"))
+			{
+				ImGui::CloseCurrentPopup(); // Close the popup
+				openModal = false; // Reset the flag
+			}
+
+			ImGui::EndPopup(); // End the modal
+		}
+	
 	}
 }
