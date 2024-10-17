@@ -31,11 +31,29 @@ namespace resource {
 		uint32_t dataSize;
 		inFile.read(std::bit_cast<char*>(&dataSize), sizeof(dataSize));
 
-		// Resize the data vector to hold the raw audio samples
-		audioData.data.resize(dataSize);
+		size_t bytesRemaining = dataSize;
 
-		// Read the actual raw audio data
-		inFile.read(std::bit_cast<char*>(audioData.data.data()), dataSize * sizeof(short));
+		audioData.data.reserve(dataSize);  // Reserve space for the entire buffer if needed
+		size_t currentOffset = 0;
+
+		while (bytesRemaining > 0) {
+			size_t bytesToRead = std::min(chunkSize, bytesRemaining);
+
+			// Read chunk
+			std::vector<short> buffer(bytesToRead / sizeof(short));
+			inFile.read(std::bit_cast<char*>(buffer.data()), bytesToRead);
+
+			// Process or play this chunk (e.g., feeding it to an audio buffer)
+			audioData.data.insert(audioData.data.end(), buffer.begin(), buffer.end());
+
+			currentOffset += bytesToRead;
+			bytesRemaining -= bytesToRead;
+
+			// Optionally, play the chunk in an audio engine here
+			// playAudioChunk(buffer);
+
+			std::cout << "Loaded " << currentOffset << " / " << dataSize << " bytes of audio data." << std::endl;
+		}
 
 		std::cout << "Texture data successfully loaded from " << path << std::endl;
 		return audioData;

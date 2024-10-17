@@ -35,7 +35,24 @@ namespace resource {
 		uint32_t textureDataSize;
 		inFile.read(std::bit_cast<char*>(&textureDataSize), sizeof(textureDataSize)); // Read the size of the texture data
 		textureData.textureData.resize(textureDataSize);                                  // Resize the textureData vector
-		inFile.read(std::bit_cast<char*>(textureData.textureData.data()), textureDataSize); // Read the raw texture data
+
+		size_t bytesRemaining = textureDataSize;
+
+		textureData.textureData.resize(textureDataSize);  // Reserve space in advance if possible
+		size_t currentOffset = 0;
+
+		while (bytesRemaining > 0) {
+			size_t bytesToRead = std::min(chunkSize, bytesRemaining);
+
+			// Read chunk into memory
+			inFile.read(std::bit_cast<char*>(&textureData.textureData[currentOffset]), bytesToRead);
+
+			currentOffset += bytesToRead;
+			bytesRemaining -= bytesToRead;
+
+			// Provide a progress update (optional, but useful for large files)
+			std::cout << "Loaded " << currentOffset << " / " << textureDataSize << " bytes of texture data." << std::endl;
+		}
 
 		// Close the file
 		inFile.close();
