@@ -11,7 +11,7 @@ namespace types {
 
 	private:
 		
-		void saveToFile(std::string_view location, std::string_view fileName, const resource::Mesh& meshData) const;
+		void saveToFile(std::string_view location, std::string_view fileName, const resource::MeshData& meshData) const;
 		void processAssimpScene(const aiScene* scene, std::string_view fileName, std::string_view location) const;
 	};
 

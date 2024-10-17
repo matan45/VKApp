@@ -1,7 +1,6 @@
 #include "Window.hpp"
 #include "print/Logger.hpp"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "resource/TextureResource.hpp"
 
 
 namespace window {
@@ -24,7 +23,7 @@ namespace window {
 		glfwSetWindowUserPointer(window, this); // Set the user pointer to access the class
 		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 
-		setWindowIcon("../../resources/editor/VertexForge-icon.png");
+		setWindowIcon("../../resources/editor/VertexForge-icon.vfImage");
 	}
 
 	void Window::framebufferResizeCallback(GLFWwindow* window, int width, int height)
@@ -62,27 +61,16 @@ namespace window {
 	}
 
 	void Window::setWindowIcon(std::string_view iconPath) {
-		// Load image using stb_image
-		//TODO move it to resource menger
-		int width, height, channels;
-		unsigned char* imageData = stbi_load(iconPath.data(), &width, &height, &channels, 4); // 4 channels = RGBA
-
-		if (imageData == nullptr) {
-			loggerError("Failed to load icon image!");
-			return;
-		}
+		resource::TextureData iconData = resource::TextureResource::loadTexture(iconPath);
 
 		// Create GLFWimage and assign the loaded image data
 		GLFWimage icon;
-		icon.width = width;
-		icon.height = height;
-		icon.pixels = imageData;
+		icon.width = iconData.width;
+		icon.height = iconData.height;
+		icon.pixels = iconData.textureData.data();
 
 		// Set the icon for the GLFW window
 		glfwSetWindowIcon(window, 1, &icon);
-
-		// Free the image data after setting the icon
-		stbi_image_free(imageData);
 	}
 
 }

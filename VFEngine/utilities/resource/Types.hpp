@@ -24,7 +24,7 @@ namespace resource {
 		glm::vec2 texCoords;
 	};
 
-	struct Mesh {
+	struct MeshData {
 		Version version;
 		std::vector<Vertex> vertices;
 		std::vector<uint32_t> indices;

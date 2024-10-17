@@ -25,7 +25,7 @@ namespace types {
 		processAssimpScene(scene, fileName, location);
 	}
 
-	void Mesh::saveToFile(std::string_view location, std::string_view fileName, const resource::Mesh& meshData) const
+	void Mesh::saveToFile(std::string_view location, std::string_view fileName, const resource::MeshData& meshData) const
 	{
 		// Open the file in binary mode
 		std::filesystem::path newFileLocation = std::filesystem::path(location) / (std::string(fileName) + "." + FileExtension::mesh);
@@ -37,7 +37,9 @@ namespace types {
 		}
 
 		// Serialize the mesh data (this is just an example, adapt to your format)
-		outFile.write(std::bit_cast<const char*>(&meshData.version), sizeof(meshData.version));
+		outFile.write(std::bit_cast<const char*>(&meshData.version.major), sizeof(meshData.version.major));
+		outFile.write(std::bit_cast<const char*>(&meshData.version.minor), sizeof(meshData.version.minor));
+		outFile.write(std::bit_cast<const char*>(&meshData.version.patch), sizeof(meshData.version.patch));
 
 		// Save vertices
 		size_t vertexCount = meshData.vertices.size();
@@ -51,9 +53,10 @@ namespace types {
 
 		outFile.close();
 	}
+
 	void Mesh::processAssimpScene(const aiScene* scene, std::string_view fileName, std::string_view location) const
 	{
-		resource::Mesh meshData;
+		resource::MeshData meshData;
 		// Loop over each mesh in the scene
 		for (unsigned int i = 0; i < scene->mNumMeshes; ++i) {
 			const aiMesh* assimpMesh = scene->mMeshes[i];

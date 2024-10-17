@@ -1,5 +1,5 @@
 #include "Texture.hpp"
-
+#define STB_IMAGE_IMPLEMENTATION
 #include <iostream>
 #include <vector>
 #include <fstream>
