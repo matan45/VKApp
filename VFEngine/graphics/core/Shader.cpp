@@ -1,9 +1,7 @@
 #include "Shader.hpp"
 #include "Device.hpp"
-#include "print/Logger.hpp"
-#include <iostream>     // For input-output operations
-#include <fstream>      // For file handling (ifstream)
-#include <string>       // For using std::string to read lines
+#include "print/Logger.hpp"  
+#include <filesystem>
 
 namespace core {
 	Shader::Shader(Device& device) :device{ device }
@@ -11,33 +9,30 @@ namespace core {
 
 	}
 
-	void Shader::readShader(std::string_view path, vk::ShaderStageFlagBits stage, std::string_view shaderName)
+	void Shader::readShader(std::string_view path)
 	{
-		// Compile GLSL to SPIR-V
-		std::vector<uint32_t> spirvCode = compileShaderToSPIRV(path, stage, shaderName);
-		// Create Vulkan shader module
-		createShaderModule(spirvCode);
-	}
+		std::vector<resource::ShaderModel> shaders = resource::ShaderResource::readShaderFile(path);
+		// Extract the shader name from the file path
+		std::string shaderName = std::filesystem::path(path).stem().string();
 
-	vk::PipelineShaderStageCreateInfo Shader::createShaderStage() const
-	{
-		vk::PipelineShaderStageCreateInfo shaderStageInfo{};
-		shaderStageInfo.stage = stageShader;
-		shaderStageInfo.module = shaderModule.get();
-		shaderStageInfo.pName = "main";  // Entry point function in the shader
-		return shaderStageInfo;
+		for (const auto& shader : shaders) {
+			vk::ShaderStageFlagBits stage = shaderTypeToVulkanStage(shader.type);
+			// Compile GLSL to SPIR-V
+			std::vector<uint32_t> spirvCode = compileShaderToSPIRV(shader.source, stage, shaderName);
+			// Create Vulkan shader module
+			createShaderModule(spirvCode, stage);
+		}
+		
 	}
 
 	void Shader::cleanUp()
 	{
-		shaderModule.reset();
+		shaderModules.clear();
 	}
 
-	std::vector<uint32_t> Shader::compileShaderToSPIRV(std::string_view path, vk::ShaderStageFlagBits stage, std::string_view shaderName)
+	std::vector<uint32_t> Shader::compileShaderToSPIRV(std::string_view source, vk::ShaderStageFlagBits stage, std::string_view shaderName) const
 	{
-		std::string fileContent = readFile(path);
 		shaderc_shader_kind kind;
-		stageShader = stage;
 
 		// Map Vulkan shader stage to shaderc shader kind
 		switch (stage) {
@@ -58,7 +53,7 @@ namespace core {
 		options.SetOptimizationLevel(shaderc_optimization_level_performance);
 
 		// Compile GLSL to SPIR-V
-		shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(fileContent, kind, shaderName.data(), options);
+		shaderc::SpvCompilationResult result = compiler.CompileGlslToSpv(source.data(), kind, shaderName.data(), options);
 
 		// Check for compilation errors
 		if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
@@ -70,31 +65,45 @@ namespace core {
 		return { result.cbegin(), result.cend() };
 	}
 
-	void Shader::createShaderModule(const std::vector<uint32_t>& code)
+	void Shader::createShaderModule(const std::vector<uint32_t>& code, vk::ShaderStageFlagBits stage)
 	{
 		vk::ShaderModuleCreateInfo createInfo{};
-		createInfo.codeSize = code.size() * sizeof(uint32_t);  // SPIR-V is a vector of 32-bit words
+		createInfo.codeSize = code.size() * sizeof(uint32_t);
 		createInfo.pCode = code.data();
 
-		shaderModule = device.getLogicalDevice().createShaderModuleUnique(createInfo);
+		vk::UniqueShaderModule shaderModule = device.getLogicalDevice().createShaderModuleUnique(createInfo);
+
+		vk::PipelineShaderStageCreateInfo shaderStageInfo{};
+		shaderStageInfo.stage = stage;
+		shaderStageInfo.module = shaderModule.get();
+		shaderStageInfo.pName = "main";  // Entry point function in the shader
+
+		// Store the created shader resource and stage info
+		shaderModules.push_back(std::move(shaderModule));
+		shaderStages.push_back(shaderStageInfo);
 	}
 
-	std::string Shader::readFile(std::string_view path) const
+	vk::ShaderStageFlagBits Shader::shaderTypeToVulkanStage(resource::ShaderType shaderType) const
 	{
-		std::ifstream file(path.data());  // Create input file stream
-		std::string file_content;
-		if (file.is_open()) {
-			std::stringstream buffer;
-			buffer << file.rdbuf();  // Read the entire file into a stringstream
-			file_content = buffer.str();  // Convert the stringstream to a string
-
-
-			file.close();  // Close the file when done
+		switch (shaderType) {
+		using enum vk::ShaderStageFlagBits;
+		using enum resource::ShaderType;
+		case VERTEX:
+			return eVertex;
+		case FRAGMENT:
+			return eFragment;
+		case COMPUTE:
+			return eCompute;
+		case GEOMETRY:
+			return eGeometry;
+		case TESS_CONTROL:
+			return eTessellationControl;
+		case TESS_EVALUATION:
+			return eTessellationEvaluation;
+		default:
+			loggerError("Unsupported ShaderType.");
+			return vk::ShaderStageFlagBits();
 		}
-		else {
-			std::cout << "Failed to open the file." << std::endl;
-		}
-		return file_content;
 	}
 
 }

@@ -4,6 +4,7 @@
 #include <shaderc/shaderc.hpp>
 #include <string>
 #include <string_view>
+#include "resource/ShaderResource.hpp" 
 
 namespace core {
 	class Device;
@@ -12,25 +13,21 @@ namespace core {
 	{
 	private:
 		Device& device;
-		vk::UniqueShaderModule shaderModule;
-		vk::ShaderStageFlagBits stageShader;
+		std::vector<vk::UniqueShaderModule> shaderModules;
+		std::vector<vk::PipelineShaderStageCreateInfo> shaderStages;
+
 	public:
 		explicit Shader(Device& device);
 		~Shader() = default;
 
-		//TODO move it to the resource class
-		void readShader(std::string_view path, vk::ShaderStageFlagBits stage, std::string_view shaderName);
-
-		vk::PipelineShaderStageCreateInfo createShaderStage() const;
-		const vk::ShaderModule& getShaderModule() const { return shaderModule.get(); }
+		void readShader(std::string_view path);
+		const std::vector<vk::PipelineShaderStageCreateInfo>& getShaderStages() const { return shaderStages; }
 
 		void cleanUp();
 	private:
-		std::vector<uint32_t> compileShaderToSPIRV(std::string_view path, vk::ShaderStageFlagBits stage, std::string_view shaderName);
-		void createShaderModule(const std::vector<uint32_t>& code);
-
-		//TODO move it to the resource class
-		std::string readFile(std::string_view path) const;
+		std::vector<uint32_t> compileShaderToSPIRV(std::string_view path, vk::ShaderStageFlagBits stage, std::string_view shaderName) const;
+		void createShaderModule(const std::vector<uint32_t>& code, vk::ShaderStageFlagBits stage);
+		vk::ShaderStageFlagBits shaderTypeToVulkanStage(resource::ShaderType shaderType) const;
 	};
 }
 

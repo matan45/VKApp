@@ -13,11 +13,9 @@ namespace render {
 
 	void TriangleRenderer::init()
 	{
-		vertex = new core::Shader(device);
-		fragment = new core::Shader(device);
+		triangle = new core::Shader(device);
 
-		vertex->readShader("../../resources/shaders/TriangleVer.txt", vk::ShaderStageFlagBits::eVertex, "TriangleVer");
-		fragment->readShader("../../resources/shaders/TriangleFrag.txt", vk::ShaderStageFlagBits::eFragment, "TriangleFrag");
+		triangle->readShader("../../resources/shaders/Triangle.glsl");
 
 		bindingDescription();
 		attributeDescriptions();
@@ -46,8 +44,7 @@ namespace render {
 	void TriangleRenderer::cleanUp() const
 	{
 		// Cleanup shader modules
-		vertex->cleanUp();
-		fragment->cleanUp();
+		triangle->cleanUp();
 
 		for (auto framebuffer : framebuffers) {
 			device.getLogicalDevice().destroyFramebuffer(framebuffer);
@@ -62,8 +59,7 @@ namespace render {
 		device.getLogicalDevice().destroyBuffer(vertexBuffer);
 		device.getLogicalDevice().freeMemory(vertexBufferMemory);
 
-		delete vertex;
-		delete fragment;
+		delete triangle;
 	}
 
 	void TriangleRenderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex) const
@@ -87,7 +83,7 @@ namespace render {
 		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
 
 		// Bind the vertex buffer
-		vk::DeviceSize offsets[] = { 0 };
+		std::array<vk::DeviceSize, 1> offsets = { 0 };
 		commandBuffer.bindVertexBuffers(0, vertexBuffer, offsets);
 
 		// Draw the triangle
@@ -135,9 +131,6 @@ namespace render {
 
 	void TriangleRenderer::createGraphicsPipeline()
 	{
-
-		std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages = { vertex->createShaderStage(), fragment->createShaderStage() };
-
 		vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.vertexBindingDescriptionCount = 1;
 		vertexInputInfo.pVertexBindingDescriptions = &vertexInputBindingDescription;
@@ -195,8 +188,8 @@ namespace render {
 		pipelineLayout = device.getLogicalDevice().createPipelineLayout(pipelineLayoutInfo);
 
 		vk::GraphicsPipelineCreateInfo pipelineInfo{};
-		pipelineInfo.stageCount = 2;
-		pipelineInfo.pStages = shaderStages.data();
+		pipelineInfo.stageCount = static_cast<uint32_t>(triangle->getShaderStages().size());
+		pipelineInfo.pStages = triangle->getShaderStages().data();
 		pipelineInfo.pVertexInputState = &vertexInputInfo;
 		pipelineInfo.pInputAssemblyState = &inputAssembly;
 		pipelineInfo.pViewportState = &viewportState;
