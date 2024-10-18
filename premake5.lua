@@ -62,8 +62,10 @@ project "Core"
    
    includedirs {
       "VFEngine/graphics/controllers",   -- Graphics headers
+      "VFEngine/window/controllers",   -- Graphics headers
       "VFEngine/utilities",             -- Utilities headers (if used in Core)
 	  "dependencies/imgui",
+	  "dependencies/glfw/include",
 	  "dependencies/imgui/backends",
 	  vulkanLibPath.."/Include"	  
    }
@@ -142,6 +144,7 @@ project "Graphics"
       "dependencies/glm",
       "dependencies/stb",
       "VFEngine/utilities",           -- Utilities headers
+      "VFEngine/window/controllers",           -- Utilities headers
       vulkanLibPath.."/Include"
    }
 
@@ -152,7 +155,7 @@ project "Graphics"
    }
 
    links {
-      "GLFW",
+      "Window",
       "Utilities",                    -- Link against Utilities project
 	  "imgui"
    }
@@ -178,8 +181,8 @@ project "Runtime"
    files { "VFEngine/runtime/**.hpp", "VFEngine/runtime/**.cpp" }
 
    includedirs {
-      "VFEngine/core/interface",
-      "VFEngine/graphics/interface"
+      "VFEngine/core/controllers",
+      "VFEngine/graphics/controllers"
    }
 
    links { "Core"}  -- Link against Core and Graphics
@@ -209,6 +212,38 @@ project "Utilities"
    }
 
    links { "spdLog" }
+
+   filter "configurations:Debug"
+      defines { "DEBUG" }
+      symbols "On"
+
+   filter "configurations:Release"
+      defines { "NDEBUG" }
+      optimize "On"
+	  
+	  
+-- Project 6: Window
+project "Window"
+   kind "StaticLib"
+   language "C++"
+   cppdialect "C++20"
+   location "VFEngine/Window"
+   targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
+
+   files { "VFEngine/window/**.hpp", "VFEngine/window/**.cpp" }
+
+   includedirs {
+      "dependencies/glfw/include",
+	  "VFEngine/utilities",
+	  "dependencies/glm",
+	  "dependencies/spdlog/include",
+      vulkanLibPath.."/Include"
+   }
+   
+   defines { "_CRT_SECURE_NO_WARNINGS" }
+
+   links {  "GLFW",
+			"Utilities"}  -- Link against Core and Graphics
 
    filter "configurations:Debug"
       defines { "DEBUG" }

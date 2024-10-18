@@ -23,7 +23,7 @@ namespace core {
 	private:
 		Device& device;
 		SwapChain& swapChain;
-		window::Window& window;
+		const window::Window* window;
 		CommandPool* commandPool{ nullptr };
 		//render::RenderPassHandler* renderPassHandler{ nullptr };
 		imguiPass::ImguiRender* imguiRender{ nullptr };
@@ -33,7 +33,7 @@ namespace core {
 		vk::Fence renderFence;
 
 	public:
-		explicit RenderManager(Device& device, SwapChain& swapChain, window::Window& window);
+		explicit RenderManager(Device& device, SwapChain& swapChain,const window::Window* window);
 		~RenderManager();
 
 		void init();

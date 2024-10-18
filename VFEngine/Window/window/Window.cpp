@@ -6,7 +6,7 @@
 namespace window {
 	void Window::initWindow()
 	{
-		if(!glfwInit()) {
+		if (!glfwInit()) {
 			loggerError("Unable to initialize GLFW");
 		}
 
@@ -34,14 +34,14 @@ namespace window {
 		userWindow->isResized = true;
 	}
 
-	void Window::createWindowSurface(const vk::UniqueInstance& instance, vk::SurfaceKHR& surface)
+	vk::SurfaceKHR Window::createWindowSurface(const vk::UniqueInstance& instance) const
 	{
 		VkSurfaceKHR rawSurface;
 		VkResult result = glfwCreateWindowSurface(*instance, window, nullptr, &rawSurface);
 		loggerAssert(result != VK_SUCCESS,
 			"failed to create window surface!");
 
-		surface = vk::SurfaceKHR(rawSurface);
+		return vk::SurfaceKHR(rawSurface);
 	}
 
 	void Window::cleanup()

@@ -11,7 +11,7 @@
 
 namespace imguiPass {
 
-	ImguiRender::ImguiRender(core::Device& device, core::SwapChain& swapChain, core::CommandPool& commandPool, window::Window& window) :
+	ImguiRender::ImguiRender(core::Device& device, core::SwapChain& swapChain, core::CommandPool& commandPool,const window::Window* window) :
 		device{ device }, swapChain{ swapChain }, commandPool{ commandPool }, window{ window }
 	{
 
@@ -28,7 +28,7 @@ namespace imguiPass {
 		createFrameBuffers();
 
 		// Setup Platform/Renderer back ends
-		ImGui_ImplGlfw_InitForVulkan(window.getWindowPtr(), true);
+		ImGui_ImplGlfw_InitForVulkan(window->getWindowPtr(), true);
 		ImGui_ImplVulkan_InitInfo initInfo{};
 		initInfo.Instance = device.getInstance();
 		initInfo.PhysicalDevice = device.getPhysicalDevice();

@@ -12,13 +12,13 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBits
 	void* pUserData) {
 
 	if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-		loggerWarning("Validation layer: {}", pCallbackData->pMessage);
+		loggerWarning("Validation layer warning: {}", pCallbackData->pMessage);
 	}
 	else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-		loggerError("Validation layer ERROR: {}", pCallbackData->pMessage);
+		loggerError("Validation layer error: {}", pCallbackData->pMessage);
 	}
 	else {
-		loggerInfo("Validation layer: {}", pCallbackData->pMessage);
+		loggerInfo("Validation layer message: {}", pCallbackData->pMessage);
 	}
 	return VK_FALSE;
 }
@@ -26,7 +26,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBits
 
 namespace core {
 
-	Device::Device(window::Window& window) : window{ window } {}
+	Device::Device(const window::Window* window) : window{ window } {}
 
 	void Device::init()
 	{
@@ -38,17 +38,14 @@ namespace core {
 
 	void Device::cleanUp()
 	{
-		if (logicalDevice) {
-			logicalDevice.waitIdle();
-			logicalDevice.destroy();
+		if (surface) {
+			instance->destroySurfaceKHR(surface);
 		}
+
+		logicalDevice.reset();
 
 		if (debug && debugMessenger) {
 			instance->destroyDebugUtilsMessengerEXT(debugMessenger, nullptr, dldi);
-		}
-
-		if (surface) {
-			instance->destroySurfaceKHR(surface);
 		}
 	}
 
@@ -110,7 +107,7 @@ namespace core {
 			}
 		}
 
-		window.createWindowSurface(instance, surface);
+		surface = window->createWindowSurface(instance);
 	}
 
 	std::vector<const char*> Device::getRequiredExtensions() const
@@ -129,7 +126,6 @@ namespace core {
 
 	void Device::createDebugMessenger()
 	{
-
 		using enum vk::DebugUtilsMessageTypeFlagBitsEXT;
 		if (!debug) return;
 
@@ -170,7 +166,7 @@ namespace core {
 		if (!physicalDevice) {
 			loggerError("Failed to find a suitable GPU!");
 		}
-		
+
 	}
 
 	void Device::createLogicalDevice()
@@ -201,9 +197,9 @@ namespace core {
 		}
 
 		try {
-			logicalDevice = physicalDevice.createDevice(createInfo);
-			graphicsAndComputeQueue = logicalDevice.getQueue(queueFamilyIndices.graphicsAndComputeFamily.value(), 0);
-			presentQueue = logicalDevice.getQueue(queueFamilyIndices.presentFamily.value(), 0);
+			logicalDevice = physicalDevice.createDeviceUnique(createInfo);
+			graphicsAndComputeQueue = logicalDevice.get().getQueue(queueFamilyIndices.graphicsAndComputeFamily.value(), 0);
+			presentQueue = logicalDevice.get().getQueue(queueFamilyIndices.presentFamily.value(), 0);
 		}
 		catch (const vk::SystemError& err) {
 			loggerError("Failed to create logical device: {}", err.what());
@@ -233,15 +229,15 @@ namespace core {
 
 	bool Device::isDeviceSuitable(const vk::PhysicalDevice& device) const
 	{
-		const QueueFamilyIndices indices = Utilities::findQueueFamiliesFromDevice(device,surface);
+		const QueueFamilyIndices indices = Utilities::findQueueFamiliesFromDevice(device, surface);
 
 		const bool extensionsSupported = checkDeviceExtensionSupport(device);
 		const vk::PhysicalDeviceFeatures supportedFeatures = device.getFeatures();
 		const vk::PhysicalDeviceProperties deviceProperties = device.getProperties();
 
-		return indices.isComplete() && 
-			extensionsSupported && 
-			supportedFeatures.samplerAnisotropy && 
+		return indices.isComplete() &&
+			extensionsSupported &&
+			supportedFeatures.samplerAnisotropy &&
 			deviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu;
 	}
 

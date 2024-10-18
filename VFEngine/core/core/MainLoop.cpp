@@ -1,7 +1,8 @@
 #include "MainLoop.hpp"
 #include "Graphics.hpp"
-#include "WindowController.hpp"
+#include "RenderController.hpp"
 #include "../controllers/imguiHandler/ImguiWindowHandler.hpp"
+#include "../window/Window.hpp"
 #include "time/Timer.hpp"
 
 #include <imgui.h>
@@ -12,45 +13,49 @@ namespace core {
 
 	MainLoop::MainLoop()
 	{
-		controllers::Graphics::createContext();
-		windowController = new controllers::WindowController();
+		//todo use controller also in graphics
+		mainWindow = new window::Window();
+		mainWindow->initWindow();
+		controllers::Graphics::createContext(mainWindow);
+		renderController = new controllers::RenderController();
 	}
 
 	void MainLoop::init()
 	{
-		windowController->init();
+		renderController->init();
 		engineTime::Timer::initialize();
 	}
 
 	void MainLoop::run()
 	{
-		while (!windowController->windowShouldClose()) {
-			windowController->windowPollEvents();
+		while (!mainWindow->shouldClose()) {
+			mainWindow->pollEvents();
 
 			engineTime::Timer::update();
 
-			if (windowController->isWindowResized()) {
-				windowController->reSize();
+			if (mainWindow->isWindowResized()) {
+				renderController->reSize();
+				mainWindow->resetResizeFlag();
 			}
 
 			newFrame();
 			editorDraw();
 			endFrame();
 
-			windowController->render();
+			renderController->render();
 		}
 	}
 
 	void MainLoop::cleanUp()
 	{
-		windowController->cleanUp();
+		renderController->cleanUp();
 		controllers::Graphics::destroyContext();
 	}
 
 
 	MainLoop::~MainLoop()
 	{
-		delete windowController;
+		delete renderController;
 	}
 
 	void MainLoop::newFrame() const

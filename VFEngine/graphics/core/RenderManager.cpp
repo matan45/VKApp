@@ -9,7 +9,7 @@
 namespace core {
 
 
-	RenderManager::RenderManager(Device& device, SwapChain& swapChain, window::Window& window) : device{ device },
+	RenderManager::RenderManager(Device& device, SwapChain& swapChain,const window::Window* window) : device{ device },
 		swapChain{ swapChain }, window{ window }
 	{
 
@@ -51,7 +51,7 @@ namespace core {
 		);
 
 		if (result == vk::Result::eErrorOutOfDateKHR) {
-			recreate(window.getHeight(), window.getWidth());  // Handle swapchain recreation
+			recreate(window->getHeight(), window->getWidth());  // Handle swapchain recreation
 			return;
 		}
 
@@ -149,7 +149,7 @@ namespace core {
 		vk::Result result = device.getPresentQueue().presentKHR(&presentInfo);
 
 		if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
-			recreate(window.getHeight(), window.getWidth());
+			recreate(window->getHeight(), window->getWidth());
 		}
 	}
 

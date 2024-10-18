@@ -69,7 +69,7 @@ namespace core {
 		createInfo.imageFormat = surfaceFormat.format;
 		createInfo.imageColorSpace = surfaceFormat.colorSpace;
 		createInfo.imageExtent = extent;
-		createInfo.imageArrayLayers = 1;  // For VR, this could be 2
+		createInfo.imageArrayLayers = 1;
 		createInfo.imageUsage = vk::ImageUsageFlagBits::eColorAttachment;
 
 		QueueFamilyIndices indices = device.getQueueFamilyIndices();
@@ -95,10 +95,11 @@ namespace core {
 		swapchainImages = device.getLogicalDevice().getSwapchainImagesKHR(swapchain.get());
 		swapchainImageFormat = surfaceFormat.format;
 		swapchainExtent = extent;
-
-		loggerInfo("Creating swapchain with extent: {}x{}", extent.width, extent.height);
-		loggerInfo("Swapchain image format: {}", vk::to_string(swapchainImageFormat));
-		loggerInfo("Swapchain image count: {}", swapchainImages.size());
+		if (debug) {
+			loggerInfo("Creating swapchain with extent: {}x{}", extent.width, extent.height);
+			loggerInfo("Swapchain image format: {}", vk::to_string(swapchainImageFormat));
+			loggerInfo("Swapchain image count: {}", swapchainImages.size());
+		}
 
 	}
 
@@ -148,7 +149,6 @@ namespace core {
 		}
 		catch (vk::SystemError& err) {
 			loggerError("Failed to create depth stencil image: {}", err.what());
-			throw;
 		}
 
 		vk::MemoryRequirements memRequirements = device.getLogicalDevice().getImageMemoryRequirements(swapchainDepthStencil.depthStencilImage.get());
@@ -163,7 +163,6 @@ namespace core {
 		}
 		catch (vk::SystemError& err) {
 			loggerError("Failed to allocate depth stencil memory: {}", err.what());
-			throw;
 		}
 
 		vk::ImageViewCreateInfo viewInfo{};
@@ -185,10 +184,11 @@ namespace core {
 		}
 		catch (vk::SystemError& err) {
 			loggerError("Failed to create depth stencil image view: {}", err.what());
-			throw;
 		}
 
-		loggerInfo("Swapchain depthStencilFormat format: {}", vk::to_string(swapchainDepthStencilFormat));
+		if (debug) {
+			loggerInfo("Swapchain depthStencilFormat format: {}", vk::to_string(swapchainDepthStencilFormat));
+		}
 	}
 
 	vk::Format SwapChain::findDepthStencilFormat() const
@@ -210,7 +210,7 @@ namespace core {
 		}
 
 		loggerError("Failed to find a supported format for depth stencil attachment!");
-		throw std::runtime_error("Failed to find a supported format for depth stencil attachment");
+		return vk::Format();
 	}
 
 	vk::SurfaceFormatKHR SwapChain::chooseSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats) const
@@ -239,7 +239,7 @@ namespace core {
 		}
 		else {
 			// Fallback to window dimensions
-			vk::Extent2D actualExtent = { 800, 600 };  // Default values, replace with window dimensions
+			vk::Extent2D actualExtent = { width, height };  // Default values, replace with window dimensions
 			actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
 			actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
 			return actualExtent;

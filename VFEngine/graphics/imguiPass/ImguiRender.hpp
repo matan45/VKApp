@@ -20,14 +20,14 @@ namespace imguiPass {
 		core::Device& device;
 		core::SwapChain& swapChain;
 		core::CommandPool& commandPool;
-		window::Window& window;
+		const window::Window* window;
 
 		vk::DescriptorPool imGuiDescriptorPool;
 		vk::RenderPass imGuiRenderPass;
 		std::vector<vk::Framebuffer> imGuiFrameBuffers;
 
 	public:
-		explicit ImguiRender(core::Device& device, core::SwapChain& swapChain, core::CommandPool& commandPool, window::Window& window);
+		explicit ImguiRender(core::Device& device, core::SwapChain& swapChain, core::CommandPool& commandPool,const window::Window* window);
 		~ImguiRender() = default;
 
 		void init();

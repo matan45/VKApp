@@ -1,15 +1,19 @@
 #pragma once
 
 namespace controllers {
-	class WindowController;
+	class RenderController;
 }
 
+namespace window {
+	class Window;
+}
 
 namespace core {
 	class MainLoop
 	{
 	private:
-		controllers::WindowController* windowController;
+		controllers::RenderController* renderController;
+		window::Window* mainWindow;
 	public:
 		explicit MainLoop();
 		~MainLoop();
