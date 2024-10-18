@@ -2,7 +2,7 @@
 
 namespace windows {
 
-	ViewPort::ViewPort(interface::OffScreen& offscreen) :offscreen{ offscreen }
+	ViewPort::ViewPort(controllers::OffScreen& offscreen) :offscreen{ offscreen }
 	{
 	}
 

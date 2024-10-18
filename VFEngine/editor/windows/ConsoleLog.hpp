@@ -3,7 +3,7 @@
 #include "imgui.h"
 
 namespace windows {
-	class ConsoleLog : public interface::imguiHandler::ImguiWindow
+	class ConsoleLog : public controllers::imguiHandler::ImguiWindow
 	{
 	public:
 		explicit ConsoleLog() = default;

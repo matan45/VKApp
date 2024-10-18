@@ -1,0 +1,84 @@
+#include "Texture.hpp"
+#define STB_IMAGE_IMPLEMENTATION
+#include <iostream>
+#include <vector>
+#include <fstream>
+#include <bit>  // For std::bit_cast
+#include <stb_image.h>
+#include <filesystem> 
+
+#include "config/Config.hpp"
+
+namespace types {
+	void Texture::loadFromFile(std::string_view path, std::string_view fileName, std::string_view location) const
+	{
+		resource::TextureData textureData;
+
+		// Load image using stb_image
+		int width;
+		int height;
+		int channels;
+		unsigned char* imageData = stbi_load(path.data(), &width, &height, &channels, 0);
+
+		if (!imageData) {
+			std::cerr << "Failed to load texture: " << path << std::endl;
+			return; // Return
+		}
+
+		// Store texture information
+		textureData.width = static_cast<uint32_t>(width);
+		textureData.height = static_cast<uint32_t>(height);
+
+		// Determine texture format based on channels
+		switch (channels) {
+		case 1: textureData.textureFormat = "R"; break;
+		case 3: textureData.textureFormat = "RGB"; break;
+		case 4: textureData.textureFormat = "RGBA"; break;
+		default: textureData.textureFormat = "Unknown"; break;
+		}
+
+		// Store raw texture data into the vector
+		textureData.textureData = std::vector<unsigned char>(imageData, imageData + (width * height * channels));
+
+		// Free the image data once copied to the structure
+		stbi_image_free(imageData);
+
+		saveToFile(fileName, location, textureData);
+	}
+
+	void Texture::saveToFile(std::string_view fileName, std::string_view location, const resource::TextureData& textureData) const
+	{
+		// Open the file in binary mode
+		std::filesystem::path newFileLocation = std::filesystem::path(location) / (std::string(fileName) + "." + FileExtension::textrue);
+		std::ofstream outFile(newFileLocation, std::ios::binary);
+
+		if (!outFile) {
+			std::cerr << "Failed to open file for writing: " << newFileLocation << std::endl;
+			return;
+		}
+
+		// Write version
+		outFile.write(std::bit_cast<const char*>(&textureData.version.major), sizeof(textureData.version.major));
+		outFile.write(std::bit_cast<const char*>(&textureData.version.minor), sizeof(textureData.version.minor));
+		outFile.write(std::bit_cast<const char*>(&textureData.version.patch), sizeof(textureData.version.patch));
+
+		// Write width and height
+		outFile.write(std::bit_cast<const char*>(&textureData.width), sizeof(textureData.width));
+		outFile.write(std::bit_cast<const char*>(&textureData.height), sizeof(textureData.height));
+
+		// Write texture format size and then the format string itself
+		auto formatLength = static_cast<uint32_t>(textureData.textureFormat.size());
+		outFile.write(std::bit_cast<const char*>(&formatLength), sizeof(formatLength)); // Write the length of the format string
+		outFile.write(textureData.textureFormat.c_str(), formatLength);                    // Write the format string itself
+
+		// Write the size of the texture data and then the raw texture data
+		auto textureDataSize = static_cast<uint32_t>(textureData.textureData.size());
+		outFile.write(std::bit_cast<const char*>(&textureDataSize), sizeof(textureDataSize)); // Write the size of the texture data
+		outFile.write(std::bit_cast<const char*>(textureData.textureData.data()), textureDataSize); // Write the raw texture data
+
+		// Close the file
+		outFile.close();
+
+		std::cout << "Texture data successfully saved to " << newFileLocation << std::endl;
+	}
+}

@@ -6,7 +6,7 @@
 #include <memory>
 
 namespace windows {
-	class SceneGraph : public interface::imguiHandler::ImguiWindow
+	class SceneGraph : public controllers::imguiHandler::ImguiWindow
 	{
 	private:
 		entt::entity selected = entt::null;  // Currently selected entity
@@ -19,11 +19,11 @@ namespace windows {
 		void draw() override;
 
 	private:
-		void drawEntityNode(entt::entity entity);  // Helper function to display entity hierarchy
+		void drawEntityNode(scene::Entity entity);  // Helper function to display entity hierarchy
 		void drawDetails(entt::entity entity) const;     // Helper function to display selected entity's details
-		void drawDynamicComponent(entt::entity entity) const; // Helper for dynamically rendering components
+		void drawDynamicComponent(scene::Entity entity) const; // Helper for dynamically rendering components
 
-		void drawDragDropTarget(entt::entity entity) const; // Helper for drag-and-drop logic
+		void drawDragDropTarget(scene::Entity entity) const; // Helper for drag-and-drop logic
 	};
 }
 

@@ -6,9 +6,9 @@ namespace handlers {
 	class WindowImguiHandler
 	{
 	private:
-		interface::OffScreen& offscreen;
+		controllers::OffScreen& offscreen;
 	public:
-		explicit WindowImguiHandler(interface::OffScreen& offscreen);
+		explicit WindowImguiHandler(controllers::OffScreen& offscreen);
 		~WindowImguiHandler() = default;
 
 		void init() const;

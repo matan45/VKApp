@@ -1,7 +1,7 @@
 #include "MainLoop.hpp"
 #include "Graphics.hpp"
 #include "WindowController.hpp"
-#include "../interface/imguiHandler/ImguiWindowHandler.hpp"
+#include "../controllers/imguiHandler/ImguiWindowHandler.hpp"
 #include "time/Timer.hpp"
 
 #include <imgui.h>
@@ -67,7 +67,7 @@ namespace core {
 
 	void MainLoop::editorDraw() const
 	{
-		interface::imguiHandler::ImguiWindowHandler::draw();
+		controllers::imguiHandler::ImguiWindowHandler::draw();
 	}
 
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "imguiHandler/ImguiWindow.hpp"
 #include "imgui.h"
+#include "Import.hpp"
 
 
 #include <string>
@@ -16,7 +17,7 @@ namespace windows {
 	};
 
 
-	class ContentBrowser : public interface::imguiHandler::ImguiWindow
+	class ContentBrowser : public controllers::imguiHandler::ImguiWindow
 	{
 	private:
 		std::vector<Asset> assets;
@@ -33,6 +34,7 @@ namespace windows {
 		void navigateTo(const fs::path& path) {
 			if (fs::exists(path) && fs::is_directory(path)) {
 				currentPath = path;
+				controllers::Import::setLocation(currentPath.string());
 				loadDirectory(currentPath);
 			}
 		}

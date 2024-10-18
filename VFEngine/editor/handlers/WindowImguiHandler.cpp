@@ -7,7 +7,7 @@
 
 
 namespace handlers {
-	WindowImguiHandler::WindowImguiHandler(interface::OffScreen& offscreen) :offscreen{ offscreen }
+	WindowImguiHandler::WindowImguiHandler(controllers::OffScreen& offscreen) :offscreen{ offscreen }
 	{
 	}
 
@@ -16,17 +16,17 @@ namespace handlers {
 		//TODO level class
 		//scene::SceneGraph mySceneGraph;  // Your SceneGraph object that manages entities
 
-		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::MainImguiWindow>());
-		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ConsoleLog>());
-		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ContentBrowser>());
-		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::SceneGraph>());
-		interface::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ViewPort>(offscreen));
+		controllers::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::MainImguiWindow>());
+		controllers::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ConsoleLog>());
+		controllers::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ContentBrowser>());
+		controllers::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::SceneGraph>());
+		controllers::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ViewPort>(offscreen));
 
 
 	}
 
 	void WindowImguiHandler::cleanUp() const
 	{
-		interface::imguiHandler::ImguiWindowHandler::cleanUp();
+		controllers::imguiHandler::ImguiWindowHandler::cleanUp();
 	}
 }

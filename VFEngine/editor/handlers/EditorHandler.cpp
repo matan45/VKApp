@@ -1,8 +1,8 @@
 #include "EditorHandler.hpp"
 
 namespace handlers {
-	EditorHandler::EditorHandler() :coreInterface{ std::make_unique<interface::CoreInterface>() },
-		offScreenInterface{ new interface::OffScreen() },
+	EditorHandler::EditorHandler() :coreInterface{ std::make_unique<controllers::CoreInterface>() },
+		offScreenInterface{ new controllers::OffScreen() },
 		windowImguiHandler{ std::make_unique<WindowImguiHandler>(*offScreenInterface) }
 	{
 

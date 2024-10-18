@@ -25,8 +25,7 @@ namespace render {
 		core::Device& device;
 		core::SwapChain& swapChain;
 
-		core::Shader* vertex{ nullptr };
-		core::Shader* fragment{ nullptr };
+		core::Shader* triangle{ nullptr };
 
 		vk::PipelineLayout pipelineLayout;
 		vk::Pipeline graphicsPipeline;

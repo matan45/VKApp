@@ -24,18 +24,20 @@ project "Editor"
    files { "VFEngine/editor/**.hpp", "VFEngine/editor/**.cpp" }
    
    includedirs {
-      "VFEngine/core/interface",          -- Core headers
 	  "dependencies/imgui",  
 	  "dependencies/ImGuizmo",   
 	  "dependencies/imgui-node-editor",
-	  "VFEngine/utilities",
 	  "dependencies/spdlog/include",
 	  "dependencies/glm",
-	  "dependencies/entt/single_include"
+	  "dependencies/entt/single_include",
+	  "VFEngine/utilities",
+	  "VFEngine/core/controllers",     
+	  "VFEngine/import/controllers"
    }
 
    links {
-      "Core"                           -- Link Core project
+      "Core",                           -- Link Core project
+	  "Import"
    }
 
    defines { "_CRT_SECURE_NO_WARNINGS" }
@@ -76,6 +78,51 @@ project "Core"
    filter "configurations:Release"
       defines { "NDEBUG" }
       optimize "On"
+	  
+	  
+project "Import"
+   kind "StaticLib"
+   language "C++"
+   cppdialect "C++20"
+   location "VFEngine/import"
+   targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
+
+   files { "VFEngine/import/**.hpp", "VFEngine/import/**.cpp" }
+
+   includedirs {
+      "VFEngine/utilities",             -- Utilities headers
+      "dependencies/stb",               -- stb headers
+      "dependencies/dr_libs",           -- dr_mp3.h, dr_wav.h, and other dr_libs headers
+      "dependencies/assimp/include",     -- Assimp headers
+	  "dependencies/glm"
+   }
+
+   links { "Utilities" }
+
+   -- Debug configuration
+   filter "configurations:Debug"
+      defines { "DEBUG" }
+      symbols "On"
+      libdirs { "dependencies/assimp/lib/Debug" }
+      links { "assimp-vc143-mtd.lib" }  -- Assimp Debug library
+
+    -- Copy the DLL to the Editor's output directory after the build
+   postbuildcommands {
+      "{COPY} ../../dependencies/assimp/bin/Debug/assimp-vc143-mtd.dll ../../bin/Editor/Debug/x64/"
+   }
+
+   -- Release configuration
+   filter "configurations:Release"
+      defines { "NDEBUG" }
+      optimize "On"
+      libdirs { "dependencies/assimp/lib/Release" }
+      links { "assimp-vc143-mt.lib" }  -- Assimp Release library
+
+      -- Copy the DLL to the output directory after the build
+      postbuildcommands {
+         "{COPY} ../../dependencies/assimp/bin/Release/assimp-vc143-mt.dll ../../bin/Editor/Release/x64/"
+      }
+
 
 -- Project 3: Graphics
 project "Graphics"
@@ -289,8 +336,8 @@ project "jolt"
    targetdir "bin/%{prj.name}/%{cfg.buildcfg}/%{cfg.platform}"
 
    files {
-      "dependencies/JoltPhysics/Jolt/*.h",
-      "dependencies/JoltPhysics/Jolt/*.cpp"
+      "dependencies/JoltPhysics/Jolt/**.h",
+      "dependencies/JoltPhysics/Jolt/**.cpp"
    }
 
    includedirs {
