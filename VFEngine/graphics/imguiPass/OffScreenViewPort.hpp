@@ -38,7 +38,7 @@ namespace imguiPass {
 		void cleanUp() const;
 
 	private:
-		void draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const;
+		void draw(const vk::CommandBuffer& commandBuffer) const;
 
 		void createOffscreenResources();
 		void createImage(vk::Format format, vk::ImageUsageFlags usage, vk::Image& image, vk::DeviceMemory& deviceMemory) const;

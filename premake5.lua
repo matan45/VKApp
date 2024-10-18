@@ -92,11 +92,13 @@ project "Import"
    files { "VFEngine/import/**.hpp", "VFEngine/import/**.cpp" }
 
    includedirs {
+	  "dependencies/spdlog/include",
       "VFEngine/utilities",             -- Utilities headers
       "dependencies/stb",               -- stb headers
       "dependencies/dr_libs",           -- dr_mp3.h, dr_wav.h, and other dr_libs headers
       "dependencies/assimp/include",     -- Assimp headers
-	  "dependencies/glm"
+	  "dependencies/glm",
+	  
    }
 
    links { "Utilities" }
@@ -156,7 +158,6 @@ project "Graphics"
 
    links {
       "Window",
-      "Utilities",                    -- Link against Utilities project
 	  "imgui"
    }
 

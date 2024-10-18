@@ -32,7 +32,7 @@ namespace imguiPass {
 
 		void init();
 		void cleanUp() const;
-		void recreate(uint32_t width, uint32_t height);
+		void recreate();
 		void render(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const;
 
 	private:

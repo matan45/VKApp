@@ -46,7 +46,7 @@ namespace render {
 		~TriangleRenderer()=default;
 
 		void init();
-		void recreate(uint32_t width, uint32_t height);
+		void recreate();
 		void cleanUp() const;
 
 		void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex) const;

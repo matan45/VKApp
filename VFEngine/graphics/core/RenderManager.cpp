@@ -68,10 +68,8 @@ namespace core {
 		// Begin recording commands for the acquired image
 		commandBuffer.begin(vk::CommandBufferBeginInfo{});
 
-		const auto& image = swapChain.getSwapchainImage(imageIndex);
-
 		// Render the scene using the command buffer for this swapchain image
-		draw(commandBuffer, imageIndex);
+		draw(commandBuffer);
 
 		// End command buffer recording
 		commandPool->getCommandBuffer(imageIndex).end();
@@ -101,7 +99,7 @@ namespace core {
 		}
 
 		// Present the rendered image
-		present(imageIndex);
+		present();
 
 	}
 
@@ -110,7 +108,7 @@ namespace core {
 		if (width == 0 || height == 0) return;  // Skip if minimized
 		commandPool->recreate();  // Reallocate command buffers if needed
 
-		imguiRender->recreate(width, height);
+		imguiRender->recreate();
 	}
 
 	void RenderManager::cleanUp() const
@@ -126,16 +124,15 @@ namespace core {
 		device.getLogicalDevice().destroyFence(renderFence);
 	}
 
-	void RenderManager::draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const
+	void RenderManager::draw(const vk::CommandBuffer& commandBuffer) const
 	{
 		//create a render pass class so we can use here and offscreen class
 		//here for now only use imgui render
 		imguiRender->render(commandBuffer, imageIndex);
 	}
 
-	void RenderManager::present(uint32_t imageIndex) const
+	void RenderManager::present() const
 	{
-
 		// Present the image to the screen
 		vk::PresentInfoKHR presentInfo{};
 		std::array<vk::Semaphore, 1> waitSemaphores = { renderFinishedSemaphore };

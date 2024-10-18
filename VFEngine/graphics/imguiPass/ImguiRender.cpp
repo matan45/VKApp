@@ -75,7 +75,7 @@ namespace imguiPass {
 		device.getLogicalDevice().destroyDescriptorPool(imGuiDescriptorPool);
 	}
 
-	void ImguiRender::recreate(uint32_t width, uint32_t height)
+	void ImguiRender::recreate()
 	{
 		for (auto framebuffer : imGuiFrameBuffers) {
 			device.getLogicalDevice().destroyFramebuffer(framebuffer);

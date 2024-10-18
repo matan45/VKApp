@@ -2,6 +2,7 @@
 #include "Graphics.hpp"
 #include "RenderController.hpp"
 #include "../controllers/imguiHandler/ImguiWindowHandler.hpp"
+#include "WindowController.hpp"
 #include "../window/Window.hpp"
 #include "time/Timer.hpp"
 
@@ -13,9 +14,8 @@ namespace core {
 
 	MainLoop::MainLoop()
 	{
-		//todo use controller also in graphics
-		mainWindow = new window::Window();
-		mainWindow->initWindow();
+		controllers::WindowController::init();
+		mainWindow = controllers::WindowController::getWindow();
 		controllers::Graphics::createContext(mainWindow);
 		renderController = new controllers::RenderController();
 	}
@@ -46,10 +46,11 @@ namespace core {
 		}
 	}
 
-	void MainLoop::cleanUp()
+	void MainLoop::cleanUp() const
 	{
 		renderController->cleanUp();
 		controllers::Graphics::destroyContext();
+		controllers::WindowController::cleanUp();
 	}
 
 

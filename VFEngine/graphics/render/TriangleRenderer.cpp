@@ -24,8 +24,8 @@ namespace render {
 		createFramebuffers();
 		createGraphicsPipeline();
 	}
-	//TODO remove width and height
-	void TriangleRenderer::recreate(uint32_t width, uint32_t height)
+
+	void TriangleRenderer::recreate()
 	{
 		for (auto framebuffer : framebuffers) {
 			device.getLogicalDevice().destroyFramebuffer(framebuffer);

@@ -36,7 +36,7 @@ namespace imguiPass {
 	{
 
 		// Get the command buffer for this frame
-		vk::CommandBuffer commandBuffer = commandPool->getCommandBuffer(core::RenderManager::imageIndex);
+		vk::CommandBuffer commandBuffer = commandPool->getCommandBuffer(core::RenderManager::getImageIndex());
 
 		// Reset the command buffer for reuse
 		commandBuffer.reset();
@@ -45,7 +45,7 @@ namespace imguiPass {
 		commandBuffer.begin(vk::CommandBufferBeginInfo{});
 
 		// Begin the render pass (record drawing commands here)
-		draw(commandBuffer, core::RenderManager::imageIndex);
+		draw(commandBuffer);
 
 		// End command buffer recording
 		commandBuffer.end();
@@ -60,7 +60,7 @@ namespace imguiPass {
 		device.getGraphicsQueue().waitIdle();
 
 		// Return the descriptor set for ImGui rendering
-		return offscreenResources[core::RenderManager::imageIndex].descriptorSet;
+		return offscreenResources[core::RenderManager::getImageIndex()].descriptorSet;
 	}
 
 	void OffScreenViewPort::cleanUp() const
@@ -83,9 +83,9 @@ namespace imguiPass {
 		}
 	}
 
-	void OffScreenViewPort::draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const
+	void OffScreenViewPort::draw(const vk::CommandBuffer& commandBuffer) const
 	{
-		renderPassHandler->draw(commandBuffer, imageIndex);
+		renderPassHandler->draw(commandBuffer, core::RenderManager::getImageIndex());
 	}
 
 	void OffScreenViewPort::createOffscreenResources()

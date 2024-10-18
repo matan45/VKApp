@@ -132,9 +132,6 @@
     <ProjectReference Include="..\Window\Window.vcxproj">
       <Project>{3DEA79DA-298C-A4B0-1247-B804FE872B01}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\utilities\Utilities.vcxproj">
-      <Project>{010A8043-6D74-34BA-B6B2-E55F225C120F}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\imgui.vcxproj">
       <Project>{0098A80F-6CAC-D0C0-352E-7420A101CDF1}</Project>
     </ProjectReference>

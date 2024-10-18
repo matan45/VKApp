@@ -1,6 +1,6 @@
 #include "Texture.hpp"
+#include "print/EditorLogger.hpp"
 #define STB_IMAGE_IMPLEMENTATION
-#include <iostream>
 #include <vector>
 #include <fstream>
 #include <bit>  // For std::bit_cast
@@ -21,7 +21,7 @@ namespace types {
 		unsigned char* imageData = stbi_load(path.data(), &width, &height, &channels, 0);
 
 		if (!imageData) {
-			std::cerr << "Failed to load texture: " << path << std::endl;
+			vfLogError("Failed to load texture: ", path);
 			return; // Return
 		}
 
@@ -53,7 +53,7 @@ namespace types {
 		std::ofstream outFile(newFileLocation, std::ios::binary);
 
 		if (!outFile) {
-			std::cerr << "Failed to open file for writing: " << newFileLocation << std::endl;
+			vfLogError("Failed to open file for writing: ",newFileLocation.string());
 			return;
 		}
 
@@ -78,7 +78,5 @@ namespace types {
 
 		// Close the file
 		outFile.close();
-
-		std::cout << "Texture data successfully saved to " << newFileLocation << std::endl;
 	}
 }

@@ -1,6 +1,6 @@
 #include "Mesh.hpp"
+#include "print/EditorLogger.hpp"
 
-#include <iostream>
 #include <vector>
 #include <fstream>
 #include <bit>  // For std::bit_cast
@@ -17,7 +17,7 @@ namespace types {
 			aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-			std::cerr << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
+			vfLogError("Failed to load Ogg Vorbis file: {}", importer.GetErrorString());
 			return;
 		}
 		//TODO also extract the animation each animation to single file 
@@ -32,7 +32,7 @@ namespace types {
 		std::ofstream outFile(newFileLocation, std::ios::binary);
 
 		if (!outFile) {
-			std::cerr << "Failed to open file for writing: " << newFileLocation << std::endl;
+			vfLogError("Failed to open file for writing: ", newFileLocation.string());
 			return;
 		}
 

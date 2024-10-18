@@ -1,6 +1,7 @@
 #include "TextureResource.hpp"
+#include "../print/EditorLogger.hpp"
+
 #include <fstream>
-#include <iostream>
 #include <bit>  // For std::bit_cast
 
 namespace resource {
@@ -12,7 +13,7 @@ namespace resource {
 		// Open the file in binary mode
 		std::ifstream inFile(path.data(), std::ios::binary);
 		if (!inFile) {
-			std::cerr << "Failed to open file for reading: " << path << std::endl;
+			vfLogError("Failed to open file for reading: ", path);
 			return textureData; // Return an empty TextureData on failure
 		}
 
@@ -49,15 +50,11 @@ namespace resource {
 
 			currentOffset += bytesToRead;
 			bytesRemaining -= bytesToRead;
-
-			// Provide a progress update (optional, but useful for large files)
-			std::cout << "Loaded " << currentOffset << " / " << textureDataSize << " bytes of texture data." << std::endl;
 		}
 
 		// Close the file
 		inFile.close();
 
-		std::cout << "Texture data successfully loaded from " << path << std::endl;
 		return textureData;
 	}
 }
