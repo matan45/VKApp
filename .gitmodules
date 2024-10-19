@@ -22,12 +22,12 @@
 [submodule "dependencies/entt"]
 	path = dependencies/entt
 	url = https://github.com/skypjack/entt.git
-[submodule "dependencies/dependencies/json"]
-	path = dependencies/dependencies/json
+[submodule "dependencies/json"]
+	path = dependencies/json
 	url = https://github.com/nlohmann/json.git
-[submodule "dependencies/dependencies/dr_libs"]
-	path = dependencies/dependencies/dr_libs
+[submodule "dependencies/dr_libs"]
+	path = dependencies/dr_libs
 	url = https://github.com/mackron/dr_libs.git
-[submodule "dependencies/dependencies/IconFontCppHeaders"]
-	path = dependencies/dependencies/IconFontCppHeaders
+[submodule "dependencies/IconFontCppHeaders"]
+	path = dependencies/IconFontCppHeaders
 	url = https://github.com/juliettef/IconFontCppHeaders.git
