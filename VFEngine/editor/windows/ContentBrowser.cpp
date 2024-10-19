@@ -1,7 +1,7 @@
 #include "ContentBrowser.hpp"
 #include "string/StringUtil.hpp"
 #include <print/EditorLogger.hpp>
-#include <iostream>
+#include <IconsFontAwesome6.h>
 
 namespace windows {
 	void ContentBrowser::draw()
@@ -11,9 +11,17 @@ namespace windows {
 		}
 		createNewFolderModel();
 
+		
+		// Draw the folder panel on the left.
+		if (ImGui::Begin("Folder Structure", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize)) {
+			drawFolderTree(currentPath);
+		}
+		ImGui::End();
+		
+
 		if (ImGui::Begin("Content Folder")) {
 
-			if (ImGui::Button("Back")) {
+			if (ImGui::Button(ICON_FA_ARROW_LEFT)) {
 				auto parentPath = currentPath.parent_path();
 				navigateTo(parentPath);
 			}
@@ -107,12 +115,12 @@ namespace windows {
 			break;
 		case Other:
 			if (fs::is_directory(asset.path)) {
-				if (ImGui::Selectable(("[Folder] "+ asset.name).c_str(), false, ImGuiSelectableFlags_DontClosePopups)) {
+				if (ImGui::Selectable((ICON_FA_FOLDER " "+ asset.name).c_str(), false, ImGuiSelectableFlags_DontClosePopups)) {
 					navigateTo(asset.path);
 				}
 			}
 			else {
-				ImGui::Text("[Other] %s", asset.name.c_str());
+				ImGui::Text(ICON_FA_FILE " %s", asset.name.c_str());
 			}
 			break;
 		}
@@ -191,4 +199,27 @@ namespace windows {
 			ImGui::EndPopup();
 		}
 	}
+
+	void ContentBrowser::drawFolderTree(const fs::path& path)
+	{
+		for (auto& entry : fs::directory_iterator(path)) {
+			if (entry.is_directory()) {
+				ImGui::Text(ICON_FA_FOLDER ""); // Add folder icon before the name
+				ImGui::SameLine(); // Place the folder name next to the icon
+				// Use a tree node for directories
+				if (ImGui::TreeNode(StringUtil::wstringToUtf8(entry.path().filename().wstring()).c_str())) {
+					// If the directory is selected, navigate to it in the content browser.
+					if (ImGui::IsItemClicked()) {
+						navigateTo(entry.path());
+					}
+
+					// Recursively draw child directories
+					drawFolderTree(entry.path());
+
+					ImGui::TreePop(); // Close the tree node.
+				}
+			}
+		}
+	}
+
 }

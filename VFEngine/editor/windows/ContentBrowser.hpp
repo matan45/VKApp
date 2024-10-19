@@ -56,6 +56,8 @@ namespace windows {
 		void createNewFolder(const std::string& folderName);
 		void createNewFolderModel();
 		void handleCreateFiles();
+
+		void drawFolderTree(const fs::path& path);
 	};
 }
 

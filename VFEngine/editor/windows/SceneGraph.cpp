@@ -49,6 +49,13 @@ namespace windows {
 		if (ImGui::Begin("Details")) {
 			if (selected != entt::null) {
 				drawDetails(selected);
+				if (ImGui::BeginPopupContextWindow()) {
+					if (ImGui::MenuItem("Add Component")) {
+					
+					}
+					ImGui::EndPopup();
+				}
+				
 			}
 		}
 		ImGui::End();
@@ -135,11 +142,17 @@ namespace windows {
 		// Handle known component types
 		if (registry.all_of<components::Transform>(entity.getHandle())) {
 			if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
+				
 				auto& transform = registry.get<components::Transform>(entity.getHandle());
 				ImGui::DragFloat3("Position", &transform.position.x, 0.1f);
 				ImGui::DragFloat3("Rotation", &transform.rotation.x, 0.1f);
 				ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f);
 				transform.isDirty = true;
+
+				if (ImGui::Button("Remove##Transform")) {
+					//entity.removeComponent<components::Transform>(); dont remove transfrom
+					return; // Exit early since the component is removed.
+				}
 			}
 		}
 	}

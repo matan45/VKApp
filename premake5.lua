@@ -31,7 +31,8 @@ project "Editor"
 	  "dependencies/glm",
 	  "dependencies/entt/single_include",
 	  "VFEngine/utilities",
-	  "VFEngine/core/controllers",     
+	  "VFEngine/core/controllers", 
+	  "dependencies/IconFontCppHeaders",	  
 	  "VFEngine/import/controllers"
    }
 
@@ -147,6 +148,7 @@ project "Graphics"
       "dependencies/stb",
       "VFEngine/utilities",           -- Utilities headers
       "VFEngine/window/controllers",           -- Utilities headers
+	  "dependencies/IconFontCppHeaders",
       vulkanLibPath.."/Include"
    }
 
