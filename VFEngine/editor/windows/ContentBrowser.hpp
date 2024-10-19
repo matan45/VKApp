@@ -10,10 +10,12 @@ namespace fs = std::filesystem;
 
 namespace windows {
 
+	enum class AssetType { Texture, Model, Audio, Animation, Shader, Other };
+
 	struct Asset {
-		std::wstring name;
-		std::wstring path;
-		enum class AssetType { Texture, Model, Shader, Other } type;
+		std::string name;
+		std::string path;
+		AssetType type;
 	};
 
 
@@ -22,6 +24,12 @@ namespace windows {
 	private:
 		std::vector<Asset> assets;
 		fs::path currentPath = "c:\\matan";
+
+		std::string newFolderName;
+		bool showCreateFolderModal = false;
+
+		fs::path selectedFile;
+		bool showFileWindow = false;
 	public:
 		explicit ContentBrowser() {
 			navigateTo(currentPath);
@@ -40,6 +48,14 @@ namespace windows {
 		}
 
 		void loadDirectory(const fs::path& path);
+
+		void printFilesNames(const Asset& asset);
+
+		void drawFileWindow();
+
+		void createNewFolder(const std::string& folderName);
+		void createNewFolderModel();
+		void handleCreateFiles();
 	};
 }
 

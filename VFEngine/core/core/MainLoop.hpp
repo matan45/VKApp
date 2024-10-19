@@ -21,6 +21,7 @@ namespace core {
 		void init();
 		void run();
 		void cleanUp() const;
+		void close();
 
 	private:
 		void newFrame() const;

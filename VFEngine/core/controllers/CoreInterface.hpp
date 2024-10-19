@@ -16,7 +16,8 @@ namespace controllers {
 
 		void init();
 		void run() const;
-		void cleanUp();
+		void cleanUp() const;
+		void closeWindow();
 
 	};
 }

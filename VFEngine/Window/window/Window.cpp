@@ -28,7 +28,7 @@ namespace window {
 
 	void Window::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 	{
-		auto userWindow = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+		auto userWindow = static_cast<Window*>(glfwGetWindowUserPointer(window));
 		userWindow->width = width;
 		userWindow->height = height;
 		userWindow->isResized = true;
@@ -48,6 +48,11 @@ namespace window {
 	{
 		glfwDestroyWindow(window);
 		glfwTerminate();
+	}
+
+	void Window::closeWindow()
+	{
+		glfwSetWindowShouldClose(window, true);
 	}
 
 	void Window::pollEvents() const

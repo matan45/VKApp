@@ -1,5 +1,6 @@
 #include "Texture.hpp"
 #include "print/EditorLogger.hpp"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <vector>
 #include <fstream>

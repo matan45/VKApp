@@ -18,9 +18,14 @@ namespace controllers {
 		mainLoop->run();
 	}
 
-	void CoreInterface::cleanUp()
+	void CoreInterface::cleanUp() const
 	{
 		mainLoop->cleanUp();
+	}
+
+	void CoreInterface::closeWindow()
+	{
+		mainLoop->close();
 	}
 
 	CoreInterface::~CoreInterface()

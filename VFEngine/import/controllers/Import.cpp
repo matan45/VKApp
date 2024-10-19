@@ -15,7 +15,7 @@ namespace controllers {
 		}
 	}
 
-	void Import::setLocation(const std::string& newLocation)
+	void Import::setLocation(std::string_view newLocation)
 	{
 		location = newLocation;
 	}
@@ -42,32 +42,32 @@ namespace controllers {
 		// Use if-else to handle different file types
 		if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".hdr") {
 			// Handle texture files
-			processTexture(path, fileName, location);
+			processTexture(path, fileName);
 		}
 		else if (extension == ".obj" || extension == ".fbx" || extension == ".dae" || extension == ".gltf") {
 			// Handle model and animations files
-			processModel(path, fileName, location);
+			processModel(path, fileName);
 		}
 		else if (extension == ".wav" || extension == ".mp3" || extension == ".ogg") {
 			// Handle model files
-			processAudio(path, fileName, extension, location);
+			processAudio(path, fileName, extension);
 		}
 		else {
 			std::cerr << "Unknown file extension: " << extension << std::endl;
 		}
 	}
 
-	void Import::processTexture(std::string_view path, std::string_view fileName, std::string_view location)
+	void Import::processTexture(std::string_view path, std::string_view fileName)
 	{
 		texture.loadFromFile(path, fileName, location);
 	}
 
-	void Import::processModel(std::string_view path, std::string_view fileName, std::string_view location)
+	void Import::processModel(std::string_view path, std::string_view fileName)
 	{
 		mesh.loadFromFile(path, fileName, location);
 	}
 
-	void Import::processAudio(std::string_view path, std::string_view fileName, std::string_view extension, std::string_view location)
+	void Import::processAudio(std::string_view path, std::string_view fileName, std::string_view extension)
 	{
 		audio.loadFromFile(path, fileName, extension, location);
 	}

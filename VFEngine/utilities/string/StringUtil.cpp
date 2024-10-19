@@ -27,3 +27,11 @@
 	 WideCharToMultiByte(CP_UTF8, 0, wideStr, -1, &strTo[0], sizeNeeded, NULL, NULL);
 	 return strTo;
  }
+
+ std::wstring StringUtil::utf8ToWstring(const std::string& utf8Str)
+ {
+	 int wideSize = MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), -1, nullptr, 0);
+	 std::wstring wideString(wideSize, 0);
+	 MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), -1, &wideString[0], wideSize);
+	 return wideString;
+ }

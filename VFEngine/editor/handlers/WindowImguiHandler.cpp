@@ -7,7 +7,7 @@
 
 
 namespace handlers {
-	WindowImguiHandler::WindowImguiHandler(controllers::OffScreen& offscreen) :offscreen{ offscreen }
+	WindowImguiHandler::WindowImguiHandler(controllers::OffScreen& offscreen, controllers::CoreInterface& coreInterface) :offscreen{ offscreen }, coreInterface{ coreInterface }
 	{
 	}
 
@@ -16,7 +16,7 @@ namespace handlers {
 		//TODO level class
 		//scene::SceneGraph mySceneGraph;  // Your SceneGraph object that manages entities
 
-		controllers::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::MainImguiWindow>());
+		controllers::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::MainImguiWindow>(coreInterface));
 		controllers::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ConsoleLog>());
 		controllers::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ContentBrowser>());
 		controllers::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::SceneGraph>());

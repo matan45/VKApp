@@ -54,6 +54,11 @@ namespace core {
 	}
 
 
+	void MainLoop::close()
+	{
+		mainWindow->closeWindow();
+	}
+
 	MainLoop::~MainLoop()
 	{
 		delete renderController;

@@ -25,6 +25,7 @@ namespace window {
 
 		void initWindow();
 		void cleanup();
+		void closeWindow();
 		void pollEvents() const;
 		bool shouldClose() const;
 		bool isWindowResized() const { return isResized; }
