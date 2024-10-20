@@ -109,8 +109,10 @@
     <ClInclude Include="imguiPass\ImguiRender.hpp" />
     <ClInclude Include="imguiPass\OffScreen.hpp" />
     <ClInclude Include="imguiPass\OffScreenViewPort.hpp" />
+    <ClInclude Include="controllers\TextureController.hpp" />
     <ClInclude Include="render\RenderPassHandler.hpp" />
     <ClInclude Include="render\TriangleRenderer.hpp" />
+    <ClInclude Include="core\Texture.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="controllers\Graphics.cpp" />
@@ -125,8 +127,10 @@
     <ClCompile Include="core\VulkanContext.cpp" />
     <ClCompile Include="imguiPass\ImguiRender.cpp" />
     <ClCompile Include="imguiPass\OffScreenViewPort.cpp" />
+    <ClCompile Include="controllers\TextureController.cpp" />
     <ClCompile Include="render\RenderPassHandler.cpp" />
     <ClCompile Include="render\TriangleRenderer.cpp" />
+    <ClCompile Include="core\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Window\Window.vcxproj">

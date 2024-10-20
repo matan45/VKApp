@@ -93,7 +93,7 @@ namespace core {
 		return commandBuffer;
 	}
 
-	void Utilities::endSingleTimeCommands(const vk::Queue& queue, const vk::CommandPool& commandPool, const vk::UniqueCommandBuffer& commandBuffer)
+	void Utilities::endSingleTimeCommands(const vk::Queue& queue, const vk::UniqueCommandBuffer& commandBuffer)
 	{
 		commandBuffer->end();
 
@@ -106,7 +106,6 @@ namespace core {
 		}
 		catch (const vk::SystemError& err) {
 			loggerError("Failed to submit command buffer: {}", err.what());
-			throw;
 		}
 	}
 

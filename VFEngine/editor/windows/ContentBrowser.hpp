@@ -3,7 +3,6 @@
 #include "imgui.h"
 #include "Import.hpp"
 
-
 #include <string>
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -30,6 +29,9 @@ namespace windows {
 
 		fs::path selectedFile;
 		bool showFileWindow = false;
+
+		static constexpr float THUMBNAIL_SIZE = 96.0f;
+		static constexpr float PADDING = 16.0f;
 	public:
 		explicit ContentBrowser() {
 			navigateTo(currentPath);

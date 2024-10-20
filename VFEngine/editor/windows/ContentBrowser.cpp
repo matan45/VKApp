@@ -2,6 +2,7 @@
 #include "string/StringUtil.hpp"
 #include <print/EditorLogger.hpp>
 #include <IconsFontAwesome6.h>
+#include <algorithm>
 
 namespace windows {
 	void ContentBrowser::draw()
@@ -11,13 +12,13 @@ namespace windows {
 		}
 		createNewFolderModel();
 
-		
+
 		// Draw the folder panel on the left.
 		if (ImGui::Begin("Folder Structure", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize)) {
 			drawFolderTree(currentPath);
 		}
 		ImGui::End();
-		
+
 
 		if (ImGui::Begin("Content Folder")) {
 
@@ -31,6 +32,13 @@ namespace windows {
 			ImGui::Text("Current Path: %s", StringUtil::wstringToUtf8(currentPath.wstring()).c_str());
 
 			ImGui::Separator();
+
+			float panelWidth = ImGui::GetContentRegionAvail().x;
+			float cellSize = PADDING + THUMBNAIL_SIZE;
+			int columnCount = max(1, static_cast<int>(panelWidth / cellSize));
+			ImGui::Columns(columnCount, "", false);
+
+
 
 			handleCreateFiles();
 
@@ -49,12 +57,14 @@ namespace windows {
 				if (ImGui::IsItemClicked(ImGuiMouseButton_Left)
 					&& ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)
 					&& (asset.type != AssetType::Other || !fs::is_directory(asset.path))) {
-						selectedFile = asset.path;
-						showFileWindow = true;
-					
+					selectedFile = asset.path;
+					showFileWindow = true;
+
 				}
 			}
 		}
+
+		ImGui::Columns(1);
 		ImGui::End();
 	}
 
@@ -115,7 +125,7 @@ namespace windows {
 			break;
 		case Other:
 			if (fs::is_directory(asset.path)) {
-				if (ImGui::Selectable((ICON_FA_FOLDER " "+ asset.name).c_str(), false, ImGuiSelectableFlags_DontClosePopups)) {
+				if (ImGui::Selectable((ICON_FA_FOLDER " " + asset.name).c_str(), false, ImGuiSelectableFlags_DontClosePopups)) {
 					navigateTo(asset.path);
 				}
 			}
@@ -160,7 +170,7 @@ namespace windows {
 	}
 	void ContentBrowser::createNewFolderModel()
 	{
-		if (showCreateFolderModal && 
+		if (showCreateFolderModal &&
 			ImGui::BeginPopupModal("Create New Folder", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 			// Use a buffer initialized with the current folder name.
 			char buffer[256];

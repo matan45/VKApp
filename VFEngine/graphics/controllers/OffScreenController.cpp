@@ -20,7 +20,7 @@ namespace controllers {
 		offScreen->init();
 	}
 
-	void OffScreenController::cleanUp()
+	void OffScreenController::cleanUp() const
 	{
 		offScreen->cleanUp();
 	}
