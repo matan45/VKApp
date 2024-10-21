@@ -47,7 +47,7 @@ namespace windows {
 				drawFileWindow();
 			}
 
-
+			ImGui::PushStyleColor(ImGuiCol_Button,ImVec4( 0, 0, 0, 0));
 			// also add icons
 			// Display contents of the current directory
 			for (const auto& asset : assets) {
@@ -62,6 +62,7 @@ namespace windows {
 
 				}
 			}
+			ImGui::PopStyleColor();
 		}
 
 		ImGui::Columns(1);
@@ -109,6 +110,7 @@ namespace windows {
 		switch (asset.type) {
 			using enum windows::AssetType;
 		case Texture:
+			//ImGui::Image()
 			ImGui::Text("[Texture] %s", asset.name.c_str());
 			break;
 		case Model:
@@ -134,6 +136,8 @@ namespace windows {
 			}
 			break;
 		}
+
+		ImGui::NextColumn();
 	}
 
 	void ContentBrowser::drawFileWindow()

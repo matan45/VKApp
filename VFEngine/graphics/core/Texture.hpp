@@ -15,20 +15,26 @@ namespace core {
 		vk::DeviceMemory imageMemory;
 		vk::ImageView imageView;
 
-		vk::Buffer stagingBuffer;
-		vk::DeviceMemory stagingBufferMemory;
-
 		vk::Sampler sampler;
-		vk::DescriptorSet descriptorSet;
+
+		vk::UniqueDescriptorSet descriptorSet;
+		vk::UniqueDescriptorSetLayout descriptorSetLayout;
+		vk::UniqueDescriptorPool descriptorPool;
 
 	public:
 		explicit Texture(Device& device);
 		~Texture();
 
 		void loadFromFile(std::string_view filePath);
-		const vk::DescriptorSet& getDescriptorSet() const { return descriptorSet; }
+		const vk::DescriptorSet& getDescriptorSet() const { return descriptorSet.get(); }
 
 	private:
+		void createSampler();
+		void copyBufferToImage(vk::Buffer buffer, uint32_t width, uint32_t height);
+
+		void createDescriptorSetLayout();
+		void createDescriptorPool();
+		void createDescriptorSet();
 	};
 }
 

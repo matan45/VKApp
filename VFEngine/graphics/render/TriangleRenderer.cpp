@@ -101,24 +101,11 @@ namespace render {
 		   {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}   // Vertex 3
 		};
 
-		vk::BufferCreateInfo bufferInfo{};
+		core::BufferInfo bufferInfo(device.getLogicalDevice(), device.getPhysicalDevice());
 		bufferInfo.size = sizeof(vertices[0]) * vertices.size();
 		bufferInfo.usage = vk::BufferUsageFlagBits::eVertexBuffer;
-		bufferInfo.sharingMode = vk::SharingMode::eExclusive;
-
-		vertexBuffer = device.getLogicalDevice().createBuffer(bufferInfo);
-
-		vk::MemoryRequirements memRequirements = device.getLogicalDevice().getBufferMemoryRequirements(vertexBuffer);
-		vk::MemoryAllocateInfo allocInfo{};
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = core::Utilities::findMemoryType(
-			device.getPhysicalDevice(),
-			memRequirements.memoryTypeBits,
-			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent
-		);
-
-		vertexBufferMemory = device.getLogicalDevice().allocateMemory(allocInfo);
-		device.getLogicalDevice().bindBufferMemory(vertexBuffer, vertexBufferMemory, 0);
+		bufferInfo.properties = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent;
+		core::Utilities::createBuffer(bufferInfo, vertexBuffer, vertexBufferMemory);
 
 		void* data;
 		vk::Result result = device.getLogicalDevice().mapMemory(vertexBufferMemory, 0, bufferInfo.size, {}, &data);

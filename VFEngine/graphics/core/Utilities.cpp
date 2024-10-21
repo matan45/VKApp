@@ -155,9 +155,22 @@ namespace core {
 			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
 		}
 		else if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-			barrier.srcAccessMask = vk::AccessFlagBits::eNoneKHR;
+			barrier.srcAccessMask = vk::AccessFlagBits::eNone;
 			barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
 			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
+			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
+		}
+		else if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eTransferDstOptimal) {
+			barrier.srcAccessMask = vk::AccessFlagBits::eNone;
+			barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
+			destinationStage = vk::PipelineStageFlagBits::eTransfer;
+		}
+		else if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
+			barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+			barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+			sourceStage = vk::PipelineStageFlagBits::eTransfer;
 			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
 		}
 
@@ -166,6 +179,70 @@ namespace core {
 			vk::DependencyFlags{},
 			nullptr, nullptr, barrier
 		);
+	}
+
+	void Utilities::createBuffer(const BufferInfo& bufferInfo, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory)
+	{
+		vk::BufferCreateInfo bufferCreateInfo{};
+		bufferCreateInfo.size = bufferInfo.size;
+		bufferCreateInfo.usage = bufferInfo.usage;
+		bufferCreateInfo.sharingMode = vk::SharingMode::eExclusive;
+
+		buffer = bufferInfo.logicalDevice.createBuffer(bufferCreateInfo);
+
+		vk::MemoryRequirements memRequirements = bufferInfo.logicalDevice.getBufferMemoryRequirements(buffer);
+		vk::MemoryAllocateInfo allocInfo{};
+		allocInfo.allocationSize = memRequirements.size;
+		allocInfo.memoryTypeIndex = core::Utilities::findMemoryType(
+			bufferInfo.physicalDevice,
+			memRequirements.memoryTypeBits,
+			bufferInfo.properties
+		);
+
+		bufferMemory = bufferInfo.logicalDevice.allocateMemory(allocInfo);
+		bufferInfo.logicalDevice.bindBufferMemory(buffer, bufferMemory, 0);
+	}
+
+	void Utilities::createImage(const ImageInfo& imageInfo, vk::Image& image, vk::DeviceMemory& imageMemory)
+	{
+		vk::ImageCreateInfo imageCreateInfo{};
+		imageCreateInfo.imageType = vk::ImageType::e2D;
+		imageCreateInfo.extent.width = imageInfo.width;
+		imageCreateInfo.extent.height = imageInfo.height;
+		imageCreateInfo.extent.depth = 1;
+		imageCreateInfo.mipLevels = 1;
+		imageCreateInfo.arrayLayers = 1;
+		imageCreateInfo.format = imageInfo.format;
+		imageCreateInfo.tiling = imageInfo.tiling;
+		imageCreateInfo.initialLayout = vk::ImageLayout::eUndefined;
+		imageCreateInfo.usage = imageInfo.usage;
+		imageCreateInfo.samples = vk::SampleCountFlagBits::e1;
+		imageCreateInfo.sharingMode = vk::SharingMode::eExclusive;
+
+		image = imageInfo.logicalDevice.createImage(imageCreateInfo);
+
+		vk::MemoryRequirements memRequirements = imageInfo.logicalDevice.getImageMemoryRequirements(image);
+		vk::MemoryAllocateInfo allocInfo{};
+		allocInfo.allocationSize = memRequirements.size;
+		allocInfo.memoryTypeIndex = core::Utilities::findMemoryType(imageInfo.physicalDevice, memRequirements.memoryTypeBits, imageInfo.properties);
+
+		imageMemory = imageInfo.logicalDevice.allocateMemory(allocInfo);
+		imageInfo.logicalDevice.bindImageMemory(image, imageMemory, 0);
+	}
+
+	void Utilities::createImageView(const vk::Device& device, const vk::Image& image, vk::Format format, vk::ImageAspectFlags aspectFlags, vk::ImageView& imageView)
+	{
+		vk::ImageViewCreateInfo viewInfo{};
+		viewInfo.image = image;
+		viewInfo.viewType = vk::ImageViewType::e2D;
+		viewInfo.format = format;
+		viewInfo.subresourceRange.aspectMask = aspectFlags;
+		viewInfo.subresourceRange.baseMipLevel = 0;
+		viewInfo.subresourceRange.levelCount = 1;
+		viewInfo.subresourceRange.baseArrayLayer = 0;
+		viewInfo.subresourceRange.layerCount = 1;
+
+		imageView = device.createImageView(viewInfo);
 	}
 
 }

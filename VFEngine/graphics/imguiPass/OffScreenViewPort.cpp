@@ -93,16 +93,32 @@ namespace imguiPass {
 		vk::Format colorFormat = swapChain.getSwapchainImageFormat();
 		vk::Format depthFormat = swapChain.getSwapchainDepthStencilFormat();
 
+		core::ImageInfo imageColorInfo(device.getLogicalDevice(), device.getPhysicalDevice());
+		imageColorInfo.width = swapChain.getSwapchainExtent().width;
+		imageColorInfo.height = swapChain.getSwapchainExtent().height;
+		imageColorInfo.format = colorFormat;
+		imageColorInfo.tiling = vk::ImageTiling::eOptimal;
+		imageColorInfo.usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled;
+		imageColorInfo.properties = vk::MemoryPropertyFlagBits::eDeviceLocal;
+		
+		core::ImageInfo imageDepthInfo(device.getLogicalDevice(), device.getPhysicalDevice());
+		imageDepthInfo.width = swapChain.getSwapchainExtent().width;
+		imageDepthInfo.height = swapChain.getSwapchainExtent().height;
+		imageDepthInfo.format = depthFormat;
+		imageDepthInfo.tiling = vk::ImageTiling::eOptimal;
+		imageDepthInfo.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
+		imageDepthInfo.properties = vk::MemoryPropertyFlagBits::eDeviceLocal;
+
 		for (size_t i = 0; i < swapChain.getImageCount(); i++) {
 			OffscreenResources resources;
 
 			// Create color image for off-screen rendering
-			createImage(colorFormat, vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled, resources.colorImage, resources.colorImageMemory);
-			createImageView(resources.colorImage, colorFormat, vk::ImageAspectFlagBits::eColor, resources.colorImageView);
+			core::Utilities::createImage(imageColorInfo, resources.colorImage, resources.colorImageMemory);
+			core::Utilities::createImageView(device.getLogicalDevice(), resources.colorImage, colorFormat, vk::ImageAspectFlagBits::eColor, resources.colorImageView);
 
 			// Create depth image
-			createImage(depthFormat, vk::ImageUsageFlagBits::eDepthStencilAttachment, resources.depthImage, resources.depthImageMemory);
-			createImageView(resources.depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth, resources.depthImageView);
+			core::Utilities::createImage(imageDepthInfo, resources.depthImage, resources.depthImageMemory);
+			core::Utilities::createImageView(device.getLogicalDevice(), resources.depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth, resources.depthImageView);
 
 			// Create framebuffer
 			updateDescriptorSets(resources.descriptorSet, resources.colorImageView);
@@ -110,48 +126,6 @@ namespace imguiPass {
 			// Store resources
 			offscreenResources.push_back(std::move(resources));
 		}
-	}
-
-	void OffScreenViewPort::createImage(vk::Format format, vk::ImageUsageFlags usage, vk::Image& image, vk::DeviceMemory& deviceMemory) const
-	{
-		vk::ImageCreateInfo imageInfo{};
-		imageInfo.imageType = vk::ImageType::e2D;
-		imageInfo.extent.width = swapChain.getSwapchainExtent().width;
-		imageInfo.extent.height = swapChain.getSwapchainExtent().height;
-		imageInfo.extent.depth = 1;
-		imageInfo.mipLevels = 1;
-		imageInfo.arrayLayers = 1;
-		imageInfo.format = format;
-		imageInfo.tiling = vk::ImageTiling::eOptimal;
-		imageInfo.initialLayout = vk::ImageLayout::eUndefined;
-		imageInfo.usage = usage;
-		imageInfo.samples = vk::SampleCountFlagBits::e1;
-		imageInfo.sharingMode = vk::SharingMode::eExclusive;
-
-		image = device.getLogicalDevice().createImage(imageInfo);
-
-		vk::MemoryRequirements memRequirements = device.getLogicalDevice().getImageMemoryRequirements(image);
-		vk::MemoryAllocateInfo allocInfo{};
-		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = core::Utilities::findMemoryType(device.getPhysicalDevice(), memRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal);
-
-		deviceMemory = device.getLogicalDevice().allocateMemory(allocInfo);
-		device.getLogicalDevice().bindImageMemory(image, deviceMemory, 0);
-	}
-
-	void OffScreenViewPort::createImageView(const vk::Image& image, vk::Format format, vk::ImageAspectFlags aspectFlags, vk::ImageView& imageView) const
-	{
-		vk::ImageViewCreateInfo viewInfo{};
-		viewInfo.image = image;
-		viewInfo.viewType = vk::ImageViewType::e2D;
-		viewInfo.format = format;
-		viewInfo.subresourceRange.aspectMask = aspectFlags;
-		viewInfo.subresourceRange.baseMipLevel = 0;
-		viewInfo.subresourceRange.levelCount = 1;
-		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = 1;
-
-		imageView = device.getLogicalDevice().createImageView(viewInfo);
 	}
 
 	void OffScreenViewPort::updateDescriptorSets(vk::DescriptorSet& descriptorSet, const vk::ImageView& imageView) const
