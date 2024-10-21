@@ -17,7 +17,7 @@ namespace core {
 
 		vk::Sampler sampler;
 
-		vk::UniqueDescriptorSet descriptorSet;
+		vk::DescriptorSet descriptorSet;
 		vk::UniqueDescriptorSetLayout descriptorSetLayout;
 		vk::UniqueDescriptorPool descriptorPool;
 
@@ -25,8 +25,8 @@ namespace core {
 		explicit Texture(Device& device);
 		~Texture();
 
-		void loadFromFile(std::string_view filePath);
-		const vk::DescriptorSet& getDescriptorSet() const { return descriptorSet.get(); }
+		void loadFromFile(std::string_view filePath, bool isEditor = true);
+		const vk::DescriptorSet& getDescriptorSet() const { return descriptorSet; }
 
 	private:
 		void createSampler();

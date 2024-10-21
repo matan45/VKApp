@@ -5,6 +5,7 @@
 #include "WindowController.hpp"
 #include "../window/Window.hpp"
 #include "time/Timer.hpp"
+#include "../controllers/TextureLoderController.hpp"
 
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
@@ -48,6 +49,7 @@ namespace core {
 
 	void MainLoop::cleanUp() const
 	{
+		controllers::TextureLoderController::cleanUp();
 		renderController->cleanUp();
 		controllers::Graphics::destroyContext();
 		controllers::WindowController::cleanUp();

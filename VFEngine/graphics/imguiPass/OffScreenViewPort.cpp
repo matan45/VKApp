@@ -120,7 +120,7 @@ namespace imguiPass {
 			core::Utilities::createImage(imageDepthInfo, resources.depthImage, resources.depthImageMemory);
 			core::Utilities::createImageView(device.getLogicalDevice(), resources.depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth, resources.depthImageView);
 
-			// Create framebuffer
+
 			updateDescriptorSets(resources.descriptorSet, resources.colorImageView);
 
 			// Store resources
@@ -156,7 +156,6 @@ namespace imguiPass {
 		samplerInfo.unnormalizedCoordinates = VK_FALSE;  // Use normalized coordinates [0, 1]
 		samplerInfo.compareEnable = VK_FALSE;
 		samplerInfo.compareOp = vk::CompareOp::eAlways;
-
 
 		// Create the sampler
 		sampler = device.getLogicalDevice().createSampler(samplerInfo);

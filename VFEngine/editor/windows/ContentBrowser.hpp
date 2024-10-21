@@ -30,12 +30,20 @@ namespace windows {
 		fs::path selectedFile;
 		bool showFileWindow = false;
 
-		static constexpr float THUMBNAIL_SIZE = 96.0f;
+		ImTextureID fileIcon;
+		ImTextureID folderIcon;
+		ImTextureID textureIcon;
+		ImTextureID audioIcon;
+		ImTextureID meshIcon;
+		ImTextureID glslIcon;
+		ImTextureID animationIcon;
+
+		bool navigateFolder = false;
+
+		static constexpr float THUMBNAIL_SIZE = 64.0f;
 		static constexpr float PADDING = 16.0f;
 	public:
-		explicit ContentBrowser() {
-			navigateTo(currentPath);
-		};
+		explicit ContentBrowser();
 		~ContentBrowser() override = default;
 
 		void draw() override;

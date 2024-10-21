@@ -3,6 +3,7 @@
 #include "../string/StringUtil.hpp"
 
 namespace nfd {
+	//TODO swap erroer in logs
 	FileDialog::FileDialog()
 	{
 		HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
@@ -15,26 +16,6 @@ namespace nfd {
 	{
 		CoUninitialize();
 	}
-
-	/*
-	 // Prepare file type filters
-	std::vector<std::pair<std::wstring, std::wstring>> fileTypes = {
-		{ L"Text Files (*.txt)", L"*.txt" },
-		{ L"Image Files (*.png;*.jpg;*.bmp)", L"*.png;*.jpg;*.bmp" },
-		{ L"All Files (*.*)", L"*.*" }
-	};
-
-	try
-	{
-		std::string filePath = dialog.OpenFileDialog(fileTypes);
-		MessageBoxA(NULL, filePath.c_str(), "Selected File", MB_OK);
-	}
-	catch (const std::exception& e)
-	{
-		MessageBoxA(NULL, e.what(), "Error", MB_OK | MB_ICONERROR);
-	}
-
-	*/
 
 	std::string FileDialog::openFileDialog(const std::vector<std::pair<std::wstring, std::wstring>>& fileTypes) const
 	{

@@ -92,7 +92,6 @@ namespace windows {
 	{
 		if (ImGui::BeginMenu("Settings")) {
 			if (ImGui::MenuItem("Import")) {
-				files.clear();
 				std::vector<std::pair<std::wstring, std::wstring>> fileTypes = {
 						{ L"Model Files (*.obj;*.fbx;*.dae;*.gltf)", L"*.obj;*.fbx;*.dae;*.gltf" },
 						{ L"Image Files (*.png;*.jpg;*.jpeg;*.hdr)", L"*.png;*.jpg;*.jpeg;*.hdr" },
@@ -100,7 +99,7 @@ namespace windows {
 				};
 				try
 				{
-					files.push_back(fileDialog.openFileDialog(fileTypes));
+					files = fileDialog.multiSelectFileDialog(fileTypes);
 					if (!files.empty()) {
 						openModal = true;
 					}

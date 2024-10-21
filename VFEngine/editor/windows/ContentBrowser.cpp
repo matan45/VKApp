@@ -1,10 +1,24 @@
 #include "ContentBrowser.hpp"
 #include "string/StringUtil.hpp"
-#include <print/EditorLogger.hpp>
+#include "TextureLoderController.hpp"
+#include "print/EditorLogger.hpp"
 #include <IconsFontAwesome6.h>
 #include <algorithm>
 
 namespace windows {
+
+	ContentBrowser::ContentBrowser()
+	{
+		navigateTo(currentPath);
+		fileIcon = controllers::TextureLoderController::loadTexture("../../resources/editor/contentBrowser/file.vfImage");
+		folderIcon = controllers::TextureLoderController::loadTexture("../../resources/editor/contentBrowser/folder.vfImage");
+		textureIcon = controllers::TextureLoderController::loadTexture("../../resources/editor/contentBrowser/texture.vfImage");
+		audioIcon = controllers::TextureLoderController::loadTexture("../../resources/editor/contentBrowser/audio-file.vfImage");
+		meshIcon = controllers::TextureLoderController::loadTexture("../../resources/editor/contentBrowser/mesh-file.vfImage");
+		glslIcon = controllers::TextureLoderController::loadTexture("../../resources/editor/contentBrowser/glsl-file.vfImage");
+		animationIcon = controllers::TextureLoderController::loadTexture("../../resources/editor/contentBrowser/animation-file.vfImage");
+	}
+
 	void ContentBrowser::draw()
 	{
 		if (showCreateFolderModal) {
@@ -47,15 +61,14 @@ namespace windows {
 				drawFileWindow();
 			}
 
-			ImGui::PushStyleColor(ImGuiCol_Button,ImVec4( 0, 0, 0, 0));
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 			// also add icons
 			// Display contents of the current directory
 			for (const auto& asset : assets) {
 				printFilesNames(asset);
 
 				// Detect double-click on a file to open a new window.
-				if (ImGui::IsItemClicked(ImGuiMouseButton_Left)
-					&& ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)
+				if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)
 					&& (asset.type != AssetType::Other || !fs::is_directory(asset.path))) {
 					selectedFile = asset.path;
 					showFileWindow = true;
@@ -82,20 +95,22 @@ namespace windows {
 			}
 			else {
 				// Determine the asset type by its file extension.
-				auto ext = entry.path().extension();
-				if (ext == FileExtension::textrue) {
+				std::string ext = entry.path().extension().string();
+				ext.erase(std::find(ext.begin(), ext.end(), '\0'), ext.end());
+				vfLogInfo("file ex {}", ext);
+				if (ext == "." + FileExtension::textrue) {
 					asset.type = Texture;
 				}
-				else if (ext == FileExtension::mesh) {
+				else if (ext == "." + FileExtension::mesh) {
 					asset.type = Model;
 				}
-				else if (ext == FileExtension::shader) {
+				else if (ext == "." + FileExtension::shader) {
 					asset.type = Shader;
 				}
-				else if (ext == FileExtension::audio) {
+				else if (ext == "." + FileExtension::audio) {
 					asset.type = Audio;
 				}
-				else if (ext == FileExtension::animation) {
+				else if (ext == "." + FileExtension::animation) {
 					asset.type = Animation;
 				}
 				else {
@@ -110,29 +125,56 @@ namespace windows {
 		switch (asset.type) {
 			using enum windows::AssetType;
 		case Texture:
-			//ImGui::Image()
-			ImGui::Text("[Texture] %s", asset.name.c_str());
+			ImGui::BeginGroup();
+			ImGui::Image(textureIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+			ImGui::TextWrapped("%s", asset.name.c_str());
+			ImGui::EndGroup();
 			break;
 		case Model:
-			ImGui::Text("[Model] %s", asset.name.c_str());
+			ImGui::BeginGroup();
+			ImGui::Image(meshIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+			ImGui::TextWrapped("%s", asset.name.c_str());
+			ImGui::EndGroup();
 			break;
 		case Audio:
-			ImGui::Text("[Audio] %s", asset.name.c_str());
+			ImGui::BeginGroup();
+			ImGui::Image(audioIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+			ImGui::TextWrapped("%s", asset.name.c_str());
+			ImGui::EndGroup();
 			break;
 		case Animation:
-			ImGui::Text("[Animation] %s", asset.name.c_str());
+			ImGui::BeginGroup();
+			ImGui::Image(animationIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+			ImGui::TextWrapped("%s", asset.name.c_str());
+			ImGui::EndGroup();
 			break;
 		case Shader:
-			ImGui::Text("[Shader] %s", asset.name.c_str());
+			ImGui::BeginGroup();
+			ImGui::Image(glslIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+			ImGui::TextWrapped("%s", asset.name.c_str());
+			ImGui::EndGroup();
 			break;
 		case Other:
 			if (fs::is_directory(asset.path)) {
-				if (ImGui::Selectable((ICON_FA_FOLDER " " + asset.name).c_str(), false, ImGuiSelectableFlags_DontClosePopups)) {
+				ImGui::BeginGroup();
+				std::string folderName = asset.name;
+				if (ImGui::ImageButton(folderName.c_str(), folderIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE))) {
+					navigateFolder = true;
+				}
+				
+				ImGui::TextWrapped("%s", folderName.c_str());
+				ImGui::EndGroup();
+
+				if (navigateFolder) {
+					navigateFolder = false;
 					navigateTo(asset.path);
 				}
 			}
 			else {
-				ImGui::Text(ICON_FA_FILE " %s", asset.name.c_str());
+				ImGui::BeginGroup();
+				ImGui::Image(fileIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+				ImGui::Text("%s", asset.name.c_str());
+				ImGui::EndGroup();
 			}
 			break;
 		}

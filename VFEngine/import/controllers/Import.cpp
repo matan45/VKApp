@@ -1,7 +1,7 @@
 #include "Import.hpp"
 #include <filesystem> 
 #include <algorithm>
-#include <iostream>
+#include "print/EditorLogger.hpp"
 
 namespace fs = std::filesystem;
 
@@ -27,7 +27,7 @@ namespace controllers {
 
 		// Get the file name
 		std::string fileName = fsPath.stem().string();
-		std::cout << "File name: " << fileName << std::endl;
+		vfLogInfo("Import File name: {}", fileName);
 
 		// Get the file extension
 		std::string extension = fsPath.extension().string();
@@ -35,7 +35,7 @@ namespace controllers {
 		std::ranges::transform(extension.begin(), extension.end(), extension.begin(), ::tolower); // Convert to lowercase
 
 		if (extension.empty()) {
-			std::cerr << "No file extension found for path: " << path << std::endl;
+			vfLogError("No file extension found for path: {}", path);
 			return;
 		}
 
@@ -53,7 +53,7 @@ namespace controllers {
 			processAudio(path, fileName, extension);
 		}
 		else {
-			std::cerr << "Unknown file extension: " << extension << std::endl;
+			vfLogError("Unknown file extension: {}", extension);
 		}
 	}
 

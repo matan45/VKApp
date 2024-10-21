@@ -103,6 +103,7 @@ namespace core {
 
 		try {
 			queue.submit(submitInfo, nullptr);
+			queue.waitIdle();
 		}
 		catch (const vk::SystemError& err) {
 			loggerError("Failed to submit command buffer: {}", err.what());
