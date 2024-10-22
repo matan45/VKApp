@@ -1,7 +1,11 @@
 #include "Import.hpp"
 #include <filesystem> 
 #include <algorithm>
+#include <future>
+
 #include "print/EditorLogger.hpp"
+#include "string/StringUtil.hpp"
+
 
 namespace fs = std::filesystem;
 
@@ -9,9 +13,13 @@ namespace controllers {
 
 	void Import::importFiles(const std::vector<std::string>& paths)
 	{
+		std::vector<std::future<void>> futures;
 		for (const auto& path : paths) {
-			//TODO should be anysc
-			processPath(path);
+			futures.push_back(std::async(std::launch::async, &Import::processPath, path));
+		}
+
+		for (auto& future : futures) {
+			future.get();
 		}
 	}
 
@@ -32,7 +40,7 @@ namespace controllers {
 		// Get the file extension
 		std::string extension = fsPath.extension().string();
 		extension.erase(std::find(extension.begin(), extension.end(), '\0'), extension.end());
-		std::ranges::transform(extension.begin(), extension.end(), extension.begin(), ::tolower); // Convert to lowercase
+		extension = StringUtil::toLower(extension);
 
 		if (extension.empty()) {
 			vfLogError("No file extension found for path: {}", path);

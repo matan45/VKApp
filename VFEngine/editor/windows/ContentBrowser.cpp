@@ -45,14 +45,22 @@ namespace windows {
 			// Show current path and navigation options
 			ImGui::Text("Current Path: %s", StringUtil::wstringToUtf8(currentPath.wstring()).c_str());
 
+			// Draw search bar
+			ImGui::Text("Search:"); // Optional, if you want a label before the search bar.
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(150.0f);
+			char searchBuffer[256];
+			std::strncpy(searchBuffer, searchQuery.c_str(), sizeof(searchBuffer));
+			if (ImGui::InputText("##Search", searchBuffer, sizeof(searchBuffer))) {
+				searchQuery = std::string(searchBuffer);
+			}
+
 			ImGui::Separator();
 
 			float panelWidth = ImGui::GetContentRegionAvail().x;
 			float cellSize = PADDING + THUMBNAIL_SIZE;
 			int columnCount = max(1, static_cast<int>(panelWidth / cellSize));
 			ImGui::Columns(columnCount, "", false);
-
-
 
 			handleCreateFiles();
 
@@ -65,15 +73,19 @@ namespace windows {
 			// also add icons
 			// Display contents of the current directory
 			for (const auto& asset : assets) {
-				printFilesNames(asset);
+				if (matchesSearchQuery(asset)) {
+					printFilesNames(asset);
 
-				// Detect double-click on a file to open a new window.
-				if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)
-					&& (asset.type != AssetType::Other || !fs::is_directory(asset.path))) {
-					selectedFile = asset.path;
-					showFileWindow = true;
+					// Detect double-click on a file to open a new window.
+					if (ImGui::IsItemClicked(ImGuiMouseButton_Left) &&
+						ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)
+						&& (asset.type != AssetType::Other || !fs::is_directory(asset.path))) {
+						selectedFile = asset.path;
+						showFileWindow = true;
 
+					}
 				}
+				
 			}
 			ImGui::PopStyleColor();
 		}
@@ -97,7 +109,7 @@ namespace windows {
 				// Determine the asset type by its file extension.
 				std::string ext = entry.path().extension().string();
 				ext.erase(std::find(ext.begin(), ext.end(), '\0'), ext.end());
-				vfLogInfo("file ex {}", ext);
+				
 				if (ext == "." + FileExtension::textrue) {
 					asset.type = Texture;
 				}
@@ -252,6 +264,9 @@ namespace windows {
 			if (ImGui::MenuItem("Delete File")) {
 				// Logic to delete file
 			}
+			if (ImGui::MenuItem("Rename File")) {
+				// Logic to Rename file
+			}
 			ImGui::EndPopup();
 		}
 	}
@@ -276,6 +291,19 @@ namespace windows {
 				}
 			}
 		}
+	}
+
+	bool ContentBrowser::matchesSearchQuery(const Asset& asset) const
+	{
+		if (searchQuery.empty()) {
+			return true; // If no search term is entered, show all assets.
+		}
+
+		// Convert both the asset name and the search query to lowercase for case-insensitive comparison.
+		std::string assetNameLower = StringUtil::toLower(asset.name);
+		std::string searchQueryLower = StringUtil::toLower(searchQuery);
+
+		return assetNameLower.find(searchQueryLower) != std::string::npos;
 	}
 
 }

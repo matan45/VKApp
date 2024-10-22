@@ -1,6 +1,8 @@
 #include "StringUtil.hpp"
 #include <Windows.h>
 #include <stdexcept>
+#include <algorithm>
+#include "../print/EditorLogger.hpp"
 
  std::string StringUtil::wstringToUtf8(std::wstring_view wstr)
 {
@@ -12,7 +14,8 @@
 	const auto size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.data(), (int)wstr.size(), nullptr, 0, nullptr, nullptr);
 	if (size_needed <= 0)
 	{
-		throw std::runtime_error("WideCharToMultiByte() failed: " + std::to_string(size_needed));
+		vfLogError("WideCharToMultiByte() failed: {}", std::to_string(size_needed));
+		return std::string();
 	}
 
 	std::string result(size_needed, 0);
@@ -34,4 +37,12 @@
 	 std::wstring wideString(wideSize, 0);
 	 MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), -1, &wideString[0], wideSize);
 	 return wideString;
+ }
+
+ std::string StringUtil::toLower(const std::string& str)
+ {
+	 std::string lowerStr = str;
+	 std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(),
+		 [](unsigned char c) { return std::tolower(c); });
+	 return lowerStr;
  }

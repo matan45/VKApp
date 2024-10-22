@@ -23,7 +23,7 @@ namespace core {
 		device.getLogicalDevice().destroySampler(sampler);
 	}
 
-	void Texture::loadFromFile(std::string_view filePath, bool isEditor)
+	void Texture::loadFromFile(std::string_view filePath,bool isEditor)
 	{
 		resource::TextureData textureData = resource::TextureResource::loadTexture(filePath);
 		vk::DeviceSize imageSize = textureData.width * textureData.height * 4;
@@ -73,11 +73,7 @@ namespace core {
 		if (isEditor) {
 			descriptorSet = ImGui_ImplVulkan_AddTexture(sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}
-		else {
-			createDescriptorPool();
-			createDescriptorSetLayout();
-			createDescriptorSet();
-		}
+		
 	}
 
 	void Texture::createSampler()
@@ -120,60 +116,5 @@ namespace core {
 		);
 
 		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), command);
-	}
-
-	void Texture::createDescriptorPool()
-	{
-		vk::DescriptorPoolSize poolSize{};
-		poolSize.type = vk::DescriptorType::eCombinedImageSampler;
-		poolSize.descriptorCount = 1;
-
-		vk::DescriptorPoolCreateInfo poolInfo{};
-		poolInfo.poolSizeCount = 1;
-		poolInfo.pPoolSizes = &poolSize;
-		poolInfo.maxSets = 1;
-
-		descriptorPool = device.getLogicalDevice().createDescriptorPoolUnique(poolInfo);
-	}
-
-	void Texture::createDescriptorSetLayout()
-	{
-		vk::DescriptorSetLayoutBinding samplerLayoutBinding{};
-		samplerLayoutBinding.binding = 0;
-		samplerLayoutBinding.descriptorType = vk::DescriptorType::eCombinedImageSampler;
-		samplerLayoutBinding.descriptorCount = 1;
-		samplerLayoutBinding.stageFlags = vk::ShaderStageFlagBits::eFragment;
-		samplerLayoutBinding.pImmutableSamplers = nullptr;
-
-		vk::DescriptorSetLayoutCreateInfo layoutInfo{};
-		layoutInfo.bindingCount = 1;
-		layoutInfo.pBindings = &samplerLayoutBinding;
-
-		descriptorSetLayout = device.getLogicalDevice().createDescriptorSetLayoutUnique(layoutInfo);
-	}
-
-	void Texture::createDescriptorSet()
-	{
-		vk::DescriptorSetAllocateInfo allocInfo{};
-		allocInfo.descriptorPool = descriptorPool.get();
-		allocInfo.descriptorSetCount = 1;
-		allocInfo.pSetLayouts = &descriptorSetLayout.get();
-
-		descriptorSet = device.getLogicalDevice().allocateDescriptorSets(allocInfo).front();
-
-		vk::DescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-		imageInfo.imageView = imageView;
-		imageInfo.sampler = sampler;
-
-		vk::WriteDescriptorSet descriptorWrite{};
-		descriptorWrite.dstSet = descriptorSet;
-		descriptorWrite.dstBinding = 0;
-		descriptorWrite.dstArrayElement = 0;
-		descriptorWrite.descriptorType = vk::DescriptorType::eCombinedImageSampler;
-		descriptorWrite.descriptorCount = 1;
-		descriptorWrite.pImageInfo = &imageInfo;
-
-		device.getLogicalDevice().updateDescriptorSets(descriptorWrite, nullptr);
 	}
 }

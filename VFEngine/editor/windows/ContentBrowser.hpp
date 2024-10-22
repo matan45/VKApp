@@ -23,6 +23,7 @@ namespace windows {
 	private:
 		std::vector<Asset> assets;
 		fs::path currentPath = "c:\\matan";
+		std::string searchQuery;
 
 		std::string newFolderName;
 		bool showCreateFolderModal = false;
@@ -68,6 +69,7 @@ namespace windows {
 		void handleCreateFiles();
 
 		void drawFolderTree(const fs::path& path);
+		bool matchesSearchQuery(const Asset& asset) const;
 	};
 }
 
