@@ -38,11 +38,9 @@ namespace imguiPass {
 		void cleanUp() const;
 
 	private:
-		void draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const;
+		void draw(const vk::CommandBuffer& commandBuffer) const;
 
 		void createOffscreenResources();
-		void createImage(vk::Format format, vk::ImageUsageFlags usage, vk::Image& image, vk::DeviceMemory& deviceMemory) const;
-		void createImageView(const vk::Image& image, vk::Format format, vk::ImageAspectFlags aspectFlags, vk::ImageView& imageView) const;
 		void updateDescriptorSets(vk::DescriptorSet& descriptorSet, const vk::ImageView& imageView) const;
 		void createSampler();
 	};

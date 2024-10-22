@@ -20,7 +20,7 @@ namespace controllers {
 		~OffScreenController();
 
 		void init();
-		void cleanUp();
+		void cleanUp() const;
 
 		void* render();
 	};

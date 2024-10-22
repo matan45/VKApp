@@ -1,13 +1,11 @@
 #include "OffScreenController.hpp"
-#include "Graphics.hpp"
-#include "../core/Device.hpp"
-#include "../core/SwapChain.hpp"
+#include "../core/VulkanContext.hpp"
 #include "../imguiPass/OffScreenViewPort.hpp"
 
 namespace controllers {
 
 	OffScreenController::OffScreenController()
-		:swapChain{ Graphics::getSwapChain() }, device{ Graphics::getDevice() }
+		:swapChain{ *core::VulkanContext::getSwapChain() }, device{ *core::VulkanContext::getDevice() }
 	{
 		offScreen = new imguiPass::OffScreenViewPort(device, swapChain);
 	}
@@ -22,7 +20,7 @@ namespace controllers {
 		offScreen->init();
 	}
 
-	void OffScreenController::cleanUp()
+	void OffScreenController::cleanUp() const
 	{
 		offScreen->cleanUp();
 	}

@@ -1,6 +1,7 @@
 #include "AudioResource.hpp"
+#include "../print/EditorLogger.hpp"
+
 #include <fstream>
-#include <iostream>
 #include <bit>  // For std::bit_cast
 
 namespace resource {
@@ -12,7 +13,7 @@ namespace resource {
 		// Open the file in binary mode
 		std::ifstream inFile(path.data(), std::ios::binary);
 		if (!inFile) {
-			std::cerr << "Failed to open file for reading: " << path << std::endl;
+			vfLogError("Failed to open file for reading: ", path);
 			return audioData; // Return an empty audioData on failure
 		}
 
@@ -51,11 +52,7 @@ namespace resource {
 
 			// Optionally, play the chunk in an audio engine here
 			// playAudioChunk(buffer);
-
-			std::cout << "Loaded " << currentOffset << " / " << dataSize << " bytes of audio data." << std::endl;
 		}
-
-		std::cout << "Texture data successfully loaded from " << path << std::endl;
 		return audioData;
 	}
 }

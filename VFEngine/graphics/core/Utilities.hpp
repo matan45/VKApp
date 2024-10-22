@@ -25,6 +25,35 @@ namespace core {
 		std::vector<vk::PresentModeKHR> presentModes;
 	};
 
+	struct ImageInfo
+	{
+		const vk::Device& logicalDevice;
+		const vk::PhysicalDevice& physicalDevice;
+		uint32_t width;
+		uint32_t height;
+		vk::Format format;
+		vk::ImageTiling tiling;
+		vk::ImageUsageFlags usage;
+		vk::MemoryPropertyFlags properties;
+
+		explicit ImageInfo(const vk::Device& logicalDevice, const vk::PhysicalDevice& physicalDevice)
+			: logicalDevice{ logicalDevice }, physicalDevice{ physicalDevice }
+		{}
+	};
+
+	struct BufferInfo
+	{
+		const vk::Device& logicalDevice;
+		const vk::PhysicalDevice& physicalDevice;
+		vk::DeviceSize size;
+		vk::BufferUsageFlags usage;
+		vk::MemoryPropertyFlags properties;
+
+		explicit BufferInfo(const vk::Device& logicalDevice, const vk::PhysicalDevice& physicalDevice)
+			: logicalDevice{ logicalDevice }, physicalDevice{ physicalDevice }
+		{}
+	};
+
 	class Utilities
 	{
 	private:
@@ -36,9 +65,14 @@ namespace core {
 		static uint32_t findMemoryType(const vk::PhysicalDevice& device, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
 
 		static vk::UniqueCommandBuffer beginSingleTimeCommands(const vk::Device& device, const vk::CommandPool& commandPool);
-		static void endSingleTimeCommands(const vk::Queue& queue, const vk::CommandPool& commandPool, const vk::UniqueCommandBuffer& commandBuffer);
+		static void endSingleTimeCommands(const vk::Queue& queue, const vk::UniqueCommandBuffer& commandBuffer);
 
 		static void transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageAspectFlags aspectMask);
+
+		static void createBuffer(const BufferInfo& bufferInfo, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
+		static void createImage(const ImageInfo& imageInfo, vk::Image& image, vk::DeviceMemory& imageMemory);
+		static void createImageView(const vk::Device& device, const vk::Image& image, vk::Format format, vk::ImageAspectFlags aspectFlags, vk::ImageView& imageView);
+
 	};
 }
 

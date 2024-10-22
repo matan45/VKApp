@@ -11,24 +11,21 @@ namespace core {
 }
 
 namespace controllers {
-	class WindowController
+	class RenderController
 	{
 	private:
-		window::Window& window;
+		const window::Window* window;
 		core::SwapChain& swapChain;
 		core::Device& device;
 		core::RenderManager* renderManager;
 
 	public:
-		explicit WindowController();
-		~WindowController();
+		explicit RenderController();
+		~RenderController();
 
 		void init();
-		void cleanUp();
+		void cleanUp() const;
 
-		void windowPollEvents() const;
-		bool windowShouldClose() const;
-		bool isWindowResized() const;
 		void reSize() const;
 
 		void render();

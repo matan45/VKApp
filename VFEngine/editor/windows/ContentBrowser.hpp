@@ -3,17 +3,18 @@
 #include "imgui.h"
 #include "Import.hpp"
 
-
 #include <string>
 #include <filesystem>
 namespace fs = std::filesystem;
 
 namespace windows {
 
+	enum class AssetType { Texture, Model, Audio, Animation, Shader, Other };
+
 	struct Asset {
-		std::wstring name;
-		std::wstring path;
-		enum class AssetType { Texture, Model, Shader, Other } type;
+		std::string name;
+		std::string path;
+		AssetType type;
 	};
 
 
@@ -22,10 +23,28 @@ namespace windows {
 	private:
 		std::vector<Asset> assets;
 		fs::path currentPath = "c:\\matan";
+		std::string searchQuery;
+
+		std::string newFolderName;
+		bool showCreateFolderModal = false;
+
+		fs::path selectedFile;
+		bool showFileWindow = false;
+
+		ImTextureID fileIcon;
+		ImTextureID folderIcon;
+		ImTextureID textureIcon;
+		ImTextureID audioIcon;
+		ImTextureID meshIcon;
+		ImTextureID glslIcon;
+		ImTextureID animationIcon;
+
+		bool navigateFolder = false;
+
+		static constexpr float THUMBNAIL_SIZE = 64.0f;
+		static constexpr float PADDING = 16.0f;
 	public:
-		explicit ContentBrowser() {
-			navigateTo(currentPath);
-		};
+		explicit ContentBrowser();
 		~ContentBrowser() override = default;
 
 		void draw() override;
@@ -40,6 +59,17 @@ namespace windows {
 		}
 
 		void loadDirectory(const fs::path& path);
+
+		void printFilesNames(const Asset& asset);
+
+		void drawFileWindow();
+
+		void createNewFolder(const std::string& folderName);
+		void createNewFolderModel();
+		void handleCreateFiles();
+
+		void drawFolderTree(const fs::path& path);
+		bool matchesSearchQuery(const Asset& asset) const;
 	};
 }
 

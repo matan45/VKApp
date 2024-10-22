@@ -16,13 +16,13 @@ namespace controllers {
 		inline static types::Texture texture;
 	public:
 		static void importFiles(const std::vector<std::string>& paths);
-		static void setLocation(const std::string& newLocation);
+		static void setLocation(std::string_view newLocation);
 
 	private:
 		static void processPath(const std::string& path); 
-		static void processTexture(std::string_view path, std::string_view fileName, std::string_view location);
-		static void processModel(std::string_view path, std::string_view fileName, std::string_view location);
-		static void processAudio(std::string_view path, std::string_view fileName, std::string_view extension, std::string_view location);
+		static void processTexture(std::string_view path, std::string_view fileName);
+		static void processModel(std::string_view path, std::string_view fileName);
+		static void processAudio(std::string_view path, std::string_view fileName, std::string_view extension);
 	};
 }
 

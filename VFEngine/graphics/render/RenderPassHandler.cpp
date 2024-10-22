@@ -20,9 +20,9 @@ namespace render {
 		triangleRenderer->init();
 	}
 
-	void RenderPassHandler::recreate(uint32_t width, uint32_t height) const
+	void RenderPassHandler::recreate() const
 	{
-		triangleRenderer->recreate(width, height);
+		triangleRenderer->recreate();
 	}
 
 	void RenderPassHandler::cleanUp() const

@@ -1,6 +1,6 @@
 #include "Audio.hpp"
+#include "print/EditorLogger.hpp"
 
-#include <iostream>
 #include <vector>
 #include <fstream>
 #include <bit>  // For std::bit_cast
@@ -11,6 +11,7 @@
 #define DR_WAV_IMPLEMENTATION
 #include <dr_wav.h>
 #include <stb_vorbis.c>
+
 
 
 namespace types {
@@ -35,7 +36,7 @@ namespace types {
 		int error;
 		stb_vorbis* vorbis = stb_vorbis_open_filename(path.data(), &error, nullptr);
 		if (!vorbis) {
-			std::cerr << "Failed to load Ogg Vorbis file: " << path << std::endl;
+			vfLogError("Failed to load Ogg Vorbis file: {}", path);
 			return;
 		}
 
@@ -57,8 +58,6 @@ namespace types {
 
 		// Cleanup
 		stb_vorbis_close(vorbis);
-
-		std::cout << "Ogg Vorbis file loaded successfully!" << std::endl;
 	}
 
 	void Audio::loadWavFile(std::string_view path, std::string_view fileName, std::string_view location) const
@@ -68,7 +67,7 @@ namespace types {
 		// Open and load WAV file using dr_wav
 		drwav wav;
 		if (!drwav_init_file(&wav, path.data(), nullptr)) {
-			std::cerr << "Failed to load WAV file: " << path << std::endl;
+			vfLogError("Failed to load WAV file: {}", path );
 			return ;
 		}
 
@@ -87,8 +86,6 @@ namespace types {
 
 		// Cleanup
 		drwav_uninit(&wav);
-
-		std::cout << "WAV file loaded successfully!" << std::endl;
 	}
 
 	void Audio::loadMp3File(std::string_view path, std::string_view fileName, std::string_view location) const
@@ -98,7 +95,7 @@ namespace types {
 		// Open and load MP3 file using dr_mp3
 		drmp3 mp3;
 		if (!drmp3_init_file(&mp3, path.data(), nullptr)) {
-			std::cerr << "Failed to load MP3 file: " << path << std::endl;
+			vfLogError("Failed to load MP3 file: {}" , path);
 			return ;
 		}
 
@@ -120,8 +117,6 @@ namespace types {
 
 		// Cleanup
 		drmp3_uninit(&mp3);
-
-		std::cout << "MP3 file loaded successfully!" << std::endl;
 	}
 
 	void Audio::saveToFile(std::string_view location, std::string_view fileName, const resource::AudioData& audioData) const
@@ -130,7 +125,7 @@ namespace types {
 		std::filesystem::path newFileLocation = std::filesystem::path(location) / (std::string(fileName) + "." + FileExtension::audio);
 		std::ofstream outFile(newFileLocation, std::ios::binary);
 		if (!outFile) {
-			std::cerr << "Failed to open file for writing: " << newFileLocation << std::endl;
+			vfLogError("Failed to open file for writing: {}" ,newFileLocation.string());
 			return;
 		}
 
@@ -151,8 +146,6 @@ namespace types {
 		outFile.write(std::bit_cast<const char*>(audioData.data.data()), dataSize * sizeof(short));
 
 		outFile.close();
-
-		std::cout << "Audio data saved to " << newFileLocation << std::endl;
 	}
 }
 

@@ -1,6 +1,7 @@
 #include "ImguiRender.hpp"
 #include <imgui_impl_vulkan.h>
 #include <imgui_impl_glfw.h>
+#include <IconsFontAwesome6.h>
 
 #include "../core/Device.hpp"
 #include "../core/SwapChain.hpp"
@@ -11,7 +12,7 @@
 
 namespace imguiPass {
 
-	ImguiRender::ImguiRender(core::Device& device, core::SwapChain& swapChain, core::CommandPool& commandPool, window::Window& window) :
+	ImguiRender::ImguiRender(core::Device& device, core::SwapChain& swapChain, core::CommandPool& commandPool,const window::Window* window) :
 		device{ device }, swapChain{ swapChain }, commandPool{ commandPool }, window{ window }
 	{
 
@@ -28,7 +29,7 @@ namespace imguiPass {
 		createFrameBuffers();
 
 		// Setup Platform/Renderer back ends
-		ImGui_ImplGlfw_InitForVulkan(window.getWindowPtr(), true);
+		ImGui_ImplGlfw_InitForVulkan(window->getWindowPtr(), true);
 		ImGui_ImplVulkan_InitInfo initInfo{};
 		initInfo.Instance = device.getInstance();
 		initInfo.PhysicalDevice = device.getPhysicalDevice();
@@ -49,10 +50,17 @@ namespace imguiPass {
 		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
 
 		// Load a custom font
-		const ImFont* customFont = io.Fonts->AddFontFromFileTTF("../../resources/editor/Roboto-Regular.ttf", 18.0f);
-		if (!customFont) {
-			loggerError("Failed to load font!");
-		}
+		io.Fonts->AddFontFromFileTTF("../../resources/editor/Roboto-Regular.ttf", 18.0f);
+		
+		// Font Awesome icon font configuration
+		const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_FA, 0 }; // Icon range
+
+		ImFontConfig config;
+		config.MergeMode = true; // Merge icon font with the default one
+		config.PixelSnapH = true;
+
+		// Load Font Awesome font (ensure the path points to the Font Awesome .ttf file)
+		io.Fonts->AddFontFromFileTTF("../../resources/editor/fa-solid-900.ttf", 16.0f, &config, icons_ranges);
 
 		// Create font texture
 		ImGui_ImplVulkan_CreateFontsTexture();
@@ -75,7 +83,7 @@ namespace imguiPass {
 		device.getLogicalDevice().destroyDescriptorPool(imGuiDescriptorPool);
 	}
 
-	void ImguiRender::recreate(uint32_t width, uint32_t height)
+	void ImguiRender::recreate()
 	{
 		for (auto framebuffer : imGuiFrameBuffers) {
 			device.getLogicalDevice().destroyFramebuffer(framebuffer);

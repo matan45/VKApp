@@ -1,6 +1,6 @@
 #include "ImguiWindowHandler.hpp"
-#include <ranges>  // C++20 ranges
-#include <algorithm> // std::ranges::remove
+#include <ranges> 
+#include <algorithm>
 
 namespace controllers::imguiHandler {
 	void ImguiWindowHandler::add(const std::shared_ptr< ImguiWindow>& imguiWindow)

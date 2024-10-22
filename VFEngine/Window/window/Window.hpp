@@ -3,7 +3,8 @@
 #include <vulkan/vulkan.hpp>
 #include "GLFW/glfw3.h"
 #include <string_view>
-//TODO extrect to onther lib
+
+
 namespace window {
 	class Window
 	{
@@ -20,10 +21,11 @@ namespace window {
 		explicit Window() = default;
 		~Window() = default;
 
-		void createWindowSurface(const vk::UniqueInstance& instance, vk::SurfaceKHR& surface);
+		vk::SurfaceKHR createWindowSurface(const vk::UniqueInstance& instance) const;
 
 		void initWindow();
 		void cleanup();
+		void closeWindow();
 		void pollEvents() const;
 		bool shouldClose() const;
 		bool isWindowResized() const { return isResized; }
@@ -32,7 +34,7 @@ namespace window {
 		uint32_t getWidth() const { return width; }
 		uint32_t getHeight() const { return height; }
 
-		GLFWwindow* getWindowPtr() const { return window;}
+		GLFWwindow* getWindowPtr() const { return window; }
 
 	private:
 		void setWindowIcon(std::string_view iconPath);

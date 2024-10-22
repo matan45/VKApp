@@ -3,7 +3,7 @@
 namespace handlers {
 	EditorHandler::EditorHandler() :coreInterface{ std::make_unique<controllers::CoreInterface>() },
 		offScreenInterface{ new controllers::OffScreen() },
-		windowImguiHandler{ std::make_unique<WindowImguiHandler>(*offScreenInterface) }
+		windowImguiHandler{ std::make_unique<WindowImguiHandler>(*offScreenInterface,*coreInterface) }
 	{
 
 	}

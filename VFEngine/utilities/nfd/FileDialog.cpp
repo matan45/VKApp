@@ -1,51 +1,36 @@
 #include "FileDialog.hpp"
-#include <stdexcept>
+
+#include <bit>
 #include "../string/StringUtil.hpp"
+#include "../print/EditorLogger.hpp"
 
 namespace nfd {
+
 	FileDialog::FileDialog()
 	{
-		HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+		HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 		if (FAILED(hr))
 		{
-			throw std::runtime_error("Failed to initialize COM");
+			vfLogError("Failed to initialize COM");
 		}
 	}
+
 	FileDialog::~FileDialog()
 	{
 		CoUninitialize();
 	}
-
-	/*
-	 // Prepare file type filters
-	std::vector<std::pair<std::wstring, std::wstring>> fileTypes = {
-		{ L"Text Files (*.txt)", L"*.txt" },
-		{ L"Image Files (*.png;*.jpg;*.bmp)", L"*.png;*.jpg;*.bmp" },
-		{ L"All Files (*.*)", L"*.*" }
-	};
-
-	try
-	{
-		std::string filePath = dialog.OpenFileDialog(fileTypes);
-		MessageBoxA(NULL, filePath.c_str(), "Selected File", MB_OK);
-	}
-	catch (const std::exception& e)
-	{
-		MessageBoxA(NULL, e.what(), "Error", MB_OK | MB_ICONERROR);
-	}
-
-	*/
 
 	std::string FileDialog::openFileDialog(const std::vector<std::pair<std::wstring, std::wstring>>& fileTypes) const
 	{
 		IFileOpenDialog* pFileOpen = nullptr;
 
 		// Create the FileOpenDialog object
-		HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
+		HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, std::bit_cast<void**>(&pFileOpen));
 
 		if (FAILED(hr))
 		{
-			throw std::runtime_error("Failed to create File Open Dialog");
+			vfLogError("Failed to create File Open Dialog");
+			return std::string();
 		}
 
 		// Prepare COMDLG_FILTERSPEC array from the input fileTypes
@@ -61,7 +46,8 @@ namespace nfd {
 		if (FAILED(hr))
 		{
 			pFileOpen->Release();
-			throw std::runtime_error("Failed to set file filters");
+			vfLogError("Failed to set file filters");
+			return std::string();
 		}
 
 		// Set the default file type index (optional)
@@ -69,15 +55,17 @@ namespace nfd {
 		if (FAILED(hr))
 		{
 			pFileOpen->Release();
-			throw std::runtime_error("Failed to set default file type");
+			vfLogError("Failed to set default file type");
+			return std::string();
 		}
 
 		// Show the Open dialog box
-		hr = pFileOpen->Show(NULL);
+		hr = pFileOpen->Show(nullptr);
 		if (FAILED(hr))
 		{
 			pFileOpen->Release();
-			throw std::runtime_error("No file was selected or dialog failed");
+			vfLogError("No file was selected or dialog failed");
+			return std::string();
 		}
 
 		// Get the file name from the dialog box
@@ -86,7 +74,8 @@ namespace nfd {
 		if (FAILED(hr))
 		{
 			pFileOpen->Release();
-			throw std::runtime_error("Failed to retrieve file result");
+			vfLogError("Failed to retrieve file result");
+			return std::string();
 		}
 
 		// Extract the file path
@@ -96,7 +85,8 @@ namespace nfd {
 		{
 			pItem->Release();
 			pFileOpen->Release();
-			throw std::runtime_error("Failed to get file path");
+			vfLogError("Failed to get file path");
+			return std::string();
 		}
 
 		// Convert the wide string (WCHAR) to a standard string (char)
@@ -114,11 +104,12 @@ namespace nfd {
 		IFileOpenDialog* pFileOpen = nullptr;
 
 		// Create the FileOpenDialog object
-		HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, NULL, CLSCTX_ALL, IID_IFileOpenDialog, reinterpret_cast<void**>(&pFileOpen));
+		HRESULT hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL, IID_IFileOpenDialog, std::bit_cast<void**>(&pFileOpen));
 
 		if (FAILED(hr))
 		{
-			throw std::runtime_error("Failed to create File Open Dialog");
+			vfLogError("Failed to create File Open Dialog");
+			return std::vector<std::string>();
 		}
 
 		// Enable multi-selection
@@ -131,7 +122,8 @@ namespace nfd {
 		if (FAILED(hr))
 		{
 			pFileOpen->Release();
-			throw std::runtime_error("Failed to enable multi-select");
+			vfLogError("Failed to enable multi-select");
+			return std::vector<std::string>();
 		}
 
 		// Prepare COMDLG_FILTERSPEC array from the input fileTypes
@@ -147,7 +139,8 @@ namespace nfd {
 		if (FAILED(hr))
 		{
 			pFileOpen->Release();
-			throw std::runtime_error("Failed to set file filters");
+			vfLogError("Failed to set file filters");
+			return std::vector<std::string>();
 		}
 
 		// Set the default file type index (optional)
@@ -155,15 +148,17 @@ namespace nfd {
 		if (FAILED(hr))
 		{
 			pFileOpen->Release();
-			throw std::runtime_error("Failed to set default file type");
+			vfLogError("Failed to set default file type");
+			return std::vector<std::string>();
 		}
 
 		// Show the Open dialog box
-		hr = pFileOpen->Show(NULL);
+		hr = pFileOpen->Show(nullptr);
 		if (FAILED(hr))
 		{
 			pFileOpen->Release();
-			throw std::runtime_error("No file was selected or dialog failed");
+			vfLogError("No file was selected or dialog failed");
+			return std::vector<std::string>();
 		}
 
 		// Get the file names from the dialog box
@@ -172,7 +167,8 @@ namespace nfd {
 		if (FAILED(hr))
 		{
 			pFileOpen->Release();
-			throw std::runtime_error("Failed to retrieve file results");
+			vfLogError("Failed to retrieve file results");
+			return std::vector<std::string>();
 		}
 
 		// Extract the file paths

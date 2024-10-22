@@ -1,17 +1,18 @@
 #include "MeshResource.hpp"
+#include "../print/EditorLogger.hpp"
+
 #include <fstream>
-#include <iostream>
 #include <bit>  // For std::bit_cast
 
 namespace resource {
-	//TODO swap the the logs
+
 	MeshData MeshResource::loadMesh(std::string_view path)
 	{
 		resource::MeshData meshData;
 		// Open the file in binary mode
 		std::ifstream inFile(path.data(), std::ios::binary);
 		if (!inFile) {
-			std::cerr << "Failed to open file for reading: " << path << std::endl;
+			vfLogError("Failed to open file for reading: ", path);
 			return meshData; // Return an empty audioData on failure
 		}
 
@@ -34,7 +35,8 @@ namespace resource {
 
 			// Check for stream failure
 			if (inFile.fail()) {
-				throw std::runtime_error("Failed to read vertex data from file.");
+				vfLogError("Failed to read vertex data from file.");
+				return meshData;
 			}
 		}
 
@@ -51,11 +53,10 @@ namespace resource {
 			indicesProcessed += chunkToRead;
 
 			if (inFile.fail()) {
-				throw std::runtime_error("Failed to read index data from file.");
+				vfLogError("Failed to read index data from file.");
+				return meshData;
 			}
 		}
-
-		std::cout << "Mesh data successfully loaded from " << path << std::endl;
 
 		return meshData;
 	}
