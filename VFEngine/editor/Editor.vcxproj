@@ -92,7 +92,6 @@
   <ItemGroup>
     <ClInclude Include="handlers\EditorHandler.hpp" />
     <ClInclude Include="handlers\WindowImguiHandler.hpp" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="windows\ConsoleLog.hpp" />
     <ClInclude Include="windows\ContentBrowser.hpp" />
     <ClInclude Include="windows\MainImguiWindow.hpp" />
@@ -116,13 +115,6 @@
     <ProjectReference Include="..\import\Import.vcxproj">
       <Project>{605B1BBA-4CFD-4590-35B8-59E421F9CCE0}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Editor.aps" />
-    <None Include="imgui.ini" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Editor.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

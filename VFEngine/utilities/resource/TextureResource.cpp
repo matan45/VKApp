@@ -29,7 +29,7 @@ namespace resource {
 		// Read the texture format (length and string)
 		uint32_t formatLength;
 		inFile.read(std::bit_cast<char*>(&formatLength), sizeof(formatLength)); // Read the length of the format string
-		textureData.textureFormat.resize(formatLength);                            // Resize the string buffer
+		textureData.textureFormat.reserve(formatLength);                            // Resize the string buffer
 		inFile.read(&textureData.textureFormat[0], formatLength);                  // Read the format string itself
 
 		// Read the texture data size and then the texture data itself

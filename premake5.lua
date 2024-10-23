@@ -66,6 +66,7 @@ project "Core"
       "VFEngine/window/controllers",   -- Graphics headers
       "VFEngine/utilities",             -- Utilities headers (if used in Core)
 	  "dependencies/imgui",
+	  "dependencies/glm",
 	  "dependencies/glfw/include",
 	  "dependencies/imgui/backends",
 	  vulkanLibPath.."/Include"	  
