@@ -115,11 +115,9 @@ namespace resource {
 
 	void ResourceManager::cleanUp()
 	{
-		
 		notifyThread();
 		cleanupCondition.notify_one(); // Notify the cleanup thread to wake up and exit.
 		releaseResources();
-
 	}
 
 	void ResourceManager::notifyThread()

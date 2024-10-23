@@ -90,7 +90,7 @@
   <ItemGroup>
     <ClInclude Include="controllers\CoreInterface.hpp" />
     <ClInclude Include="controllers\OffScreen.hpp" />
-    <ClInclude Include="controllers\TextureLoderController.hpp" />
+    <ClInclude Include="controllers\EditorTextureController.hpp" />
     <ClInclude Include="controllers\imguiHandler\ImguiWindow.hpp" />
     <ClInclude Include="controllers\imguiHandler\ImguiWindowHandler.hpp" />
     <ClInclude Include="core\MainLoop.hpp" />
@@ -100,7 +100,7 @@
   <ItemGroup>
     <ClCompile Include="controllers\CoreInterface.cpp" />
     <ClCompile Include="controllers\OffScreen.cpp" />
-    <ClCompile Include="controllers\TextureLoderController.cpp" />
+    <ClCompile Include="controllers\EditorTextureController.cpp" />
     <ClCompile Include="controllers\imguiHandler\ImguiWindowHandler.cpp" />
     <ClCompile Include="core\MainLoop.cpp" />
     <ClCompile Include="handlers\GraphicesHandler.cpp" />
