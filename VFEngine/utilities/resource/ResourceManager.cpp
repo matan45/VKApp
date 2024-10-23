@@ -2,7 +2,7 @@
 #include "TextureResource.hpp"
 #include "AudioResource.hpp"
 #include "MeshResource.hpp"
-#include "../print/EditorLogger.hpp"
+
 
 namespace resource {
 
@@ -27,84 +27,43 @@ namespace resource {
 
 	void ResourceManager::unloadUnusedResources()
 	{
-		std::erase_if(textureCache, [](const auto& pair) {
-			return pair.second.expired();  // Remove the entry if the resource is no longer referenced
-			});
-		std::erase_if(audioCache, [](const auto& pair) {
-			return pair.second.expired();  // Remove the entry if the resource is no longer referenced
-			});
-		std::erase_if(meshCache, [](const auto& pair) {
-			return pair.second.expired();  // Remove the entry if the resource is no longer referenced
-			});
+		// Remove the entry if the resource is no longer referenced
+		std::erase_if(textureCache, [](const auto& pair) {return pair.second.expired(); });
+		std::erase_if(audioCache, [](const auto& pair) {return pair.second.expired(); });
+		std::erase_if(meshCache, [](const auto& pair) {return pair.second.expired(); });
+		std::erase_if(shaderCache, [](const auto& pair) { return pair.second.expired(); });
 	}
 
 	std::future<std::shared_ptr<TextureData>> ResourceManager::loadTextureAsync(std::string_view path)
 	{
-		if (auto texture = textureCache[path.data()].lock()) {
-			return make_ready_future(texture);
-		}
-
-		return std::async(std::launch::async, [path]() {
-			try {
-				auto texture = std::make_shared<TextureData>(TextureResource::loadTexture(path));
-				{
-					std::scoped_lock lock(cacheMutex);
-					textureCache[path.data()] = texture;
-				}
-
-				return texture;
-			}
-			catch (const std::exception& e) {
-				vfLogError("Error loading texture: {} - {}", path, e.what());
-				return std::shared_ptr<TextureData>(nullptr);
-			}
-			});
+		return loadResourceAsync<TextureData>(
+			path,
+			textureCache,
+			[](std::string_view p) { return TextureResource::loadTexture(p); });
 	}
 
 	std::future<std::shared_ptr<AudioData>> ResourceManager::loadAudioAsync(std::string_view path)
 	{
-		if (auto audio = audioCache[path.data()].lock()) {
-			return make_ready_future(audio);
-		}
-
-		return std::async(std::launch::async, [path]() {
-			try {
-				auto audio = std::make_shared<AudioData>(AudioResource::loadAudio(path));
-				{
-					std::scoped_lock lock(cacheMutex);
-					audioCache[path.data()] = audio;
-				}
-
-				return audio;
-			}
-			catch (const std::exception& e) {
-				vfLogError("Error loading audio: {} - {}", path, e.what());
-				return std::shared_ptr<AudioData>(nullptr);
-			}
-			});
+		return loadResourceAsync<AudioData>(
+			path,
+			audioCache,
+			[](std::string_view p) { return AudioResource::loadAudio(p); });
 	}
 
 	std::future<std::shared_ptr<MeshData>> ResourceManager::loadMeshAsync(std::string_view path)
 	{
-		if (auto mesh = meshCache[path.data()].lock()) {
-			return make_ready_future(mesh);
-		}
+		return loadResourceAsync<MeshData>(
+			path,
+			meshCache,
+			[](std::string_view p) { return MeshResource::loadMesh(p); });
+	}
 
-		return std::async(std::launch::async, [path]() {
-			try {
-				auto mesh = std::make_shared<MeshData>(MeshResource::loadMesh(path));
-				{
-					std::scoped_lock lock(cacheMutex);
-					meshCache[path.data()] = mesh;
-				}
-
-				return mesh;
-			}
-			catch (const std::exception& e) {
-				vfLogError("Error loading mesh: {} - {}", path, e.what());
-				return std::shared_ptr<MeshData>(nullptr);
-			}
-			});
+	std::future<std::shared_ptr<std::vector<ShaderModel>>> ResourceManager::loadShaderAsync(std::string_view path)
+	{
+		return loadResourceAsync<std::vector<ShaderModel>>(
+			path,
+			shaderCache,
+			[](std::string_view p) { return ShaderResource::readShaderFile(p); });
 	}
 
 	void ResourceManager::init()

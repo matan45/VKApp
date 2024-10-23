@@ -20,13 +20,13 @@ namespace core {
 		static void init(const window::Window* windowGlfw);
 		static void cleanup();
 
-		static Device* getDevice() { 
+		static std::unique_ptr<Device>& getDevice() {
 			loggerAssert(device == nullptr || device.get() == nullptr, "device is not initiated");
-			return device.get(); }
+			return device; }
 
-		static SwapChain* getSwapChain() { 
+		static std::unique_ptr<SwapChain>& getSwapChain() {
 			loggerAssert(swapChain == nullptr || swapChain.get() == nullptr, "swapChain is not initiated");
-			return swapChain.get(); }
+			return swapChain; }
 
 		static const window::Window* getWindow() {
 			loggerAssert(window == nullptr, "window is not initiated");

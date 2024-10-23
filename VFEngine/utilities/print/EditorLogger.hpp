@@ -12,14 +12,14 @@
 #include <vector>
 
 
-#define vfLogInfo(...) util::infoLog(__VA_ARGS__)
-#define vfLogWarning(...) util::warningLog(__VA_ARGS__)
-#define vfLogError(...) util::infoError(__VA_ARGS__)
+#define vfLogInfo(...) util::infoLogEditor(__VA_ARGS__)
+#define vfLogWarning(...) util::warningLogEditor(__VA_ARGS__)
+#define vfLogError(...) util::infoErrorEditor(__VA_ARGS__)
 
 
 namespace util {
 
-	inline std::string getCurrentTime() {
+	inline std::string getCurrentTimeEditor() {
 		// Get the current time
 		auto now = std::chrono::system_clock::now();
 		std::time_t now_time = std::chrono::system_clock::to_time_t(now);
@@ -38,17 +38,17 @@ namespace util {
 	inline std::vector<std::string> imguiConsoleBuffer;
 
 	// Append log message to ImGui buffer
-	inline void appendToImGuiConsole(const std::string& message) {
+	inline void appendToImGuiConsoleEditor(const std::string& message) {
 		imguiConsoleBuffer.push_back(message);
 	}
 
 	// Helper function to set console text color (Windows-specific)
-	inline void setConsoleColor(WORD color) {
+	inline void setConsoleColorEditor(WORD color) {
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
 	}
 
 	// Helper function to reset console text color to default
-	inline void resetConsoleColor() {
+	inline void resetConsoleColorEditor() {
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0F);  // Reset to normal
 	}
 
@@ -57,65 +57,65 @@ namespace util {
 
 	// Info logging function (without file name and line)
 	template<typename... Args>
-	inline void infoLog(format_string_t<Args...> fmt, Args&&... args) {
-		std::string currentTime = getCurrentTime();
+	inline void infoLogEditor(format_string_t<Args...> fmt, Args&&... args) {
+		std::string currentTime = getCurrentTimeEditor();
 
 		// Format log message with just the message
 		std::string formattedMessage = fmt::format(fmt, std::forward<Args>(args)...);
 		std::string fullMessage = fmt::format("{}INFO: {}", currentTime, formattedMessage);
 
 		// Set console color to green for info
-		setConsoleColor(FOREGROUND_GREEN);
+		setConsoleColorEditor(FOREGROUND_GREEN);
 		printf("%s\n", fullMessage.c_str());
-		resetConsoleColor();
+		resetConsoleColorEditor();
 
 		// Log using spdlog
 		spdlog::info(formattedMessage);
 
 		// Append the log with a timestamp to ImGui buffer
-		appendToImGuiConsole(fullMessage);
+		appendToImGuiConsoleEditor(fullMessage);
 	}
 
 	// Warning logging function (without file name and line)
 	template<typename... Args>
-	inline void warningLog(format_string_t<Args...> fmt, Args&&... args) {
-		std::string currentTime = getCurrentTime();
+	inline void warningLogEditor(format_string_t<Args...> fmt, Args&&... args) {
+		std::string currentTime = getCurrentTimeEditor();
 
 		// Format log message
 		std::string formattedMessage = fmt::format(fmt, std::forward<Args>(args)...);
 		std::string fullMessage = fmt::format("{}WARNING: {}", currentTime, formattedMessage);
 
 		// Set console color to yellow for warning
-		setConsoleColor(FOREGROUND_GREEN | FOREGROUND_RED);  // Yellow text for warning
+		setConsoleColorEditor(FOREGROUND_GREEN | FOREGROUND_RED);  // Yellow text for warning
 		printf("%s\n", fullMessage.c_str());
-		resetConsoleColor();
+		resetConsoleColorEditor();
 
 		// Log using spdlog
 		spdlog::warn(formattedMessage);
 
 		// Append the log with a timestamp to ImGui buffer
-		appendToImGuiConsole(fullMessage);
+		appendToImGuiConsoleEditor(fullMessage);
 	}
 
 	// Error logging function (without file name and line)
 	template<typename... Args>
-	inline void infoError(format_string_t<Args...> fmt, Args&&... args) {
-		std::string currentTime = getCurrentTime();
+	inline void infoErrorEditor(format_string_t<Args...> fmt, Args&&... args) {
+		std::string currentTime = getCurrentTimeEditor();
 
 		// Format log message
 		std::string formattedMessage = fmt::format(fmt, std::forward<Args>(args)...);
 		std::string fullMessage = fmt::format("{}ERROR: {}", currentTime, formattedMessage);
 
 		// Set console color to red for error
-		setConsoleColor(FOREGROUND_RED);
+		setConsoleColorEditor(FOREGROUND_RED);
 		printf("%s\n", fullMessage.c_str());
-		resetConsoleColor();
+		resetConsoleColorEditor();
 
 		// Log using spdlog
 		spdlog::error(formattedMessage);
 
 		// Append the log with a timestamp to ImGui buffer
-		appendToImGuiConsole(fullMessage);
+		appendToImGuiConsoleEditor(fullMessage);
 	}
 
 }  // namespace util

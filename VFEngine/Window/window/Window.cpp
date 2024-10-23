@@ -1,6 +1,6 @@
 #include "Window.hpp"
-#include "print/Logger.hpp"
 #include "resource/ResourceManager.hpp"
+#include "print/Logger.hpp"
 
 
 namespace window {

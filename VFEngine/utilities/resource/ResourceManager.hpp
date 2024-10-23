@@ -7,7 +7,9 @@
 #include <chrono>
 #include <thread>
 
+#include "../print/EditorLogger.hpp"
 #include "Types.hpp"
+#include "ShaderResource.hpp"
 
 namespace resource {
 	class ResourceManager
@@ -16,6 +18,7 @@ namespace resource {
 		inline static std::unordered_map<std::string, std::weak_ptr<TextureData>> textureCache;
 		inline static std::unordered_map<std::string, std::weak_ptr<AudioData>> audioCache;
 		inline static std::unordered_map<std::string, std::weak_ptr<MeshData>> meshCache;
+		inline static std::unordered_map<std::string, std::weak_ptr<std::vector<ShaderModel>>> shaderCache;
 
 		inline static std::mutex cacheMutex;
 		inline static std::jthread cleanupThread;
@@ -26,6 +29,7 @@ namespace resource {
 		static std::future <std::shared_ptr<TextureData>> loadTextureAsync(std::string_view path);
 		static std::future <std::shared_ptr<AudioData>> loadAudioAsync(std::string_view path);
 		static std::future <std::shared_ptr<MeshData>> loadMeshAsync(std::string_view path);
+		static std::future <std::shared_ptr<std::vector<ShaderModel>>> loadShaderAsync(std::string_view path);
 
 		static void init();
 		static void cleanUp();
@@ -36,6 +40,12 @@ namespace resource {
 		static void notifyThread();
 		static void releaseResources();
 
+		template <typename T, typename LoaderFunc>
+		static std::future<std::shared_ptr<T>> loadResourceAsync(
+			std::string_view path,
+			std::unordered_map<std::string, std::weak_ptr<T>>& cache,
+			LoaderFunc loader);
+
 		template <typename T>
 		static std::future<T> make_ready_future(T value) {
 			std::promise<T> promise;
@@ -43,6 +53,29 @@ namespace resource {
 			return promise.get_future();
 		}
 	};
+
+	template<typename T, typename LoaderFunc>
+	inline std::future<std::shared_ptr<T>> ResourceManager::loadResourceAsync(std::string_view path, std::unordered_map<std::string, std::weak_ptr<T>>& cache, LoaderFunc loader)
+	{
+		if (auto resource = cache[path.data()].lock()) {
+			return make_ready_future(resource);
+		}
+
+		return std::async(std::launch::async, [path, loader, &cache]() {
+			try {
+				auto resource = std::make_shared<T>(loader(path));
+				{
+					std::scoped_lock lock(cacheMutex);
+					cache[path.data()] = resource;
+				}
+				return resource;
+			}
+			catch (const std::exception& e) {
+				vfLogError("Error loading resource: {} - {}", path, e.what());
+				return std::shared_ptr<T>(nullptr);
+			}
+			});
+	}
 }
 
 

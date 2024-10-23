@@ -9,6 +9,16 @@
 
 namespace resource {
 
+	enum class ShaderType {
+		VERTEX,
+		FRAGMENT,
+		COMPUTE,
+		GEOMETRY,
+		TESS_CONTROL,
+		TESS_EVALUATION,
+		UNKNOWN
+	};
+
 	struct TextureData {
 		Version version;
 		uint32_t width;

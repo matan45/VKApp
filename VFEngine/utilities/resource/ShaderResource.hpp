@@ -7,16 +7,9 @@
 #include <stdexcept>
 #include <string>
 
+#include "Types.hpp"
+
 namespace resource {
-	enum class ShaderType {
-		VERTEX,
-		FRAGMENT,
-		COMPUTE,
-		GEOMETRY,
-		TESS_CONTROL,
-		TESS_EVALUATION,
-		UNKNOWN
-	};
 
 	struct ShaderModel {
 		ShaderType type;

@@ -11,11 +11,17 @@ namespace core {
 
 	void Shader::readShader(std::string_view path)
 	{
-		std::vector<resource::ShaderModel> shaders = resource::ShaderResource::readShaderFile(path);
+		auto futureShaders = resource::ResourceManager::loadShaderAsync(path);
 		// Extract the shader name from the file path
 		std::string shaderName = std::filesystem::path(path).stem().string();
 
-		for (const auto& shader : shaders) {
+		auto shaders = futureShaders.get();
+		if (!shaders) {
+			loggerError("Failed to load shaders from file: {}", path);
+			return;
+		}
+
+		for (const auto& shader : *shaders) {
 			vk::ShaderStageFlagBits stage = shaderTypeToVulkanStage(shader.type);
 			// Compile GLSL to SPIR-V
 			std::vector<uint32_t> spirvCode = compileShaderToSPIRV(shader.source, stage, shaderName);
