@@ -72,7 +72,9 @@ namespace core {
 		device.getLogicalDevice().freeMemory(stagingBufferMemory);
 
 		createSampler();
-		Utilities::createImageView(device.getLogicalDevice(), image, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, imageView);
+		core::ImageViewInfoRequest imageDepthRequest(device.getLogicalDevice(), image);
+		imageDepthRequest.format = vk::Format::eR8G8B8A8Srgb;
+		Utilities::createImageView(imageDepthRequest, imageView);
 		if (isEditor) {
 			descriptorSet = ImGui_ImplVulkan_AddTexture(sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}

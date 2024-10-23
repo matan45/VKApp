@@ -112,6 +112,8 @@ namespace core {
 
 	void Utilities::transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageAspectFlags aspectMask)
 	{
+		using enum vk::AccessFlagBits;
+		using enum vk::ImageLayout;
 		vk::ImageMemoryBarrier barrier{};
 		barrier.oldLayout = oldLayout;
 		barrier.newLayout = newLayout;
@@ -128,48 +130,48 @@ namespace core {
 		vk::PipelineStageFlags sourceStage;
 		vk::PipelineStageFlags destinationStage;
 
-		if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eColorAttachmentOptimal) {
-			barrier.srcAccessMask = vk::AccessFlagBits::eNoneKHR;
-			barrier.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+		if (oldLayout == eUndefined && newLayout == eColorAttachmentOptimal) {
+			barrier.srcAccessMask = eNoneKHR;
+			barrier.dstAccessMask = eColorAttachmentWrite;
 			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
 			destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
 		}
-		else if (oldLayout == vk::ImageLayout::eColorAttachmentOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-			barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-			barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+		else if (oldLayout == eColorAttachmentOptimal && newLayout == eShaderReadOnlyOptimal) {
+			barrier.srcAccessMask = eColorAttachmentWrite;
+			barrier.dstAccessMask = eShaderRead;
 			sourceStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
 
 		}
-		else if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal) {
-			barrier.srcAccessMask = vk::AccessFlagBits::eNoneKHR;
-			barrier.dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+		else if (oldLayout == eUndefined && newLayout == eDepthStencilAttachmentOptimal) {
+			barrier.srcAccessMask = eNoneKHR;
+			barrier.dstAccessMask = eDepthStencilAttachmentWrite;
 			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
 			destinationStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
 
 		}
-		else if (oldLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-			barrier.srcAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-			barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+		else if (oldLayout == eDepthStencilAttachmentOptimal && newLayout == eShaderReadOnlyOptimal) {
+			barrier.srcAccessMask = eDepthStencilAttachmentWrite;
+			barrier.dstAccessMask = eShaderRead;
 			sourceStage = vk::PipelineStageFlagBits::eLateFragmentTests;
 			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
 		}
-		else if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-			barrier.srcAccessMask = vk::AccessFlagBits::eNone;
-			barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+		else if (oldLayout == eUndefined && newLayout == eShaderReadOnlyOptimal) {
+			barrier.srcAccessMask = eNone;
+			barrier.dstAccessMask = eShaderRead;
 			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
 			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
 		}
-		else if (oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eTransferDstOptimal) {
-			barrier.srcAccessMask = vk::AccessFlagBits::eNone;
-			barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
+		else if (oldLayout == eUndefined && newLayout == eTransferDstOptimal) {
+			barrier.srcAccessMask = eNone;
+			barrier.dstAccessMask = eTransferWrite;
 			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
 			destinationStage = vk::PipelineStageFlagBits::eTransfer;
 		}
-		else if (oldLayout == vk::ImageLayout::eTransferDstOptimal && newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-			barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-			barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+		else if (oldLayout == eTransferDstOptimal && newLayout == eShaderReadOnlyOptimal) {
+			barrier.srcAccessMask = eTransferWrite;
+			barrier.dstAccessMask = eShaderRead;
 
 			sourceStage = vk::PipelineStageFlagBits::eTransfer;
 			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
@@ -212,13 +214,14 @@ namespace core {
 		imageCreateInfo.extent.height = imageInfo.height;
 		imageCreateInfo.extent.depth = 1;
 		imageCreateInfo.mipLevels = 1;
-		imageCreateInfo.arrayLayers = 1;
+		imageCreateInfo.arrayLayers = imageInfo.layers;
 		imageCreateInfo.format = imageInfo.format;
 		imageCreateInfo.tiling = imageInfo.tiling;
 		imageCreateInfo.initialLayout = vk::ImageLayout::eUndefined;
 		imageCreateInfo.usage = imageInfo.usage;
 		imageCreateInfo.samples = vk::SampleCountFlagBits::e1;
 		imageCreateInfo.sharingMode = vk::SharingMode::eExclusive;
+		imageCreateInfo.flags = imageInfo.imageFlags;
 
 		image = imageInfo.logicalDevice.createImage(imageCreateInfo);
 
@@ -231,19 +234,19 @@ namespace core {
 		imageInfo.logicalDevice.bindImageMemory(image, imageMemory, 0);
 	}
 
-	void Utilities::createImageView(const vk::Device& device, const vk::Image& image, vk::Format format, vk::ImageAspectFlags aspectFlags, vk::ImageView& imageView)
+	void Utilities::createImageView(const ImageViewInfoRequest& imageInfoView, vk::ImageView& imageView)
 	{
 		vk::ImageViewCreateInfo viewInfo{};
-		viewInfo.image = image;
-		viewInfo.viewType = vk::ImageViewType::e2D;
-		viewInfo.format = format;
-		viewInfo.subresourceRange.aspectMask = aspectFlags;
+		viewInfo.image = imageInfoView.image;
+		viewInfo.viewType = imageInfoView.imageType;
+		viewInfo.format = imageInfoView.format;
+		viewInfo.subresourceRange.aspectMask = imageInfoView.aspectFlags;
 		viewInfo.subresourceRange.baseMipLevel = 0;
 		viewInfo.subresourceRange.levelCount = 1;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = 1;
+		viewInfo.subresourceRange.layerCount = imageInfoView.layerCount;
 
-		imageView = device.createImageView(viewInfo);
+		imageView = imageInfoView.logicalDevice.createImageView(viewInfo);
 	}
 
 }

@@ -114,12 +114,16 @@ namespace imguiPass {
 
 			// Create color image for off-screen rendering
 			core::Utilities::createImage(imageColorInfo, resources.colorImage, resources.colorImageMemory);
-			core::Utilities::createImageView(device.getLogicalDevice(), resources.colorImage, colorFormat, vk::ImageAspectFlagBits::eColor, resources.colorImageView);
+			core::ImageViewInfoRequest imageColorViewRequest(device.getLogicalDevice(), resources.colorImage);
+			imageColorViewRequest.format = colorFormat;
+			core::Utilities::createImageView(imageColorViewRequest, resources.colorImageView);
 
 			// Create depth image
 			core::Utilities::createImage(imageDepthInfo, resources.depthImage, resources.depthImageMemory);
-			core::Utilities::createImageView(device.getLogicalDevice(), resources.depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth, resources.depthImageView);
-
+			core::ImageViewInfoRequest imageDepthRequest(device.getLogicalDevice(), resources.depthImage);
+			imageDepthRequest.format = depthFormat;
+			imageDepthRequest.aspectFlags = vk::ImageAspectFlagBits::eDepth;
+			core::Utilities::createImageView(imageDepthRequest, resources.depthImageView);
 
 			updateDescriptorSets(resources.descriptorSet, resources.colorImageView);
 
