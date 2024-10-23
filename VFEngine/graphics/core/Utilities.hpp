@@ -25,7 +25,7 @@ namespace core {
 		std::vector<vk::PresentModeKHR> presentModes;
 	};
 
-	struct ImageInfo
+	struct ImageInfoRequest
 	{
 		const vk::Device& logicalDevice;
 		const vk::PhysicalDevice& physicalDevice;
@@ -36,12 +36,12 @@ namespace core {
 		vk::ImageUsageFlags usage;
 		vk::MemoryPropertyFlags properties;
 
-		explicit ImageInfo(const vk::Device& logicalDevice, const vk::PhysicalDevice& physicalDevice)
+		explicit ImageInfoRequest(const vk::Device& logicalDevice, const vk::PhysicalDevice& physicalDevice)
 			: logicalDevice{ logicalDevice }, physicalDevice{ physicalDevice }
 		{}
 	};
 
-	struct BufferInfo
+	struct BufferInfoRequest
 	{
 		const vk::Device& logicalDevice;
 		const vk::PhysicalDevice& physicalDevice;
@@ -49,7 +49,7 @@ namespace core {
 		vk::BufferUsageFlags usage;
 		vk::MemoryPropertyFlags properties;
 
-		explicit BufferInfo(const vk::Device& logicalDevice, const vk::PhysicalDevice& physicalDevice)
+		explicit BufferInfoRequest(const vk::Device& logicalDevice, const vk::PhysicalDevice& physicalDevice)
 			: logicalDevice{ logicalDevice }, physicalDevice{ physicalDevice }
 		{}
 	};
@@ -69,8 +69,8 @@ namespace core {
 
 		static void transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageAspectFlags aspectMask);
 
-		static void createBuffer(const BufferInfo& bufferInfo, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
-		static void createImage(const ImageInfo& imageInfo, vk::Image& image, vk::DeviceMemory& imageMemory);
+		static void createBuffer(const BufferInfoRequest& bufferInfo, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
+		static void createImage(const ImageInfoRequest& imageInfo, vk::Image& image, vk::DeviceMemory& imageMemory);
 		static void createImageView(const vk::Device& device, const vk::Image& image, vk::Format format, vk::ImageAspectFlags aspectFlags, vk::ImageView& imageView);
 
 	};

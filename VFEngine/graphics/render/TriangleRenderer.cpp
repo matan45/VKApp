@@ -101,7 +101,7 @@ namespace render {
 		   {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}   // Vertex 3
 		};
 
-		core::BufferInfo bufferInfo(device.getLogicalDevice(), device.getPhysicalDevice());
+		core::BufferInfoRequest bufferInfo(device.getLogicalDevice(), device.getPhysicalDevice());
 		bufferInfo.size = sizeof(vertices[0]) * vertices.size();
 		bufferInfo.usage = vk::BufferUsageFlagBits::eVertexBuffer;
 		bufferInfo.properties = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent;

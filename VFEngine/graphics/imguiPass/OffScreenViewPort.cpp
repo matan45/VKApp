@@ -93,7 +93,7 @@ namespace imguiPass {
 		vk::Format colorFormat = swapChain.getSwapchainImageFormat();
 		vk::Format depthFormat = swapChain.getSwapchainDepthStencilFormat();
 
-		core::ImageInfo imageColorInfo(device.getLogicalDevice(), device.getPhysicalDevice());
+		core::ImageInfoRequest imageColorInfo(device.getLogicalDevice(), device.getPhysicalDevice());
 		imageColorInfo.width = swapChain.getSwapchainExtent().width;
 		imageColorInfo.height = swapChain.getSwapchainExtent().height;
 		imageColorInfo.format = colorFormat;
@@ -101,7 +101,7 @@ namespace imguiPass {
 		imageColorInfo.usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled;
 		imageColorInfo.properties = vk::MemoryPropertyFlagBits::eDeviceLocal;
 		
-		core::ImageInfo imageDepthInfo(device.getLogicalDevice(), device.getPhysicalDevice());
+		core::ImageInfoRequest imageDepthInfo(device.getLogicalDevice(), device.getPhysicalDevice());
 		imageDepthInfo.width = swapChain.getSwapchainExtent().width;
 		imageDepthInfo.height = swapChain.getSwapchainExtent().height;
 		imageDepthInfo.format = depthFormat;

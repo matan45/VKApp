@@ -1,6 +1,6 @@
 #include "Texture.hpp"
 #include "Device.hpp"
-#include "resource/TextureResource.hpp"
+#include "resource/ResourceManager.hpp"
 #include "print/Logger.hpp"
 #include <imgui_impl_vulkan.h>
 
@@ -25,13 +25,16 @@ namespace core {
 
 	void Texture::loadFromFile(std::string_view filePath,bool isEditor)
 	{
-		resource::TextureData textureData = resource::TextureResource::loadTexture(filePath);
-		vk::DeviceSize imageSize = textureData.width * textureData.height * 4;
+		auto textureData = resource::ResourceManager::loadTextureAsync(filePath);
+		auto texturePtr = textureData.get();
+		uint32_t imageWidth = texturePtr->width;
+		uint32_t imageHeight = texturePtr->height;
+		vk::DeviceSize imageSize = imageWidth * imageHeight * 4;
 
 		vk::Buffer stagingBuffer;
 		vk::DeviceMemory stagingBufferMemory;
 
-		BufferInfo bufferInfo(device.getLogicalDevice(), device.getPhysicalDevice());
+		BufferInfoRequest bufferInfo(device.getLogicalDevice(), device.getPhysicalDevice());
 		bufferInfo.size = imageSize;
 		bufferInfo.usage = vk::BufferUsageFlagBits::eTransferSrc;
 		bufferInfo.properties = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent;
@@ -41,13 +44,13 @@ namespace core {
 		if (vk::Result result = device.getLogicalDevice().mapMemory(stagingBufferMemory, 0, imageSize, {}, &data); result != vk::Result::eSuccess) {
 			loggerError("failed to map memory");
 		}
-		memcpy(data, textureData.textureData.data(), imageSize);
+		memcpy(data, texturePtr->textureData.data(), imageSize);
 		device.getLogicalDevice().unmapMemory(stagingBufferMemory);
 
 
-		ImageInfo imageInfo(device.getLogicalDevice(), device.getPhysicalDevice());
-		imageInfo.width = textureData.width;
-		imageInfo.height = textureData.height;
+		ImageInfoRequest imageInfo(device.getLogicalDevice(), device.getPhysicalDevice());
+		imageInfo.width = imageWidth;
+		imageInfo.height = imageHeight;
 		imageInfo.format = vk::Format::eR8G8B8A8Srgb;
 		imageInfo.tiling = vk::ImageTiling::eOptimal;
 		imageInfo.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
@@ -58,7 +61,7 @@ namespace core {
 		Utilities::transitionImageLayout(commandTransitionA.get(), image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, vk::ImageAspectFlagBits::eColor);
 		Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandTransitionA);
 
-		copyBufferToImage(stagingBuffer, textureData.width, textureData.height);
+		copyBufferToImage(stagingBuffer, imageWidth, imageHeight);
 
 		vk::UniqueCommandBuffer commandTransitionB = core::Utilities::beginSingleTimeCommands(device.getLogicalDevice(), commandPool.get());
 		Utilities::transitionImageLayout(commandTransitionB.get(), image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageAspectFlagBits::eColor);

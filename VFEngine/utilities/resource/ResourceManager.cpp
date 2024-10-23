@@ -13,7 +13,7 @@ namespace resource {
 
 		while (running) {
 			// Wait for 5 minutes or until notified to wake up early.
-			cleanupCondition.wait_for(lock, 5min);
+			cleanupCondition.wait_for(lock, 1min);
 
 			// Check if we should stop running before proceeding.
 			if (!running) {
@@ -27,7 +27,6 @@ namespace resource {
 
 	void ResourceManager::unloadUnusedResources()
 	{
-		std::scoped_lock lock(cacheMutex);
 		std::erase_if(textureCache, [](const auto& pair) {
 			return pair.second.expired();  // Remove the entry if the resource is no longer referenced
 			});
@@ -131,8 +130,8 @@ namespace resource {
 
 	void ResourceManager::releaseResources()
 	{
-		unloadUnusedResources();
 		std::scoped_lock lock(cacheMutex);
+		unloadUnusedResources();
 		textureCache.clear();
 		audioCache.clear();
 		meshCache.clear();

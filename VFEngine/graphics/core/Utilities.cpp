@@ -182,7 +182,7 @@ namespace core {
 		);
 	}
 
-	void Utilities::createBuffer(const BufferInfo& bufferInfo, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory)
+	void Utilities::createBuffer(const BufferInfoRequest& bufferInfo, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory)
 	{
 		vk::BufferCreateInfo bufferCreateInfo{};
 		bufferCreateInfo.size = bufferInfo.size;
@@ -204,7 +204,7 @@ namespace core {
 		bufferInfo.logicalDevice.bindBufferMemory(buffer, bufferMemory, 0);
 	}
 
-	void Utilities::createImage(const ImageInfo& imageInfo, vk::Image& image, vk::DeviceMemory& imageMemory)
+	void Utilities::createImage(const ImageInfoRequest& imageInfo, vk::Image& image, vk::DeviceMemory& imageMemory)
 	{
 		vk::ImageCreateInfo imageCreateInfo{};
 		imageCreateInfo.imageType = vk::ImageType::e2D;
