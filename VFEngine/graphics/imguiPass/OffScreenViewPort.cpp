@@ -93,7 +93,7 @@ namespace imguiPass {
 		vk::Format colorFormat = swapChain.getSwapchainImageFormat();
 		vk::Format depthFormat = swapChain.getSwapchainDepthStencilFormat();
 
-		core::ImageInfo imageColorInfo(device.getLogicalDevice(), device.getPhysicalDevice());
+		core::ImageInfoRequest imageColorInfo(device.getLogicalDevice(), device.getPhysicalDevice());
 		imageColorInfo.width = swapChain.getSwapchainExtent().width;
 		imageColorInfo.height = swapChain.getSwapchainExtent().height;
 		imageColorInfo.format = colorFormat;
@@ -101,7 +101,7 @@ namespace imguiPass {
 		imageColorInfo.usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eSampled;
 		imageColorInfo.properties = vk::MemoryPropertyFlagBits::eDeviceLocal;
 		
-		core::ImageInfo imageDepthInfo(device.getLogicalDevice(), device.getPhysicalDevice());
+		core::ImageInfoRequest imageDepthInfo(device.getLogicalDevice(), device.getPhysicalDevice());
 		imageDepthInfo.width = swapChain.getSwapchainExtent().width;
 		imageDepthInfo.height = swapChain.getSwapchainExtent().height;
 		imageDepthInfo.format = depthFormat;
@@ -114,12 +114,16 @@ namespace imguiPass {
 
 			// Create color image for off-screen rendering
 			core::Utilities::createImage(imageColorInfo, resources.colorImage, resources.colorImageMemory);
-			core::Utilities::createImageView(device.getLogicalDevice(), resources.colorImage, colorFormat, vk::ImageAspectFlagBits::eColor, resources.colorImageView);
+			core::ImageViewInfoRequest imageColorViewRequest(device.getLogicalDevice(), resources.colorImage);
+			imageColorViewRequest.format = colorFormat;
+			core::Utilities::createImageView(imageColorViewRequest, resources.colorImageView);
 
 			// Create depth image
 			core::Utilities::createImage(imageDepthInfo, resources.depthImage, resources.depthImageMemory);
-			core::Utilities::createImageView(device.getLogicalDevice(), resources.depthImage, depthFormat, vk::ImageAspectFlagBits::eDepth, resources.depthImageView);
-
+			core::ImageViewInfoRequest imageDepthRequest(device.getLogicalDevice(), resources.depthImage);
+			imageDepthRequest.format = depthFormat;
+			imageDepthRequest.aspectFlags = vk::ImageAspectFlagBits::eDepth;
+			core::Utilities::createImageView(imageDepthRequest, resources.depthImageView);
 
 			updateDescriptorSets(resources.descriptorSet, resources.colorImageView);
 

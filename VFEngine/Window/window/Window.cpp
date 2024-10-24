@@ -1,6 +1,6 @@
 #include "Window.hpp"
+#include "resource/ResourceManager.hpp"
 #include "print/Logger.hpp"
-#include "resource/TextureResource.hpp"
 
 
 namespace window {
@@ -66,13 +66,14 @@ namespace window {
 	}
 
 	void Window::setWindowIcon(std::string_view iconPath) {
-		resource::TextureData iconData = resource::TextureResource::loadTexture(iconPath);
+		auto iconData = resource::ResourceManager::loadTextureAsync(iconPath);
 
+		auto dataPtr = iconData.get();
 		// Create GLFWimage and assign the loaded image data
 		GLFWimage icon;
-		icon.width = iconData.width;
-		icon.height = iconData.height;
-		icon.pixels = iconData.textureData.data();
+		icon.width = dataPtr->width;
+		icon.height = dataPtr->height;
+		icon.pixels = dataPtr->textureData.data();
 
 		// Set the icon for the GLFW window
 		glfwSetWindowIcon(window, 1, &icon);

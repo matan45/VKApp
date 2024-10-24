@@ -4,7 +4,7 @@
 #include <shaderc/shaderc.hpp>
 #include <string>
 #include <string_view>
-#include "resource/ShaderResource.hpp" 
+#include "resource/ResourceManager.hpp"
 
 namespace core {
 	class Device;

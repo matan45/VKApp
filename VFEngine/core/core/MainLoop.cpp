@@ -1,11 +1,12 @@
 #include "MainLoop.hpp"
 #include "Graphics.hpp"
 #include "RenderController.hpp"
-#include "../controllers/imguiHandler/ImguiWindowHandler.hpp"
 #include "WindowController.hpp"
 #include "../window/Window.hpp"
 #include "time/Timer.hpp"
-#include "../controllers/TextureLoderController.hpp"
+#include "../controllers/imguiHandler/ImguiWindowHandler.hpp"
+#include "../controllers/EditorTextureController.hpp"
+#include "resource/ResourceManager.hpp"
 
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
@@ -15,6 +16,7 @@ namespace core {
 
 	MainLoop::MainLoop()
 	{
+		resource::ResourceManager::init();
 		controllers::WindowController::init();
 		mainWindow = controllers::WindowController::getWindow();
 		controllers::Graphics::createContext(mainWindow);
@@ -49,10 +51,11 @@ namespace core {
 
 	void MainLoop::cleanUp() const
 	{
-		controllers::TextureLoderController::cleanUp();
+		controllers::EditorTextureController::cleanUp();
 		renderController->cleanUp();
 		controllers::Graphics::destroyContext();
 		controllers::WindowController::cleanUp();
+		resource::ResourceManager::cleanUp();
 	}
 
 

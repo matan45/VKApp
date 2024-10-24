@@ -1,4 +1,5 @@
 #include "ShaderResource.hpp"
+#include "../print/EditorLogger.hpp"
 
 
 namespace resource {
@@ -8,20 +9,22 @@ namespace resource {
 		std::ifstream file(filePath.data());
 
 		if (!file.is_open()) {
-			//throw std::runtime_error("Failed to open shader file: " + filePath);
+			vfLogError("Failed to open shader file: {}", filePath);
+			return std::vector<ShaderModel>();
 		}
 
 		std::string line;
-		std::string shaderSource;
+		std::ostringstream shaderStream;
 		ShaderType currentType = ShaderType::UNKNOWN;
 		const std::string TYPE = "#type ";
 
 		while (std::getline(file, line)) {
 			if (line.rfind(TYPE, 0) == 0) {  // Check if line starts with "#type"
 				// Save previous shader block before switching to new type
-				if (currentType != ShaderType::UNKNOWN && !shaderSource.empty()) {
-					shaderModels.emplace_back(currentType, shaderSource);
-					shaderSource.clear(); // Reset shader source
+				if (currentType != ShaderType::UNKNOWN && !shaderStream.str().empty()) {
+					shaderModels.emplace_back(currentType, shaderStream.str());
+					shaderStream.str("");
+					shaderStream.clear();
 				}
 
 				// Extract shader type from the line
@@ -29,17 +32,18 @@ namespace resource {
 				currentType = getShaderType(shaderType);
 
 				if (currentType == ShaderType::UNKNOWN) {
-					throw std::runtime_error("Invalid shader type: " + shaderType);
+					vfLogError("Invalid shader type: {} in file: {}", shaderType, std::string(filePath));
+					return std::vector<ShaderModel>();
 				}
-				continue; // Skip adding the "#type" line to the shader source
+				continue;
 			}
 
-			shaderSource += line + "\n"; // Append line to shader source
+			shaderStream << line << "\n";
 		}
 
 		// Add the last shader block if exists
-		if (currentType != ShaderType::UNKNOWN && !shaderSource.empty()) {
-			shaderModels.emplace_back(currentType, shaderSource);
+		if (currentType != ShaderType::UNKNOWN && !shaderStream.str().empty()) {
+			shaderModels.emplace_back(currentType, shaderStream.str());
 		}
 
 		return shaderModels;
@@ -48,13 +52,14 @@ namespace resource {
 
 	ShaderType ShaderResource::getShaderType(std::string_view shaderType)
 	{
-		if (shaderType == "VERTEX") return ShaderType::VERTEX;
-		if (shaderType == "FRAGMENT") return ShaderType::FRAGMENT;
-		if (shaderType == "COMPUTE") return ShaderType::COMPUTE;
-		if (shaderType == "GEOMETRY") return ShaderType::GEOMETRY;
-		if (shaderType == "CONTROL") return ShaderType::TESS_CONTROL;
-		if (shaderType == "EVALUATION") return ShaderType::TESS_EVALUATION;
-		return ShaderType::UNKNOWN;
+		using enum resource::ShaderType;
+		if (shaderType == "VERTEX") return VERTEX;
+		if (shaderType == "FRAGMENT") return FRAGMENT;
+		if (shaderType == "COMPUTE") return COMPUTE;
+		if (shaderType == "GEOMETRY") return GEOMETRY;
+		if (shaderType == "CONTROL") return TESS_CONTROL;
+		if (shaderType == "EVALUATION") return TESS_EVALUATION;
+		return UNKNOWN;
 	}
 }
 

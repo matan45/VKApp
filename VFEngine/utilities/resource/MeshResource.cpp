@@ -24,7 +24,7 @@ namespace resource {
 		// Read vertices
 		size_t vertexCount = 0;
 		inFile.read(std::bit_cast<char*>(&vertexCount), sizeof(size_t));
-		meshData.vertices.resize(vertexCount);  // Resize the vector to hold all vertices
+		meshData.vertices.reserve(vertexCount);  // Resize the vector to hold all vertices
 
 		size_t verticesProcessed = 0;
 		while (verticesProcessed < vertexCount) {
@@ -43,7 +43,7 @@ namespace resource {
 		// Read indices
 		size_t indexCount = 0;
 		inFile.read(std::bit_cast<char*>(&indexCount), sizeof(size_t));
-		meshData.indices.resize(indexCount);  // Resize the vector to hold all indices
+		meshData.indices.reserve(indexCount);  // Resize the vector to hold all indices
 		// Read the index data in chunks
 		size_t indicesProcessed = 0;
 		while (indicesProcessed < indexCount) {

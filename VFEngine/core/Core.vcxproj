@@ -56,7 +56,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\graphics\controllers;..\window\controllers;..\utilities;..\..\dependencies\imgui;..\..\dependencies\glfw\include;..\..\dependencies\imgui\backends;C:\VulkanSDK\1.3.290.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\graphics\controllers;..\window\controllers;..\..\dependencies\spdlog\include;..\utilities;..\..\dependencies\imgui;..\..\dependencies\glm;..\..\dependencies\glfw\include;..\..\dependencies\imgui\backends;C:\VulkanSDK\1.3.290.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -72,7 +72,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\graphics\controllers;..\window\controllers;..\utilities;..\..\dependencies\imgui;..\..\dependencies\glfw\include;..\..\dependencies\imgui\backends;C:\VulkanSDK\1.3.290.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\graphics\controllers;..\window\controllers;..\..\dependencies\spdlog\include;..\utilities;..\..\dependencies\imgui;..\..\dependencies\glm;..\..\dependencies\glfw\include;..\..\dependencies\imgui\backends;C:\VulkanSDK\1.3.290.0\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
@@ -89,22 +89,22 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="controllers\CoreInterface.hpp" />
+    <ClInclude Include="controllers\EditorTextureController.hpp" />
     <ClInclude Include="controllers\OffScreen.hpp" />
     <ClInclude Include="controllers\imguiHandler\ImguiWindow.hpp" />
     <ClInclude Include="controllers\imguiHandler\ImguiWindowHandler.hpp" />
     <ClInclude Include="core\MainLoop.hpp" />
     <ClInclude Include="handlers\GraphicesHandler.hpp" />
     <ClInclude Include="handlers\WindowHandler.hpp" />
-    <ClInclude Include="controllers\TextureLoderController.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="controllers\CoreInterface.cpp" />
+    <ClCompile Include="controllers\EditorTextureController.cpp" />
     <ClCompile Include="controllers\OffScreen.cpp" />
     <ClCompile Include="controllers\imguiHandler\ImguiWindowHandler.cpp" />
     <ClCompile Include="core\MainLoop.cpp" />
     <ClCompile Include="handlers\GraphicesHandler.cpp" />
     <ClCompile Include="handlers\WindowHandler.cpp" />
-    <ClCompile Include="controllers\TextureLoderController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\graphics\Graphics.vcxproj">

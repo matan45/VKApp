@@ -1,6 +1,6 @@
 #include "ContentBrowser.hpp"
 #include "string/StringUtil.hpp"
-#include "TextureLoderController.hpp"
+#include "EditorTextureController.hpp"
 #include "print/EditorLogger.hpp"
 #include <IconsFontAwesome6.h>
 #include <algorithm>
@@ -10,13 +10,13 @@ namespace windows {
 	ContentBrowser::ContentBrowser()
 	{
 		navigateTo(currentPath);
-		fileIcon = controllers::TextureLoderController::loadTexture("../../resources/editor/contentBrowser/file.vfImage");
-		folderIcon = controllers::TextureLoderController::loadTexture("../../resources/editor/contentBrowser/folder.vfImage");
-		textureIcon = controllers::TextureLoderController::loadTexture("../../resources/editor/contentBrowser/texture.vfImage");
-		audioIcon = controllers::TextureLoderController::loadTexture("../../resources/editor/contentBrowser/audio-file.vfImage");
-		meshIcon = controllers::TextureLoderController::loadTexture("../../resources/editor/contentBrowser/mesh-file.vfImage");
-		glslIcon = controllers::TextureLoderController::loadTexture("../../resources/editor/contentBrowser/glsl-file.vfImage");
-		animationIcon = controllers::TextureLoderController::loadTexture("../../resources/editor/contentBrowser/animation-file.vfImage");
+		fileIcon = controllers::EditorTextureController::loadTexture("../../resources/editor/contentBrowser/file.vfImage");
+		folderIcon = controllers::EditorTextureController::loadTexture("../../resources/editor/contentBrowser/folder.vfImage");
+		textureIcon = controllers::EditorTextureController::loadTexture("../../resources/editor/contentBrowser/texture.vfImage");
+		audioIcon = controllers::EditorTextureController::loadTexture("../../resources/editor/contentBrowser/audio-file.vfImage");
+		meshIcon = controllers::EditorTextureController::loadTexture("../../resources/editor/contentBrowser/mesh-file.vfImage");
+		glslIcon = controllers::EditorTextureController::loadTexture("../../resources/editor/contentBrowser/glsl-file.vfImage");
+		animationIcon = controllers::EditorTextureController::loadTexture("../../resources/editor/contentBrowser/animation-file.vfImage");
 	}
 
 	void ContentBrowser::draw()

@@ -2,7 +2,7 @@
 #include <string>
 
 namespace controllers {
-	class TextureLoderController
+	class EditorTextureController
 	{
 	public:
 		static void* loadTexture(std::string_view path);

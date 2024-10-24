@@ -25,23 +25,70 @@ namespace core {
 		std::vector<vk::PresentModeKHR> presentModes;
 	};
 
-	struct ImageInfo
+	struct ImageInfoRequest
 	{
 		const vk::Device& logicalDevice;
 		const vk::PhysicalDevice& physicalDevice;
 		uint32_t width;
 		uint32_t height;
+		uint32_t layers;
 		vk::Format format;
 		vk::ImageTiling tiling;
 		vk::ImageUsageFlags usage;
 		vk::MemoryPropertyFlags properties;
+		vk::ImageCreateFlags imageFlags;
 
-		explicit ImageInfo(const vk::Device& logicalDevice, const vk::PhysicalDevice& physicalDevice)
-			: logicalDevice{ logicalDevice }, physicalDevice{ physicalDevice }
+		explicit ImageInfoRequest(
+			const vk::Device& logicalDevice,
+			const vk::PhysicalDevice& physicalDevice,
+			uint32_t width = 1,
+			uint32_t height = 1,
+			uint32_t layers = 1,
+			vk::Format format = vk::Format::eR8G8B8A8Unorm,
+			vk::ImageTiling tiling = vk::ImageTiling::eOptimal,
+			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+			vk::MemoryPropertyFlags properties = vk::MemoryPropertyFlagBits::eDeviceLocal,
+			vk::ImageCreateFlags imageFlags = {}
+		)
+			: logicalDevice{ logicalDevice },
+			physicalDevice{ physicalDevice },
+			width{ width },
+			height{ height },
+			layers{ layers },
+			format{ format },
+			tiling{ tiling },
+			usage{ usage },
+			properties{ properties },
+			imageFlags{ imageFlags }
 		{}
 	};
 
-	struct BufferInfo
+	struct ImageViewInfoRequest {
+		const vk::Device& logicalDevice;
+		const vk::Image& image;
+		vk::Format format;
+		vk::ImageAspectFlags aspectFlags;
+		vk::ImageViewType imageType;
+		uint32_t layerCount;
+
+		explicit ImageViewInfoRequest(
+			const vk::Device& logicalDevice,
+			const vk::Image& image,
+			vk::Format format = vk::Format::eR8G8B8A8Unorm, // Default format: 8-bit RGBA
+			vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor, // Default to color aspect
+			vk::ImageViewType imageType = vk::ImageViewType::e2D, // Default view type is 2D
+			uint32_t layerCount = 1 // Default to a single layer
+		)
+			: logicalDevice{ logicalDevice },
+			image{ image },
+			format{ format },
+			aspectFlags{ aspectFlags },
+			imageType{ imageType },
+			layerCount{ layerCount }
+		{}
+	};
+
+	struct BufferInfoRequest
 	{
 		const vk::Device& logicalDevice;
 		const vk::PhysicalDevice& physicalDevice;
@@ -49,8 +96,18 @@ namespace core {
 		vk::BufferUsageFlags usage;
 		vk::MemoryPropertyFlags properties;
 
-		explicit BufferInfo(const vk::Device& logicalDevice, const vk::PhysicalDevice& physicalDevice)
-			: logicalDevice{ logicalDevice }, physicalDevice{ physicalDevice }
+		explicit BufferInfoRequest(
+			const vk::Device& logicalDevice,
+			const vk::PhysicalDevice& physicalDevice,
+			vk::DeviceSize size = 1024, // Default size of 1024 bytes (1 KB)
+			vk::BufferUsageFlags usage = vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+			vk::MemoryPropertyFlags properties = vk::MemoryPropertyFlagBits::eDeviceLocal
+		)
+			: logicalDevice{ logicalDevice },
+			physicalDevice{ physicalDevice },
+			size{ size },
+			usage{ usage },
+			properties{ properties }
 		{}
 	};
 
@@ -69,9 +126,9 @@ namespace core {
 
 		static void transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageAspectFlags aspectMask);
 
-		static void createBuffer(const BufferInfo& bufferInfo, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
-		static void createImage(const ImageInfo& imageInfo, vk::Image& image, vk::DeviceMemory& imageMemory);
-		static void createImageView(const vk::Device& device, const vk::Image& image, vk::Format format, vk::ImageAspectFlags aspectFlags, vk::ImageView& imageView);
+		static void createBuffer(const BufferInfoRequest& bufferInfo, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
+		static void createImage(const ImageInfoRequest& imageInfo, vk::Image& image, vk::DeviceMemory& imageMemory);
+		static void createImageView(const ImageViewInfoRequest& imageInfoView, vk::ImageView& imageView);
 
 	};
 }
