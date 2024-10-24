@@ -48,7 +48,7 @@ namespace render {
 		void recreate();
 		void cleanUp() const;
 
-		void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex) const;
+		void recordCommandBuffer(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const;
 
 	private:
 		void createVertexBuffer();

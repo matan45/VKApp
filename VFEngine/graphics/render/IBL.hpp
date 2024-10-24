@@ -1,7 +1,5 @@
 #pragma once
 #include <vector>
-#include <string>
-#include <glm/glm.hpp>
 #include "../core/OffScreen.hpp"
 
 namespace core {
@@ -22,7 +20,7 @@ namespace render {
 		explicit IBL(core::Device& device, core::SwapChain& swapChain, std::vector<core::OffscreenResources>& offscreenResources);
 		~IBL() = default;
 
-		void recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex) const;
+		void recordCommandBuffer(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const;
 
 		void init(std::string_view path);
 		void recreate();

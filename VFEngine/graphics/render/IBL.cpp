@@ -10,7 +10,7 @@ namespace render {
 
 	}
 
-	void IBL::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex) const
+	void IBL::recordCommandBuffer(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const
 	{
 	}
 

@@ -62,7 +62,7 @@ namespace render {
 		delete triangle;
 	}
 
-	void TriangleRenderer::recordCommandBuffer(vk::CommandBuffer commandBuffer, uint32_t imageIndex) const
+	void TriangleRenderer::recordCommandBuffer(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const
 	{
 		vk::RenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.renderPass = renderPass;
