@@ -6,7 +6,7 @@
 #include "print/Logger.hpp"
 
 namespace render {
-	TriangleRenderer::TriangleRenderer(core::Device& device, core::SwapChain& swapChain, std::vector<imguiPass::OffscreenResources>& offscreenResources) : device{ device },
+	TriangleRenderer::TriangleRenderer(core::Device& device, core::SwapChain& swapChain, std::vector<core::OffscreenResources>& offscreenResources) : device{ device },
 		swapChain{ swapChain }, offscreenResources{ offscreenResources }
 	{
 	}

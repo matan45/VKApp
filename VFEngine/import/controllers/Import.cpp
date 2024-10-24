@@ -17,10 +17,6 @@ namespace controllers {
 		for (const auto& path : paths) {
 			futures.push_back(std::async(std::launch::async, &Import::processPath, path));
 		}
-
-		for (auto& future : futures) {
-			future.get();
-		}
 	}
 
 	void Import::setLocation(std::string_view newLocation)

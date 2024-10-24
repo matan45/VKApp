@@ -1,8 +1,7 @@
 #pragma once
-#include <vulkan/vulkan.hpp>
 #include <vector>
 #include <glm/glm.hpp>
-#include "../imguiPass/OffScreen.hpp"
+#include "../core/OffScreen.hpp"
 
 namespace core {
 	class Device;
@@ -39,10 +38,10 @@ namespace render {
 		vk::RenderPass renderPass;
 		std::vector<vk::Framebuffer> framebuffers;
 
-		std::vector<imguiPass::OffscreenResources>& offscreenResources;
+		std::vector<core::OffscreenResources>& offscreenResources;
 
 	public:
-		explicit TriangleRenderer(core::Device& device, core::SwapChain& swapChain, std::vector<imguiPass::OffscreenResources>& offscreenResources);
+		explicit TriangleRenderer(core::Device& device, core::SwapChain& swapChain, std::vector<core::OffscreenResources>& offscreenResources);
 		~TriangleRenderer()=default;
 
 		void init();

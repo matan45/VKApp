@@ -1,5 +1,5 @@
 #pragma once
-#include "../imguiPass/OffScreen.hpp"
+#include "../core/OffScreen.hpp"
 
 namespace core {
 	class Device;
@@ -19,9 +19,9 @@ namespace render {
 
 		TriangleRenderer* triangleRenderer{ nullptr };
 
-		std::vector<imguiPass::OffscreenResources>& offscreenResources;
+		std::vector<core::OffscreenResources>& offscreenResources;
 	public:
-		explicit RenderPassHandler(core::Device& device, core::SwapChain& swapChain, std::vector<imguiPass::OffscreenResources>& offscreenResources);
+		explicit RenderPassHandler(core::Device& device, core::SwapChain& swapChain, std::vector<core::OffscreenResources>& offscreenResources);
 		~RenderPassHandler();
 
 		void init();

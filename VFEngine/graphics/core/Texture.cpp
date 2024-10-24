@@ -23,7 +23,7 @@ namespace core {
 		device.getLogicalDevice().destroySampler(sampler);
 	}
 
-	void Texture::loadFromFile(std::string_view filePath,bool isEditor)
+	void Texture::loadFromFile(std::string_view filePath, vk::Format format, bool isEditor)
 	{
 		auto textureData = resource::ResourceManager::loadTextureAsync(filePath);
 		auto texturePtr = textureData.get();
@@ -51,7 +51,7 @@ namespace core {
 		ImageInfoRequest imageInfo(device.getLogicalDevice(), device.getPhysicalDevice());
 		imageInfo.width = imageWidth;
 		imageInfo.height = imageHeight;
-		imageInfo.format = vk::Format::eR8G8B8A8Srgb;
+		imageInfo.format = format;
 		imageInfo.tiling = vk::ImageTiling::eOptimal;
 		imageInfo.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
 		imageInfo.properties = vk::MemoryPropertyFlagBits::eDeviceLocal;
@@ -73,12 +73,12 @@ namespace core {
 
 		createSampler();
 		core::ImageViewInfoRequest imageDepthRequest(device.getLogicalDevice(), image);
-		imageDepthRequest.format = vk::Format::eR8G8B8A8Srgb;
+		imageDepthRequest.format = format;
 		Utilities::createImageView(imageDepthRequest, imageView);
 		if (isEditor) {
 			descriptorSet = ImGui_ImplVulkan_AddTexture(sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}
-		
+
 	}
 
 	void Texture::createSampler()

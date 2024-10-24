@@ -1,7 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 
-namespace imguiPass {
+namespace core {
 	struct OffscreenResources {
 		vk::Image colorImage;
 		vk::DeviceMemory colorImageMemory;

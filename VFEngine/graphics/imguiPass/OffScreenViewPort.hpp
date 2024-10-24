@@ -1,5 +1,5 @@
 #pragma once
-#include "OffScreen.hpp"
+#include "../core/OffScreen.hpp"
 #include <vector>
 
 namespace core {
@@ -25,7 +25,7 @@ namespace imguiPass {
 		render::RenderPassHandler* renderPassHandler{ nullptr };
 
 		vk::Sampler sampler;
-		std::vector<OffscreenResources> offscreenResources;
+		std::vector<core::OffscreenResources> offscreenResources;
 
 	public:
 		explicit OffScreenViewPort(core::Device& device, core::SwapChain& swapChain);

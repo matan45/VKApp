@@ -110,7 +110,7 @@ namespace imguiPass {
 		imageDepthInfo.properties = vk::MemoryPropertyFlagBits::eDeviceLocal;
 
 		for (size_t i = 0; i < swapChain.getImageCount(); i++) {
-			OffscreenResources resources;
+			core::OffscreenResources resources;
 
 			// Create color image for off-screen rendering
 			core::Utilities::createImage(imageColorInfo, resources.colorImage, resources.colorImageMemory);
