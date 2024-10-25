@@ -57,4 +57,38 @@ namespace components {
 		}
 	};
 
+	struct Camera
+	{
+		glm::mat4 projectionMatrix{1.0f};
+		glm::mat4 viewMatrix{1.0f};
+		bool isPerspective = true; // True for perspective, false for orthographic
+		float fieldOfView = 45.0f; // For perspective cameras, in degrees
+		float orthoSize = 10.0f; // For orthographic cameras, half the height of the view
+		float nearPlane = 0.1f;
+		float farPlane = 1000.0f;
+		float aspectRatio = 1.778f; // Typically screen width / height
+		// Update the projection matrix based on the current settings
+		void updateProjectionMatrix()
+		{
+			if (isPerspective) {
+				projectionMatrix = glm::perspective(
+					glm::radians(fieldOfView),
+					aspectRatio,
+					nearPlane,
+					farPlane
+				);
+			} else {
+				float orthoHalfWidth = orthoSize * aspectRatio;
+				projectionMatrix = glm::ortho(
+					-orthoHalfWidth,
+					orthoHalfWidth,
+					-orthoSize,
+					orthoSize,
+					nearPlane,
+					farPlane
+				);
+			}
+		}
+	};
+
 }

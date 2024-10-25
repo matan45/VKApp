@@ -56,11 +56,11 @@ namespace windows
     void MainImguiWindow::importModel()
     {
         // Check if the popup modal is open
-        if (ImGui::BeginPopupModal("Import Model", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGui::BeginPopupModal("Import Files", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
         {
             std::vector<importConfig::ImportFiles> paths;
-            isFlip.resize(files.size(), false);
             paths.reserve(files.size());
+            isFlip.resize(files.size(), false);
 
             ImGui::Text("Files Dropped:");
             // Display the dropped files in the modal popup
