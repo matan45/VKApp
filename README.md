@@ -1,6 +1,6 @@
 # VertexForge
 
-![image](https://github.com/matan45/VertexForge/blob/imgui/resources/editor/VertexForge-logo.png)
+![image](https://github.com/matan45/VertexForge/blob/dev/resources/editor/VertexForge-logo.png)
 
 ## Introduction
 VertexForge is a modular game engine framework built in C++ using modern technologies such as Vulkan, GLFW, ImGui, and spdlog. The project is structured to support the development of real-time applications, with components divided into several sub-projects including core engine functionality, a graphical editor, runtime, utilities, and libraries like Jolt Physics.
