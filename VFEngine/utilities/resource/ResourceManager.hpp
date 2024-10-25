@@ -26,6 +26,7 @@ namespace resource {
 		inline static std::atomic<bool> running;
 
 	public:
+		static FileType readHeaderFile(std::string_view path);
 		static std::future <std::shared_ptr<TextureData>> loadTextureAsync(std::string_view path);
 		static std::future <std::shared_ptr<AudioData>> loadAudioAsync(std::string_view path);
 		static std::future <std::shared_ptr<MeshData>> loadMeshAsync(std::string_view path);

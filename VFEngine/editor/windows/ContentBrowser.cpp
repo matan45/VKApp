@@ -231,6 +231,7 @@ namespace windows
         {
             ImGui::Text("File Name: %s", StringUtil::wstringToUtf8(selectedFile.filename().wstring()).c_str());
             ImGui::Text("File Path: %s", StringUtil::wstringToUtf8(selectedFile.wstring()).c_str());
+            ImGui::Separator();
 
             // Add more information or options specific to the file.
             // For example, if the file is an image, you could display it.

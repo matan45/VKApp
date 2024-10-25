@@ -2,96 +2,119 @@
 #include "TextureResource.hpp"
 #include "AudioResource.hpp"
 #include "MeshResource.hpp"
+#include <bit>  // For std::bit_cast
 
+namespace resource
+{
+    void ResourceManager::periodicCleanup()
+    {
+        using namespace std::chrono_literals;
+        std::unique_lock lock(cacheMutex);
 
-namespace resource {
+        while (running)
+        {
+            // Wait for 5 minutes or until notified to wake up early.
+            cleanupCondition.wait_for(lock, 1min);
 
-	void ResourceManager::periodicCleanup()
-	{
-		using namespace std::chrono_literals;
-		std::unique_lock lock(cacheMutex);
+            // Check if we should stop running before proceeding.
+            if (!running)
+            {
+                break;
+            }
 
-		while (running) {
-			// Wait for 5 minutes or until notified to wake up early.
-			cleanupCondition.wait_for(lock, 1min);
+            // Perform the cleanup.
+            unloadUnusedResources();
+        }
+    }
 
-			// Check if we should stop running before proceeding.
-			if (!running) {
-				break;
-			}
+    void ResourceManager::unloadUnusedResources()
+    {
+        // Remove the entry if the resource is no longer referenced
+        std::erase_if(textureCache, [](const auto& pair) { return pair.second.expired(); });
+        std::erase_if(audioCache, [](const auto& pair) { return pair.second.expired(); });
+        std::erase_if(meshCache, [](const auto& pair) { return pair.second.expired(); });
+        std::erase_if(shaderCache, [](const auto& pair) { return pair.second.expired(); });
+    }
 
-			// Perform the cleanup.
-			unloadUnusedResources();
-		}
-	}
+    FileType ResourceManager::readHeaderFile(std::string_view path)
+    {
+        std::ifstream file(path.data(), std::ios::binary);
+        if (!file.is_open()) {
+            vfLogError( "Failed to open file for reading: {}", path.data());
+            return FileType::UNKNOWN;
+        }
 
-	void ResourceManager::unloadUnusedResources()
-	{
-		// Remove the entry if the resource is no longer referenced
-		std::erase_if(textureCache, [](const auto& pair) {return pair.second.expired(); });
-		std::erase_if(audioCache, [](const auto& pair) {return pair.second.expired(); });
-		std::erase_if(meshCache, [](const auto& pair) {return pair.second.expired(); });
-		std::erase_if(shaderCache, [](const auto& pair) { return pair.second.expired(); });
-	}
+        uint8_t typeByte;
+        file.read(std::bit_cast<char*>(&typeByte), sizeof(typeByte));
 
-	std::future<std::shared_ptr<TextureData>> ResourceManager::loadTextureAsync(std::string_view path)
-	{
-		return loadResourceAsync<TextureData>(
-			path,
-			textureCache,
-			[](std::string_view p) { return TextureResource::loadTexture(p); });
-	}
+        if (!file) {
+            vfLogError( "Failed to read headerFileType from file: {}", path.data());
+            return FileType::UNKNOWN;
+        }
 
-	std::future<std::shared_ptr<AudioData>> ResourceManager::loadAudioAsync(std::string_view path)
-	{
-		return loadResourceAsync<AudioData>(
-			path,
-			audioCache,
-			[](std::string_view p) { return AudioResource::loadAudio(p); });
-	}
+        file.close();
 
-	std::future<std::shared_ptr<MeshData>> ResourceManager::loadMeshAsync(std::string_view path)
-	{
-		return loadResourceAsync<MeshData>(
-			path,
-			meshCache,
-			[](std::string_view p) { return MeshResource::loadMesh(p); });
-	}
+        // Cast the read byte back to a FileType
+        return static_cast<FileType>(typeByte);
+    }
 
-	std::future<std::shared_ptr<std::vector<ShaderModel>>> ResourceManager::loadShaderAsync(std::string_view path)
-	{
-		return loadResourceAsync<std::vector<ShaderModel>>(
-			path,
-			shaderCache,
-			[](std::string_view p) { return ShaderResource::readShaderFile(p); });
-	}
+    std::future<std::shared_ptr<TextureData>> ResourceManager::loadTextureAsync(std::string_view path)
+    {
+        return loadResourceAsync<TextureData>(
+            path,
+            textureCache,
+            [](std::string_view p) { return TextureResource::loadTexture(p); });
+    }
 
-	void ResourceManager::init()
-	{
-		running = true;
-		cleanupThread = std::jthread(&ResourceManager::periodicCleanup);
-	}
+    std::future<std::shared_ptr<AudioData>> ResourceManager::loadAudioAsync(std::string_view path)
+    {
+        return loadResourceAsync<AudioData>(
+            path,
+            audioCache,
+            [](std::string_view p) { return AudioResource::loadAudio(p); });
+    }
 
-	void ResourceManager::cleanUp()
-	{
-		notifyThread();
-		cleanupCondition.notify_one(); // Notify the cleanup thread to wake up and exit.
-		releaseResources();
-	}
+    std::future<std::shared_ptr<MeshData>> ResourceManager::loadMeshAsync(std::string_view path)
+    {
+        return loadResourceAsync<MeshData>(
+            path,
+            meshCache,
+            [](std::string_view p) { return MeshResource::loadMesh(p); });
+    }
 
-	void ResourceManager::notifyThread()
-	{
-		std::scoped_lock lock(cacheMutex);
-		running = false;
-	}
+    std::future<std::shared_ptr<std::vector<ShaderModel>>> ResourceManager::loadShaderAsync(std::string_view path)
+    {
+        return loadResourceAsync<std::vector<ShaderModel>>(
+            path,
+            shaderCache,
+            [](std::string_view p) { return ShaderResource::readShaderFile(p); });
+    }
 
-	void ResourceManager::releaseResources()
-	{
-		std::scoped_lock lock(cacheMutex);
-		unloadUnusedResources();
-		textureCache.clear();
-		audioCache.clear();
-		meshCache.clear();
-	}
+    void ResourceManager::init()
+    {
+        running = true;
+        cleanupThread = std::jthread(&ResourceManager::periodicCleanup);
+    }
 
+    void ResourceManager::cleanUp()
+    {
+        notifyThread();
+        cleanupCondition.notify_one(); // Notify the cleanup thread to wake up and exit.
+        releaseResources();
+    }
+
+    void ResourceManager::notifyThread()
+    {
+        std::scoped_lock lock(cacheMutex);
+        running = false;
+    }
+
+    void ResourceManager::releaseResources()
+    {
+        std::scoped_lock lock(cacheMutex);
+        unloadUnusedResources();
+        textureCache.clear();
+        audioCache.clear();
+        meshCache.clear();
+    }
 }

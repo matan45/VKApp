@@ -11,7 +11,7 @@
 #include "config/Config.hpp"
 
 namespace types {
-	void Texture::loadFromFile(const importConfig::ImportFiles& file, std::string_view fileName, std::string_view location) const
+	void Texture::loadTextureFile(const importConfig::ImportFiles& file, std::string_view fileName, std::string_view location) const
 	{
 		resource::TextureData textureData;
 
@@ -23,6 +23,7 @@ namespace types {
 		int width;
 		int height;
 		int channels;
+		//TODO load float for hdr stbi_loadf
 		unsigned char* imageData = stbi_load(file.path.data(), &width, &height, &channels, 0);
 
 		if (!imageData) {
@@ -52,10 +53,15 @@ namespace types {
 		// Free the image data once copied to the structure
 		stbi_image_free(imageData);
 
-		saveToFile(fileName, location, textureData);
+		saveToFileTexture(fileName, location, textureData);
 	}
 
-	void Texture::saveToFile(std::string_view fileName, std::string_view location, const resource::TextureData& textureData) const
+	void Texture::loadHDRFile(const importConfig::ImportFiles& file, std::string_view fileName,
+		std::string_view location) const
+	{
+	}
+
+	void Texture::saveToFileTexture(std::string_view fileName, std::string_view location, const resource::TextureData& textureData) const
 	{
 		// Open the file in binary mode
 		std::filesystem::path newFileLocation = std::filesystem::path(location) / (std::string(fileName) + "." + FileExtension::textrue);
@@ -88,4 +94,10 @@ namespace types {
 		// Close the file
 		outFile.close();
 	}
+
+	void Texture::saveToFileHDR(std::string_view fileName, std::string_view location,
+		const resource::HDRData& hdrData) const
+	{
+	}
+	
 }

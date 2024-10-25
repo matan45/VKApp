@@ -102,16 +102,16 @@
     <ClInclude Include="controllers\TextureController.hpp" />
     <ClInclude Include="core\CommandPool.hpp" />
     <ClInclude Include="core\Device.hpp" />
+    <ClInclude Include="core\OffScreen.hpp" />
     <ClInclude Include="core\RenderManager.hpp" />
     <ClInclude Include="core\Shader.hpp" />
     <ClInclude Include="core\SwapChain.hpp" />
     <ClInclude Include="core\Texture.hpp" />
     <ClInclude Include="core\Utilities.hpp" />
     <ClInclude Include="core\VulkanContext.hpp" />
-    <ClInclude Include="render\IBL.hpp" />
     <ClInclude Include="imguiPass\ImguiRender.hpp" />
-    <ClInclude Include="core\OffScreen.hpp" />
     <ClInclude Include="imguiPass\OffScreenViewPort.hpp" />
+    <ClInclude Include="render\IBL.hpp" />
     <ClInclude Include="render\RenderPassHandler.hpp" />
     <ClInclude Include="render\TriangleRenderer.hpp" />
   </ItemGroup>
@@ -128,9 +128,9 @@
     <ClCompile Include="core\Texture.cpp" />
     <ClCompile Include="core\Utilities.cpp" />
     <ClCompile Include="core\VulkanContext.cpp" />
-    <ClCompile Include="render\IBL.cpp" />
     <ClCompile Include="imguiPass\ImguiRender.cpp" />
     <ClCompile Include="imguiPass\OffScreenViewPort.cpp" />
+    <ClCompile Include="render\IBL.cpp" />
     <ClCompile Include="render\RenderPassHandler.cpp" />
     <ClCompile Include="render\TriangleRenderer.cpp" />
   </ItemGroup>

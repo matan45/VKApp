@@ -40,7 +40,7 @@ namespace windows
     {
         if (openModal)
         {
-            ImGui::OpenPopup("Import Model");
+            ImGui::OpenPopup("Import Files");
         }
 
         importModel();
@@ -69,7 +69,7 @@ namespace windows
                 ImGui::PushID(files[i].c_str());
                 importConfig::ImportConfig config;
                 ImGui::BulletText("%s", files[i].c_str());
-                if (files::FileUtils::isImageFile(files[i]))
+                if (files::FileUtils::isHDRFile(files[i]))
                 {
                     bool flip = isFlip[i];
                     ImGui::Checkbox("Flip Vertically", &flip);
@@ -132,7 +132,8 @@ namespace windows
             {
                 std::vector<std::pair<std::wstring, std::wstring>> fileTypes = {
                     {L"Model Files (*.obj;*.fbx;*.dae;*.gltf)", L"*.obj;*.fbx;*.dae;*.gltf"},
-                    {L"Image Files (*.png;*.jpg;*.jpeg;*.hdr)", L"*.png;*.jpg;*.jpeg;*.hdr"},
+                    {L"Image Files (*.png;*.jpg;*.jpeg;*.tga;*.bmp)", L"*.png;*.jpg;*.jpeg;*.tga;*.bmp"},
+                    {L"Hdr Files (*.exr;*.hdr)", L"*.exr;*.hdr"},
                     {L"Audio Files (*.wav;*.ogg:*.mp3)", L"*.wav;*.ogg;*.mp3"}
                 };
 

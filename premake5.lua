@@ -99,6 +99,7 @@ project "Import"
       "VFEngine/utilities",             -- Utilities headers
       "dependencies/stb",               -- stb headers
       "dependencies/dr_libs",           -- dr_mp3.h, dr_wav.h, and other dr_libs headers
+      "dependencies/tinyexr",           -- exr headers
       "dependencies/assimp/include",     -- Assimp headers
 	  "dependencies/glm",
 	  
