@@ -1,5 +1,6 @@
 #include "SceneGraph.hpp"
 #include "components/Components.hpp"
+#include <imgui.h>
 
 namespace windows {
 
@@ -50,8 +51,9 @@ namespace windows {
 			if (selected != entt::null) {
 				drawDetails(selected);
 				if (ImGui::BeginPopupContextWindow()) {
-					if (ImGui::MenuItem("Add Component")) {
-					
+					if (ImGui::MenuItem("Add Camera Component")) {
+						auto entityObject = scene::Entity(selected);
+						entityObject.addComponent<components::CameraComponent>();
 					}
 					ImGui::EndPopup();
 				}
@@ -122,8 +124,8 @@ namespace windows {
 
 		//maybe need pushID here
 		// Display the name component first if it exists
-		if (entityObject.hasComponent<components::Name>()) {
-			auto const& nameComponent = entityObject.getComponent<components::Name>();
+		if (entityObject.hasComponent<components::NameComponent>()) {
+			auto const& nameComponent = entityObject.getComponent<components::NameComponent>();
 			char buffer[256];
 			strcpy(buffer, nameComponent.name.c_str());
 			if (ImGui::InputText("Name", buffer, sizeof(buffer))) {
@@ -140,18 +142,57 @@ namespace windows {
 	void SceneGraph::drawDynamicComponent(scene::Entity entity) const {
 		auto& registry = scene::EntityRegistry::getRegistry();
 		// Handle known component types
-		if (registry.all_of<components::Transform>(entity.getHandle())) {
+		if (registry.all_of<components::TransformComponent>(entity.getHandle())) {
 			if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
 				
-				auto& transform = registry.get<components::Transform>(entity.getHandle());
+				auto& transform = registry.get<components::TransformComponent>(entity.getHandle());
 				ImGui::DragFloat3("Position", &transform.position.x, 0.1f);
 				ImGui::DragFloat3("Rotation", &transform.rotation.x, 0.1f);
 				ImGui::DragFloat3("Scale", &transform.scale.x, 0.1f);
 				transform.isDirty = true;
+			}
+		}
+		// Handle Camera component
+		if (registry.all_of<components::CameraComponent>(entity.getHandle())) {
+			if (ImGui::CollapsingHeader("Camera", ImGuiTreeNodeFlags_DefaultOpen)) {
+				auto& camera = registry.get<components::CameraComponent>(entity.getHandle());
 
-				if (ImGui::Button("Remove##Transform")) {
-					//entity.removeComponent<components::Transform>(); dont remove transfrom
-					return; // Exit early since the component is removed.
+				// Toggle between Perspective and Orthographic
+				bool isPerspective = camera.isPerspective;
+				if (ImGui::Checkbox("Perspective", &isPerspective)) {
+					camera.isPerspective = isPerspective;
+					camera.updateProjectionMatrix();
+				}
+
+				// Perspective settings
+				if (camera.isPerspective) {
+					if (ImGui::DragFloat("Field of View", &camera.fieldOfView, 0.1f, 1.0f, 179.0f)) {
+						camera.updateProjectionMatrix();
+					}
+				} 
+				// Orthographic settings
+				else {
+					if (ImGui::DragFloat("Orthographic Size", &camera.orthoSize, 0.1f, 0.1f, 1000.0f)) {
+						camera.updateProjectionMatrix();
+					}
+				}
+
+				// Near and Far Plane settings
+				if (ImGui::DragFloat("Near Plane", &camera.nearPlane, 0.01f, 0.01f, camera.farPlane - 0.1f)) {
+					camera.updateProjectionMatrix();
+				}
+				if (ImGui::DragFloat("Far Plane", &camera.farPlane, 0.1f, camera.nearPlane + 0.1f, 10000.0f)) {
+					camera.updateProjectionMatrix();
+				}
+
+				// Aspect Ratio
+				if (ImGui::DragFloat("Aspect Ratio", &camera.aspectRatio, 0.01f, 0.1f, 10.0f)) {
+					camera.updateProjectionMatrix();
+				}
+
+				// Remove Camera component button
+				if (ImGui::Button("Remove##Camera")) {
+					entity.removeComponent<components::CameraComponent>();
 				}
 			}
 		}

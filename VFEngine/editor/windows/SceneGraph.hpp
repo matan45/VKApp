@@ -1,8 +1,6 @@
 #pragma once
 #include "imguiHandler/ImguiWindow.hpp"
 #include "scene/SceneGraphSystem.hpp"
-
-#include <imgui.h>
 #include <memory>
 
 namespace windows {

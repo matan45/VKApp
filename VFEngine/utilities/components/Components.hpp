@@ -6,7 +6,7 @@
 
 namespace components {
 
-	struct WorldTransform
+	struct WorldTransformComponent
 	{
 		glm::mat4 worldMatrix;
 	};
@@ -19,11 +19,11 @@ namespace components {
 		std::vector<entt::entity> children; // List of child entity handles
 	};
 
-	struct Name {
+	struct NameComponent {
 		std::string name;
 	};
 
-	struct Transform {
+	struct TransformComponent {
 		glm::vec3 position{ 0.0f };
 		glm::vec3 rotation{ 0.0f }; // Euler angles
 		glm::vec3 scale{ 1.0f };
@@ -57,7 +57,7 @@ namespace components {
 		}
 	};
 
-	struct Camera
+	struct CameraComponent
 	{
 		glm::mat4 projectionMatrix{1.0f};
 		glm::mat4 viewMatrix{1.0f};
@@ -88,6 +88,18 @@ namespace components {
 					farPlane
 				);
 			}
+		}
+		// Update the view matrix based on the camera's position, rotation, and direction
+		void updateViewMatrix(const glm::vec3& position, const glm::vec3& rotation) {
+			// Create a transformation matrix based on position and rotation.
+			glm::mat4 transform = glm::mat4(1.0f);
+			transform = glm::rotate(transform, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+			transform = glm::rotate(transform, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+			transform = glm::rotate(transform, glm::radians(rotation.z), glm::vec3(0, 0, 1));
+			transform = glm::translate(transform, -position);
+
+			// View matrix is the inverse of the transformation matrix.
+			viewMatrix = glm::inverse(transform);
 		}
 	};
 

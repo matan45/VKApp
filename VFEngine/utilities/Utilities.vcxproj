@@ -121,7 +121,6 @@
     <ClCompile Include="resource\ResourceManager.cpp" />
     <ClCompile Include="resource\ShaderResource.cpp" />
     <ClCompile Include="resource\TextureResource.cpp" />
-    <ClCompile Include="scene\Entity.cpp" />
     <ClCompile Include="scene\SceneGraphSystem.cpp" />
     <ClCompile Include="serialization\SceneSerialization.cpp" />
     <ClCompile Include="string\StringUtil.cpp" />
@@ -132,9 +131,6 @@
     <ProjectReference Include="..\spdLog.vcxproj">
       <Project>{6E25431C-5AC7-6DF2-4382-81462FC3F442}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="components\ComponentUtils.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
