@@ -1,309 +1,357 @@
 #include "ContentBrowser.hpp"
+#include "files/FileUtils.hpp"
 #include "string/StringUtil.hpp"
 #include "EditorTextureController.hpp"
 #include "print/EditorLogger.hpp"
 #include <IconsFontAwesome6.h>
 #include <algorithm>
 
-namespace windows {
+namespace windows
+{
+    ContentBrowser::ContentBrowser()
+    {
+        navigateTo(currentPath);
+        fileIcon = controllers::EditorTextureController::loadTexture(
+            "../../resources/editor/contentBrowser/file.vfImage");
+        folderIcon = controllers::EditorTextureController::loadTexture(
+            "../../resources/editor/contentBrowser/folder.vfImage");
+        textureIcon = controllers::EditorTextureController::loadTexture(
+            "../../resources/editor/contentBrowser/texture.vfImage");
+        audioIcon = controllers::EditorTextureController::loadTexture(
+            "../../resources/editor/contentBrowser/audio-file.vfImage");
+        meshIcon = controllers::EditorTextureController::loadTexture(
+            "../../resources/editor/contentBrowser/mesh-file.vfImage");
+        glslIcon = controllers::EditorTextureController::loadTexture(
+            "../../resources/editor/contentBrowser/glsl-file.vfImage");
+        animationIcon = controllers::EditorTextureController::loadTexture(
+            "../../resources/editor/contentBrowser/animation-file.vfImage");
+    }
 
-	ContentBrowser::ContentBrowser()
-	{
-		navigateTo(currentPath);
-		fileIcon = controllers::EditorTextureController::loadTexture("../../resources/editor/contentBrowser/file.vfImage");
-		folderIcon = controllers::EditorTextureController::loadTexture("../../resources/editor/contentBrowser/folder.vfImage");
-		textureIcon = controllers::EditorTextureController::loadTexture("../../resources/editor/contentBrowser/texture.vfImage");
-		audioIcon = controllers::EditorTextureController::loadTexture("../../resources/editor/contentBrowser/audio-file.vfImage");
-		meshIcon = controllers::EditorTextureController::loadTexture("../../resources/editor/contentBrowser/mesh-file.vfImage");
-		glslIcon = controllers::EditorTextureController::loadTexture("../../resources/editor/contentBrowser/glsl-file.vfImage");
-		animationIcon = controllers::EditorTextureController::loadTexture("../../resources/editor/contentBrowser/animation-file.vfImage");
-	}
-
-	void ContentBrowser::draw()
-	{
-		if (showCreateFolderModal) {
-			ImGui::OpenPopup("Create New Folder");
-		}
-		createNewFolderModel();
+    void ContentBrowser::draw()
+    {
+        if (showCreateFolderModal)
+        {
+            ImGui::OpenPopup("Create New Folder");
+        }
+        createNewFolderModel();
 
 
-		// Draw the folder panel on the left.
-		if (ImGui::Begin("Folder Structure", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize)) {
-			drawFolderTree(currentPath);
-		}
-		ImGui::End();
+        // Draw the folder panel on the left.
+        if (ImGui::Begin("Folder Structure", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize))
+        {
+            drawFolderTree(currentPath);
+        }
+        ImGui::End();
 
 
-		if (ImGui::Begin("Content Folder")) {
+        if (ImGui::Begin("Content Folder"))
+        {
+            if (ImGui::Button(ICON_FA_ARROW_LEFT))
+            {
+                auto parentPath = currentPath.parent_path();
+                navigateTo(parentPath);
+            }
 
-			if (ImGui::Button(ICON_FA_ARROW_LEFT)) {
-				auto parentPath = currentPath.parent_path();
-				navigateTo(parentPath);
-			}
+            ImGui::SameLine();
+            // Show current path and navigation options
+            ImGui::Text("Current Path: %s", StringUtil::wstringToUtf8(currentPath.wstring()).c_str());
 
-			ImGui::SameLine();
-			// Show current path and navigation options
-			ImGui::Text("Current Path: %s", StringUtil::wstringToUtf8(currentPath.wstring()).c_str());
+            // Draw search bar
+            ImGui::Text("Search:"); // Optional, if you want a label before the search bar.
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(150.0f);
+            char searchBuffer[256];
+            std::strncpy(searchBuffer, searchQuery.c_str(), sizeof(searchBuffer));
+            if (ImGui::InputText("##Search", searchBuffer, sizeof(searchBuffer)))
+            {
+                searchQuery = std::string(searchBuffer);
+            }
 
-			// Draw search bar
-			ImGui::Text("Search:"); // Optional, if you want a label before the search bar.
-			ImGui::SameLine();
-			ImGui::SetNextItemWidth(150.0f);
-			char searchBuffer[256];
-			std::strncpy(searchBuffer, searchQuery.c_str(), sizeof(searchBuffer));
-			if (ImGui::InputText("##Search", searchBuffer, sizeof(searchBuffer))) {
-				searchQuery = std::string(searchBuffer);
-			}
+            ImGui::Separator();
 
-			ImGui::Separator();
+            float panelWidth = ImGui::GetContentRegionAvail().x;
+            float cellSize = PADDING + THUMBNAIL_SIZE;
+            int columnCount = max(1, static_cast<int>(panelWidth / cellSize));
+            ImGui::Columns(columnCount, "", false);
 
-			float panelWidth = ImGui::GetContentRegionAvail().x;
-			float cellSize = PADDING + THUMBNAIL_SIZE;
-			int columnCount = max(1, static_cast<int>(panelWidth / cellSize));
-			ImGui::Columns(columnCount, "", false);
+            handleCreateFiles();
 
-			handleCreateFiles();
+            // Draw the file-specific window if requested.
+            if (showFileWindow)
+            {
+                drawFileWindow();
+            }
 
-			// Draw the file-specific window if requested.
-			if (showFileWindow) {
-				drawFileWindow();
-			}
+            ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+            // also add icons
+            // Display contents of the current directory
+            for (const auto& asset : assets)
+            {
+                if (matchesSearchQuery(asset))
+                {
+                    printFilesNames(asset);
 
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-			// also add icons
-			// Display contents of the current directory
-			for (const auto& asset : assets) {
-				if (matchesSearchQuery(asset)) {
-					printFilesNames(asset);
+                    // Detect double-click on a file to open a new window.
+                    if (ImGui::IsItemClicked(ImGuiMouseButton_Left) &&
+                        ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)
+                        && (asset.type != AssetType::Other || !fs::is_directory(asset.path)))
+                    {
+                        selectedFile = asset.path;
+                        showFileWindow = true;
+                    }
+                }
+            }
+            ImGui::PopStyleColor();
+        }
 
-					// Detect double-click on a file to open a new window.
-					if (ImGui::IsItemClicked(ImGuiMouseButton_Left) &&
-						ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)
-						&& (asset.type != AssetType::Other || !fs::is_directory(asset.path))) {
-						selectedFile = asset.path;
-						showFileWindow = true;
+        ImGui::Columns(1);
+        ImGui::End();
+    }
 
-					}
-				}
-				
-			}
-			ImGui::PopStyleColor();
-		}
+    void ContentBrowser::loadDirectory(const fs::path& path)
+    {
+        assets.clear();
+        for (auto& entry : fs::directory_iterator(path))
+        {
+            using enum windows::AssetType;
+            Asset asset;
+            asset.path = StringUtil::wstringToUtf8(entry.path().wstring());
+            asset.name = StringUtil::wstringToUtf8(entry.path().filename().wstring());
+            if (entry.is_directory())
+            {
+                asset.type = Other; // Indicate it's a folder
+            }
+            else
+            {
+                // Determine the asset type by its file extension.
+                std::string ext = files::FileUtils::getFileExtension(entry.path().string(), false);
 
-		ImGui::Columns(1);
-		ImGui::End();
-	}
+                if (ext == "." + FileExtension::textrue)
+                {
+                    asset.type = Texture;
+                }
+                else if (ext == "." + FileExtension::mesh)
+                {
+                    asset.type = Model;
+                }
+                else if (ext == "." + FileExtension::shader)
+                {
+                    asset.type = Shader;
+                }
+                else if (ext == "." + FileExtension::audio)
+                {
+                    asset.type = Audio;
+                }
+                else if (ext == "." + FileExtension::animation)
+                {
+                    asset.type = Animation;
+                }
+                else
+                {
+                    asset.type = Other;
+                }
+            }
+            assets.push_back(asset);
+        }
+    }
 
-	void ContentBrowser::loadDirectory(const fs::path& path)
-	{
-		assets.clear();
-		for (auto& entry : fs::directory_iterator(path)) {
-			using enum windows::AssetType;
-			Asset asset;
-			asset.path = StringUtil::wstringToUtf8(entry.path().wstring());
-			asset.name = StringUtil::wstringToUtf8(entry.path().filename().wstring());
-			if (entry.is_directory()) {
-				asset.type = Other; // Indicate it's a folder
-			}
-			else {
-				// Determine the asset type by its file extension.
-				std::string ext = entry.path().extension().string();
-				ext.erase(std::find(ext.begin(), ext.end(), '\0'), ext.end());
-				
-				if (ext == "." + FileExtension::textrue) {
-					asset.type = Texture;
-				}
-				else if (ext == "." + FileExtension::mesh) {
-					asset.type = Model;
-				}
-				else if (ext == "." + FileExtension::shader) {
-					asset.type = Shader;
-				}
-				else if (ext == "." + FileExtension::audio) {
-					asset.type = Audio;
-				}
-				else if (ext == "." + FileExtension::animation) {
-					asset.type = Animation;
-				}
-				else {
-					asset.type = Other;
-				}
-			}
-			assets.push_back(asset);
-		}
-	}
-	void ContentBrowser::printFilesNames(const Asset& asset)
-	{
-		switch (asset.type) {
-			using enum windows::AssetType;
-		case Texture:
-			ImGui::BeginGroup();
-			ImGui::Image(textureIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
-			ImGui::TextWrapped("%s", asset.name.c_str());
-			ImGui::EndGroup();
-			break;
-		case Model:
-			ImGui::BeginGroup();
-			ImGui::Image(meshIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
-			ImGui::TextWrapped("%s", asset.name.c_str());
-			ImGui::EndGroup();
-			break;
-		case Audio:
-			ImGui::BeginGroup();
-			ImGui::Image(audioIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
-			ImGui::TextWrapped("%s", asset.name.c_str());
-			ImGui::EndGroup();
-			break;
-		case Animation:
-			ImGui::BeginGroup();
-			ImGui::Image(animationIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
-			ImGui::TextWrapped("%s", asset.name.c_str());
-			ImGui::EndGroup();
-			break;
-		case Shader:
-			ImGui::BeginGroup();
-			ImGui::Image(glslIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
-			ImGui::TextWrapped("%s", asset.name.c_str());
-			ImGui::EndGroup();
-			break;
-		case Other:
-			if (fs::is_directory(asset.path)) {
-				ImGui::BeginGroup();
-				std::string folderName = asset.name;
-				if (ImGui::ImageButton(folderName.c_str(), folderIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE))) {
-					navigateFolder = true;
-				}
-				
-				ImGui::TextWrapped("%s", folderName.c_str());
-				ImGui::EndGroup();
+    void ContentBrowser::printFilesNames(const Asset& asset)
+    {
+        switch (asset.type)
+        {
+            using enum windows::AssetType;
+        case Texture:
+            ImGui::BeginGroup();
+            ImGui::Image(textureIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+            ImGui::TextWrapped("%s", asset.name.c_str());
+            ImGui::EndGroup();
+            break;
+        case Model:
+            ImGui::BeginGroup();
+            ImGui::Image(meshIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+            ImGui::TextWrapped("%s", asset.name.c_str());
+            ImGui::EndGroup();
+            break;
+        case Audio:
+            ImGui::BeginGroup();
+            ImGui::Image(audioIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+            ImGui::TextWrapped("%s", asset.name.c_str());
+            ImGui::EndGroup();
+            break;
+        case Animation:
+            ImGui::BeginGroup();
+            ImGui::Image(animationIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+            ImGui::TextWrapped("%s", asset.name.c_str());
+            ImGui::EndGroup();
+            break;
+        case Shader:
+            ImGui::BeginGroup();
+            ImGui::Image(glslIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+            ImGui::TextWrapped("%s", asset.name.c_str());
+            ImGui::EndGroup();
+            break;
+        case Other:
+            if (fs::is_directory(asset.path))
+            {
+                ImGui::BeginGroup();
+                std::string folderName = asset.name;
+                if (ImGui::ImageButton(folderName.c_str(), folderIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE)))
+                {
+                    navigateFolder = true;
+                }
 
-				if (navigateFolder) {
-					navigateFolder = false;
-					navigateTo(asset.path);
-				}
-			}
-			else {
-				ImGui::BeginGroup();
-				ImGui::Image(fileIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
-				ImGui::Text("%s", asset.name.c_str());
-				ImGui::EndGroup();
-			}
-			break;
-		}
+                ImGui::TextWrapped("%s", folderName.c_str());
+                ImGui::EndGroup();
 
-		ImGui::NextColumn();
-	}
+                if (navigateFolder)
+                {
+                    navigateFolder = false;
+                    navigateTo(asset.path);
+                }
+            }
+            else
+            {
+                ImGui::BeginGroup();
+                ImGui::Image(fileIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+                ImGui::Text("%s", asset.name.c_str());
+                ImGui::EndGroup();
+            }
+            break;
+        }
 
-	void ContentBrowser::drawFileWindow()
-	{
-		ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
+        ImGui::NextColumn();
+    }
 
-		if (std::string windowTitle = "File: " + StringUtil::wstringToUtf8(selectedFile.filename().wstring()); ImGui::Begin(windowTitle.c_str(), &showFileWindow)) {
-			ImGui::Text("File Name: %s", StringUtil::wstringToUtf8(selectedFile.filename().wstring()).c_str());
-			ImGui::Text("File Path: %s", StringUtil::wstringToUtf8(selectedFile.wstring()).c_str());
+    void ContentBrowser::drawFileWindow()
+    {
+        ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
 
-			// Add more information or options specific to the file.
-			// For example, if the file is an image, you could display it.
-			// If it's a text file, you could show its contents.
-			//if (selectedFile.extension() == L".txt") {}
-		}
-		ImGui::End();
-	}
+        if (std::string windowTitle = "File: " + StringUtil::wstringToUtf8(selectedFile.filename().wstring());
+            ImGui::Begin(windowTitle.c_str(), &showFileWindow))
+        {
+            ImGui::Text("File Name: %s", StringUtil::wstringToUtf8(selectedFile.filename().wstring()).c_str());
+            ImGui::Text("File Path: %s", StringUtil::wstringToUtf8(selectedFile.wstring()).c_str());
 
-	void ContentBrowser::createNewFolder(const std::string& folderName)
-	{
-		fs::path newFolderPath = currentPath / folderName;
-		try {
-			if (!fs::exists(newFolderPath)) {
-				fs::create_directory(newFolderPath);
-				loadDirectory(currentPath); // Refresh the directory to include the new folder.
-			}
-			else {
-				vfLogWarning("Folder already exists.");
-			}
-		}
-		catch (const fs::filesystem_error& e) {
-			ImGui::Text("Failed to create folder: %s", e.what());
-		}
-	}
-	void ContentBrowser::createNewFolderModel()
-	{
-		if (showCreateFolderModal &&
-			ImGui::BeginPopupModal("Create New Folder", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-			// Use a buffer initialized with the current folder name.
-			char buffer[256];
-			std::strncpy(buffer, newFolderName.c_str(), sizeof(buffer));
-			if (ImGui::InputText("Folder Name", buffer, IM_ARRAYSIZE(buffer))) {
-				newFolderName = std::string(buffer);
-			}
+            // Add more information or options specific to the file.
+            // For example, if the file is an image, you could display it.
+            // If it's a text file, you could show its contents.
+            //if (selectedFile.extension() == L".txt") {}
+        }
+        ImGui::End();
+    }
 
-			if (ImGui::Button("Create", ImVec2(120, 0))) {
-				createNewFolder(newFolderName);
-				ImGui::CloseCurrentPopup();
-				showCreateFolderModal = false;
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel", ImVec2(120, 0))) {
-				ImGui::CloseCurrentPopup();
-				showCreateFolderModal = false;
-			}
-			ImGui::EndPopup();
-		}
-	}
+    void ContentBrowser::createNewFolder(const std::string& folderName)
+    {
+        fs::path newFolderPath = currentPath / folderName;
+        try
+        {
+            if (!fs::exists(newFolderPath))
+            {
+                fs::create_directory(newFolderPath);
+                loadDirectory(currentPath); // Refresh the directory to include the new folder.
+            }
+            else
+            {
+                vfLogWarning("Folder already exists.");
+            }
+        }
+        catch (const fs::filesystem_error& e)
+        {
+            ImGui::Text("Failed to create folder: %s", e.what());
+        }
+    }
 
-	void ContentBrowser::handleCreateFiles()
-	{
-		if (ImGui::BeginPopupContextWindow()) {
-			if (ImGui::MenuItem("Create New Folder")) {
-				showCreateFolderModal = true;
-				newFolderName.clear(); // Clear the previous input.
-			}
-			if (ImGui::MenuItem("Create New File")) {
-				// Logic to create a new file
-			}
-			if (ImGui::MenuItem("Delete File")) {
-				// Logic to delete file
-			}
-			if (ImGui::MenuItem("Rename File")) {
-				// Logic to Rename file
-			}
-			ImGui::EndPopup();
-		}
-	}
+    void ContentBrowser::createNewFolderModel()
+    {
+        if (showCreateFolderModal &&
+            ImGui::BeginPopupModal("Create New Folder", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            // Use a buffer initialized with the current folder name.
+            char buffer[256];
+            std::strncpy(buffer, newFolderName.c_str(), sizeof(buffer));
+            if (ImGui::InputText("Folder Name", buffer, IM_ARRAYSIZE(buffer)))
+            {
+                newFolderName = std::string(buffer);
+            }
 
-	void ContentBrowser::drawFolderTree(const fs::path& path)
-	{
-		for (auto& entry : fs::directory_iterator(path)) {
-			if (entry.is_directory()) {
-				ImGui::Text(ICON_FA_FOLDER ""); // Add folder icon before the name
-				ImGui::SameLine(); // Place the folder name next to the icon
-				// Use a tree node for directories
-				if (ImGui::TreeNode(StringUtil::wstringToUtf8(entry.path().filename().wstring()).c_str())) {
-					// If the directory is selected, navigate to it in the content browser.
-					if (ImGui::IsItemClicked()) {
-						navigateTo(entry.path());
-					}
+            if (ImGui::Button("Create", ImVec2(120, 0)))
+            {
+                createNewFolder(newFolderName);
+                ImGui::CloseCurrentPopup();
+                showCreateFolderModal = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(120, 0)))
+            {
+                ImGui::CloseCurrentPopup();
+                showCreateFolderModal = false;
+            }
+            ImGui::EndPopup();
+        }
+    }
 
-					// Recursively draw child directories
-					drawFolderTree(entry.path());
+    void ContentBrowser::handleCreateFiles()
+    {
+        if (ImGui::BeginPopupContextWindow())
+        {
+            if (ImGui::MenuItem("Create New Folder"))
+            {
+                showCreateFolderModal = true;
+                newFolderName.clear(); // Clear the previous input.
+            }
+            if (ImGui::MenuItem("Create New File"))
+            {
+                // Logic to create a new file
+            }
+            if (ImGui::MenuItem("Delete File"))
+            {
+                // Logic to delete file
+            }
+            if (ImGui::MenuItem("Rename File"))
+            {
+                // Logic to Rename file
+            }
+            ImGui::EndPopup();
+        }
+    }
 
-					ImGui::TreePop(); // Close the tree node.
-				}
-			}
-		}
-	}
+    void ContentBrowser::drawFolderTree(const fs::path& path)
+    {
+        for (auto& entry : fs::directory_iterator(path))
+        {
+            if (entry.is_directory())
+            {
+                ImGui::Text(ICON_FA_FOLDER ""); // Add folder icon before the name
+                ImGui::SameLine(); // Place the folder name next to the icon
+                // Use a tree node for directories
+                if (ImGui::TreeNode(StringUtil::wstringToUtf8(entry.path().filename().wstring()).c_str()))
+                {
+                    // If the directory is selected, navigate to it in the content browser.
+                    if (ImGui::IsItemClicked())
+                    {
+                        navigateTo(entry.path());
+                    }
 
-	bool ContentBrowser::matchesSearchQuery(const Asset& asset) const
-	{
-		if (searchQuery.empty()) {
-			return true; // If no search term is entered, show all assets.
-		}
+                    // Recursively draw child directories
+                    drawFolderTree(entry.path());
 
-		// Convert both the asset name and the search query to lowercase for case-insensitive comparison.
-		std::string assetNameLower = StringUtil::toLower(asset.name);
-		std::string searchQueryLower = StringUtil::toLower(searchQuery);
+                    ImGui::TreePop(); // Close the tree node.
+                }
+            }
+        }
+    }
 
-		return assetNameLower.find(searchQueryLower) != std::string::npos;
-	}
+    bool ContentBrowser::matchesSearchQuery(const Asset& asset) const
+    {
+        if (searchQuery.empty())
+        {
+            return true; // If no search term is entered, show all assets.
+        }
 
+        // Convert both the asset name and the search query to lowercase for case-insensitive comparison.
+        std::string assetNameLower = StringUtil::toLower(asset.name);
+        std::string searchQueryLower = StringUtil::toLower(searchQuery);
+
+        return assetNameLower.find(searchQueryLower) != std::string::npos;
+    }
 }

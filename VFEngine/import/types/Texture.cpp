@@ -11,18 +11,22 @@
 #include "config/Config.hpp"
 
 namespace types {
-	void Texture::loadFromFile(std::string_view path, std::string_view fileName, std::string_view location) const
+	void Texture::loadFromFile(const importConfig::ImportFiles& file, std::string_view fileName, std::string_view location) const
 	{
 		resource::TextureData textureData;
 
+		if(file.config.isImageFlipVertically)
+		{
+			stbi_set_flip_vertically_on_load(true);
+		}
 		// Load image using stb_image
 		int width;
 		int height;
 		int channels;
-		unsigned char* imageData = stbi_load(path.data(), &width, &height, &channels, 0);
+		unsigned char* imageData = stbi_load(file.path.data(), &width, &height, &channels, 0);
 
 		if (!imageData) {
-			vfLogError("Failed to load texture: ", path);
+			vfLogError("Failed to load texture: {}", file.path.data());
 			return; // Return
 		}
 
@@ -41,6 +45,10 @@ namespace types {
 		// Store raw texture data into the vector
 		textureData.textureData = std::vector<unsigned char>(imageData, imageData + (width * height * channels));
 
+		if(file.config.isImageFlipVertically)
+		{
+			stbi_set_flip_vertically_on_load(false);
+		}
 		// Free the image data once copied to the structure
 		stbi_image_free(imageData);
 

@@ -1,6 +1,5 @@
 #pragma once
 #include "imguiHandler/ImguiWindow.hpp"
-#include "imgui.h"
 #include "nfd/FileDialog.hpp"
 #include "CoreInterface.hpp"
 
@@ -12,6 +11,7 @@ namespace windows {
 		int windowFlags;
 		nfd::FileDialog fileDialog;
 		std::vector<std::string> files;
+		std::vector<bool> isFlip;
 		bool openModal = false;
 	public:
 		explicit MainImguiWindow(controllers::CoreInterface& coreInterface);

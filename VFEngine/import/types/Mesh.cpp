@@ -10,10 +10,10 @@
 #include <assimp/postprocess.h>
 
 namespace types {
-	void Mesh::loadFromFile(std::string_view path, std::string_view fileName, std::string_view location) const
+	void Mesh::loadFromFile(const importConfig::ImportFiles& file, std::string_view fileName, std::string_view location) const
 	{
 		Assimp::Importer importer;
-		const aiScene* scene = importer.ReadFile(path.data(),
+		const aiScene* scene = importer.ReadFile(file.path.data(),
 			aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {

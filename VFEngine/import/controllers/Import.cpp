@@ -1,19 +1,18 @@
 #include "Import.hpp"
 #include <filesystem> 
-#include <algorithm>
 #include <future>
 
+#include "files/FileUtils.hpp"
 #include "print/EditorLogger.hpp"
-#include "string/StringUtil.hpp"
 
-
-namespace fs = std::filesystem;
 
 namespace controllers {
 
-	void Import::importFiles(const std::vector<std::string>& paths)
+	void Import::importFiles(const std::vector<importConfig::ImportFiles>& paths)
 	{
 		std::vector<std::future<void>> futures;
+		futures.reserve(paths.size());
+		
 		for (const auto& path : paths) {
 			futures.push_back(std::async(std::launch::async, &Import::processPath, path));
 		}
@@ -24,55 +23,42 @@ namespace controllers {
 		location = newLocation;
 	}
 
-	void Import::processPath(const std::string& path)
+	void Import::processPath(const importConfig::ImportFiles& file)
 	{
-		// Convert the string path to a std::filesystem::path object
-		fs::path fsPath(path);
-
 		// Get the file name
-		std::string fileName = fsPath.stem().string();
+		std::string fileName = files::FileUtils::getFileName(file.path.data());
 		vfLogInfo("Import File name: {}", fileName);
 
-		// Get the file extension
-		std::string extension = fsPath.extension().string();
-		extension.erase(std::find(extension.begin(), extension.end(), '\0'), extension.end());
-		extension = StringUtil::toLower(extension);
-
-		if (extension.empty()) {
-			vfLogError("No file extension found for path: {}", path);
-			return;
-		}
-
 		// Use if-else to handle different file types
-		if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".hdr") {
+		if (files::FileUtils::isImageFile(file.path.data())) {
 			// Handle texture files
-			processTexture(path, fileName);
+			processTexture(file, fileName);
 		}
-		else if (extension == ".obj" || extension == ".fbx" || extension == ".dae" || extension == ".gltf") {
+		else if (files::FileUtils::isMeshFile(file.path.data())) {
 			// Handle model and animations files
-			processModel(path, fileName);
+			processModel(file, fileName);
 		}
-		else if (extension == ".wav" || extension == ".mp3" || extension == ".ogg") {
+		else if (files::FileUtils::isAudioFile(file.path.data())) {
 			// Handle model files
-			processAudio(path, fileName, extension);
+			processAudio(file, fileName, files::FileUtils::getFileExtension(file.path.data()));
 		}
 		else {
-			vfLogError("Unknown file extension: {}", extension);
+			vfLogError("Unknown file extension: {}", files::FileUtils::getFileExtension(file.path.data()));
 		}
 	}
 
-	void Import::processTexture(std::string_view path, std::string_view fileName)
+	void Import::processTexture(const importConfig::ImportFiles& file, std::string_view fileName)
 	{
-		texture.loadFromFile(path, fileName, location);
+		texture.loadFromFile(file, fileName, location);
 	}
 
-	void Import::processModel(std::string_view path, std::string_view fileName)
+	void Import::processModel(const importConfig::ImportFiles& file, std::string_view fileName)
 	{
-		mesh.loadFromFile(path, fileName, location);
+		mesh.loadFromFile(file, fileName, location);
 	}
 
-	void Import::processAudio(std::string_view path, std::string_view fileName, std::string_view extension)
+	void Import::processAudio(const importConfig::ImportFiles& file, std::string_view fileName, std::string_view extension)
 	{
-		audio.loadFromFile(path, fileName, extension, location);
+		audio.loadFromFile(file, fileName, extension, location);
 	}
 }

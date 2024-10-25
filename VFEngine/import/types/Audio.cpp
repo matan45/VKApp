@@ -15,16 +15,16 @@
 
 
 namespace types {
-	void Audio::loadFromFile(std::string_view path, std::string_view fileName, std::string_view extension, std::string_view location) const
+	void Audio::loadFromFile(const importConfig::ImportFiles& file, std::string_view fileName, std::string_view extension, std::string_view location) const
 	{
 		if (extension == "ogg") {
-			loadOggFile(path, fileName, location);
+			loadOggFile(file.path, fileName, location);
 		}
 		else if (extension == "wav") {
-			loadWavFile(path, fileName, location);
+			loadWavFile(file.path, fileName, location);
 		}
 		else if (extension == "mp3") {
-			loadMp3File(path, fileName, location);
+			loadMp3File(file.path, fileName, location);
 		}
 	}
 
@@ -46,8 +46,9 @@ namespace types {
 		audioData.channels = info.channels;
 
 		// Get the total number of samples
-		int totalSamples = stb_vorbis_stream_length_in_samples(vorbis) * info.channels;
-		audioData.frames = stb_vorbis_stream_length_in_samples(vorbis);
+		int frames = stb_vorbis_stream_length_in_samples(vorbis);
+		int totalSamples = frames * info.channels;
+		audioData.frames = frames;
 		audioData.totalDurationInSeconds = static_cast<uint32_t>(stb_vorbis_stream_length_in_seconds(vorbis));
 
 		// Resize the data buffer and read samples
