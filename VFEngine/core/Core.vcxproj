@@ -93,6 +93,7 @@
     <ClInclude Include="controllers\OffScreen.hpp" />
     <ClInclude Include="controllers\imguiHandler\ImguiWindow.hpp" />
     <ClInclude Include="controllers\imguiHandler\ImguiWindowHandler.hpp" />
+    <ClInclude Include="controllers\texture\EditorTexture.hpp" />
     <ClInclude Include="core\MainLoop.hpp" />
     <ClInclude Include="handlers\GraphicesHandler.hpp" />
     <ClInclude Include="handlers\WindowHandler.hpp" />
@@ -102,6 +103,7 @@
     <ClCompile Include="controllers\EditorTextureController.cpp" />
     <ClCompile Include="controllers\OffScreen.cpp" />
     <ClCompile Include="controllers\imguiHandler\ImguiWindowHandler.cpp" />
+    <ClCompile Include="controllers\texture\EditorTexture.cpp" />
     <ClCompile Include="core\MainLoop.cpp" />
     <ClCompile Include="handlers\GraphicesHandler.cpp" />
     <ClCompile Include="handlers\WindowHandler.cpp" />

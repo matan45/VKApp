@@ -1,7 +1,6 @@
 #include "ContentBrowser.hpp"
 #include "files/FileUtils.hpp"
 #include "string/StringUtil.hpp"
-#include "EditorTextureController.hpp"
 #include "print/EditorLogger.hpp"
 #include <IconsFontAwesome6.h>
 #include <algorithm>
@@ -25,6 +24,17 @@ namespace windows
             "../../resources/editor/contentBrowser/glsl-file.vfImage");
         animationIcon = controllers::EditorTextureController::loadTexture(
             "../../resources/editor/contentBrowser/animation-file.vfImage");
+    }
+
+    ContentBrowser::~ContentBrowser()
+    {
+		delete fileIcon;
+        delete folderIcon;
+        delete textureIcon;
+        delete audioIcon;
+        delete meshIcon;
+        delete glslIcon;
+        delete animationIcon;
     }
 
     void ContentBrowser::draw()
@@ -80,6 +90,9 @@ namespace windows
             if (showFileWindow)
             {
                 drawFileWindow();
+            }
+            else {
+                //clean the data if needed
             }
 
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
@@ -162,31 +175,31 @@ namespace windows
             using enum windows::AssetType;
         case Texture:
             ImGui::BeginGroup();
-            ImGui::Image(textureIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+            ImGui::Image(textureIcon->getDescriptorSet(), ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
             ImGui::TextWrapped("%s", asset.name.c_str());
             ImGui::EndGroup();
             break;
         case Model:
             ImGui::BeginGroup();
-            ImGui::Image(meshIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+            ImGui::Image(meshIcon->getDescriptorSet(), ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
             ImGui::TextWrapped("%s", asset.name.c_str());
             ImGui::EndGroup();
             break;
         case Audio:
             ImGui::BeginGroup();
-            ImGui::Image(audioIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+            ImGui::Image(audioIcon->getDescriptorSet(), ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
             ImGui::TextWrapped("%s", asset.name.c_str());
             ImGui::EndGroup();
             break;
         case Animation:
             ImGui::BeginGroup();
-            ImGui::Image(animationIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+            ImGui::Image(animationIcon->getDescriptorSet(), ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
             ImGui::TextWrapped("%s", asset.name.c_str());
             ImGui::EndGroup();
             break;
         case Shader:
             ImGui::BeginGroup();
-            ImGui::Image(glslIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+            ImGui::Image(glslIcon->getDescriptorSet(), ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
             ImGui::TextWrapped("%s", asset.name.c_str());
             ImGui::EndGroup();
             break;
@@ -195,7 +208,7 @@ namespace windows
             {
                 ImGui::BeginGroup();
                 std::string folderName = asset.name;
-                if (ImGui::ImageButton(folderName.c_str(), folderIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE)))
+                if (ImGui::ImageButton(folderName.c_str(), folderIcon->getDescriptorSet(), ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE)))
                 {
                     navigateFolder = true;
                 }
@@ -212,7 +225,7 @@ namespace windows
             else
             {
                 ImGui::BeginGroup();
-                ImGui::Image(fileIcon, ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+                ImGui::Image(fileIcon->getDescriptorSet(), ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
                 ImGui::Text("%s", asset.name.c_str());
                 ImGui::EndGroup();
             }

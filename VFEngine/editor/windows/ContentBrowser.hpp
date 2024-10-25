@@ -2,6 +2,7 @@
 #include "imguiHandler/ImguiWindow.hpp"
 #include "imgui.h"
 #include "Import.hpp"
+#include "EditorTextureController.hpp"
 
 #include <string>
 #include <filesystem>
@@ -31,13 +32,13 @@ namespace windows {
 		fs::path selectedFile;
 		bool showFileWindow = false;
 
-		ImTextureID fileIcon;
-		ImTextureID folderIcon;
-		ImTextureID textureIcon;
-		ImTextureID audioIcon;
-		ImTextureID meshIcon;
-		ImTextureID glslIcon;
-		ImTextureID animationIcon;
+		dto::EditorTexture* fileIcon;
+		dto::EditorTexture* folderIcon;
+		dto::EditorTexture* textureIcon;
+		dto::EditorTexture* audioIcon;
+		dto::EditorTexture* meshIcon;
+		dto::EditorTexture* glslIcon;
+		dto::EditorTexture* animationIcon;
 
 		bool navigateFolder = false;
 
@@ -45,7 +46,7 @@ namespace windows {
 		static constexpr float PADDING = 16.0f;
 	public:
 		explicit ContentBrowser();
-		~ContentBrowser() override = default;
+		~ContentBrowser() override;
 
 		void draw() override;
 

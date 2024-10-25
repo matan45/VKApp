@@ -1,12 +1,12 @@
 #pragma once
 #include <string>
+#include "texture/EditorTexture.hpp"
 
 namespace controllers {
 	class EditorTextureController
 	{
 	public:
-		static void* loadTexture(std::string_view path);
-		static void cleanUp();
+		static dto::EditorTexture* loadTexture(std::string_view path);
 	};
 }
 
