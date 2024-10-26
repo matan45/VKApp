@@ -10,12 +10,13 @@ namespace windows
     ContentBrowser::ContentBrowser()
     {
         navigateTo(currentPath);
+        
         fileIcon = controllers::EditorTextureController::loadTexture(
             "../../resources/editor/contentBrowser/file.vfImage");
         folderIcon = controllers::EditorTextureController::loadTexture(
             "../../resources/editor/contentBrowser/folder.vfImage");
         textureIcon = controllers::EditorTextureController::loadTexture(
-            "../../resources/editor/contentBrowser/texture.vfImage");
+            "../../resources/editor/contentBrowser/texture-file.vfImage");
         audioIcon = controllers::EditorTextureController::loadTexture(
             "../../resources/editor/contentBrowser/audio-file.vfImage");
         meshIcon = controllers::EditorTextureController::loadTexture(

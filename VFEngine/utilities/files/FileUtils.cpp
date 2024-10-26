@@ -103,7 +103,7 @@ namespace files
 
     bool FileUtils::isMeshFile(std::string_view filePath)
     {
-        std::vector<unsigned char> header = readHeader(filePath, 10); // Read the first 10 bytes
+        std::vector<unsigned char> header = readHeader(filePath, 20); // Read the first 20 bytes
 
         if (isOBJ(header))
         {
@@ -152,8 +152,9 @@ namespace files
         if (file.is_open())
         {
             file.read(std::bit_cast<char*>(header.data()), numBytes);
+            file.close();
         }
-        file.close();
+       
         return header;
     }
 
@@ -187,7 +188,11 @@ namespace files
     bool FileUtils::isEXR(const std::vector<unsigned char>& header)
     {
         const unsigned char exrSignature[4] = {0x76, 0x2F, 0x31, 0x01}; // 'v/1' + 0x01
-        return header.size() >= 4 && std::equal(header.begin(), header.begin() + 4, exrSignature);
+        // Use std::ranges::search to find the signature within the header
+        auto result = std::ranges::search(header, exrSignature);
+
+        // Check if the result is not empty (meaning the signature was found)
+        return !result.empty();
     }
 
     bool FileUtils::isMP3(const std::vector<unsigned char>& header)
@@ -215,37 +220,37 @@ namespace files
 
     bool FileUtils::isOBJ(const std::vector<unsigned char>& header)
     {
-        // Check for 'Kaydara FBX Binary' signature for binary FBX
-        const std::string fbxSignature = "Kaydara FBX Binary  ";
-        return header.size() >= fbxSignature.size() &&
-            std::equal(fbxSignature.begin(), fbxSignature.end(), header.begin());
+        // Define the signature to look for
+        const std::string objSignature = "# Blender";
+        // Use std::search to look for the objSignature within the header
+        auto result = std::ranges::search(header, objSignature);
+        
+        return !result.empty();
     }
 
     bool FileUtils::isFBX(const std::vector<unsigned char>& header)
     {
         // Check for 'Kaydara FBX Binary' signature for binary FBX
         const std::string fbxSignature = "Kaydara FBX Binary  ";
-        return header.size() >= fbxSignature.size() &&
-            std::equal(fbxSignature.begin(), fbxSignature.end(), header.begin());
+        auto result = std::ranges::search(header, fbxSignature);
+        
+        return !result.empty();
     }
 
     bool FileUtils::isDAE(const std::vector<unsigned char>& header)
     {
         // Check for '<?xml' in the first few bytes for XML-based DAE
         const std::string xmlSignature = "<?xml";
-        const std::string colladaTag = "<COLLADA";
-        return header.size() >= xmlSignature.size() &&
-            std::equal(xmlSignature.begin(), xmlSignature.end(),
-                       header.begin() + StringUtil::findFirstNotOf(header, "\n\r\t ")) &&
-            std::search(header.begin(), header.end(), colladaTag.begin(), colladaTag.end()) != header.end();
+        auto result = std::ranges::search(header, xmlSignature);
+        return !result.empty();
     }
 
     bool FileUtils::isGLTF(const std::vector<unsigned char>& header)
     {
         // Check for '{' for JSON-based GLTF or 'glTF' for binary GLB
         const std::string glbSignature = "glTF";
-        return header.size() >= 1 && header[0] == '{' ||
-            (header.size() >= 4 && std::equal(glbSignature.begin(), glbSignature.end(), header.begin()));
+        auto result = std::ranges::search(header, glbSignature);
+        return !result.empty();
     }
 
     bool FileUtils::isTextureFile(std::string_view filePath)

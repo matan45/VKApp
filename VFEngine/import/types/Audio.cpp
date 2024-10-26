@@ -134,7 +134,7 @@ namespace types {
 		// Write version
 		// Write the header file type
 		uint8_t headerFileType = static_cast<uint8_t>(audioData.headerFileType);
-		outFile.write(reinterpret_cast<const char*>(&headerFileType), sizeof(headerFileType));
+		outFile.write(std::bit_cast<const char*>(&headerFileType), sizeof(headerFileType));
 		
 		// Serialize the mesh data (this is just an example, adapt to your format)
 		uint32_t majorVersion = std::bit_cast<uint32_t>(Version::major);
@@ -153,7 +153,7 @@ namespace types {
 		// Write audio data size and the raw audio data
 		auto dataSize = static_cast<uint32_t>(audioData.data.size());
 		outFile.write(std::bit_cast<const char*>(&dataSize), sizeof(dataSize));
-		outFile.write(std::bit_cast<const char*>(audioData.data.data()), dataSize * sizeof(short));
+		outFile.write(std::bit_cast<const char*>(audioData.data.data()), dataSize);
 
 		outFile.close();
 	}
