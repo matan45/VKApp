@@ -105,9 +105,36 @@ namespace types
 		}
 		else if (type == "EXR")
 		{
+			EXRVersion exrVersion;
 
-			// Load EXR image using TinyEXR
+			int ret = ParseEXRVersionFromFile(&exrVersion, file.path.data());
+			if (ret != TINYEXR_SUCCESS) {
+				vfLogError("Invalid EXR file: {}", file.path.data());
+				return;
+			}
+
+			EXRHeader exrHeader;
+			InitEXRHeader(&exrHeader);
+
 			const char* exrError = nullptr;
+			ret = ParseEXRHeaderFromFile(&exrHeader, &exrVersion, file.path.data(), &exrError);
+			if (ret != TINYEXR_SUCCESS) {
+				vfLogError("Parse EXR err: {}", exrError);
+				FreeEXRErrorMessage(exrError); // free's buffer for an error message
+				return;
+			}
+
+			EXRImage exrImage;
+			InitEXRImage(&exrImage);
+
+			ret = LoadEXRImageFromFile(&exrImage, &exrHeader, file.path.data(), &exrError);
+			if (ret != TINYEXR_SUCCESS) {
+				vfLogError("Load EXR err: {}", exrError);
+				FreeEXRHeader(&exrHeader);
+				FreeEXRErrorMessage(exrError); // free's buffer for an error message
+				return;
+			}
+
 			float* out; // width * height * RGBA
 			int width;
 			int height;
@@ -119,7 +146,8 @@ namespace types
 				FreeEXRErrorMessage(exrError);
 				return;
 			}
-			int channels = 4;
+
+			int channels = exrImage.num_channels < 4 ? exrImage.num_channels : 4;
 
 			// Allocate space for texture data
 			hdrData.width = static_cast<uint32_t>(width);
@@ -144,6 +172,9 @@ namespace types
 
 			// Free the memory allocated by LoadEXR
 			free(out);
+
+			FreeEXRImage(&exrImage);
+			FreeEXRHeader(&exrHeader);
 
 			// Save the EXR data to a file
 			saveToFileHDR(fileName, location, hdrData);
