@@ -16,8 +16,9 @@ namespace resource {
 	{
 	private:
 		inline static std::unordered_map<std::string, std::weak_ptr<TextureData>> textureCache;
+		inline static std::unordered_map<std::string, std::weak_ptr<HDRData>> hdrCache;
 		inline static std::unordered_map<std::string, std::weak_ptr<AudioData>> audioCache;
-		inline static std::unordered_map<std::string, std::weak_ptr<MeshData>> meshCache;
+		inline static std::unordered_map<std::string, std::weak_ptr<MeshesData>> meshCache;
 		inline static std::unordered_map<std::string, std::weak_ptr<std::vector<ShaderModel>>> shaderCache;
 
 		inline static std::mutex cacheMutex;
@@ -28,8 +29,9 @@ namespace resource {
 	public:
 		static FileType readHeaderFile(std::string_view path);
 		static std::future <std::shared_ptr<TextureData>> loadTextureAsync(std::string_view path);
+		static std::future <std::shared_ptr<HDRData>> loadHDRAsync(std::string_view path);
 		static std::future <std::shared_ptr<AudioData>> loadAudioAsync(std::string_view path);
-		static std::future <std::shared_ptr<MeshData>> loadMeshAsync(std::string_view path);
+		static std::future <std::shared_ptr<MeshesData>> loadMeshAsync(std::string_view path);
 		static std::future <std::shared_ptr<std::vector<ShaderModel>>> loadShaderAsync(std::string_view path);
 
 		static void init();

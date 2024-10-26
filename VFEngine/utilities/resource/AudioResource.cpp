@@ -14,13 +14,27 @@ namespace resource {
 		std::ifstream inFile(path.data(), std::ios::binary);
 		if (!inFile) {
 			vfLogError("Failed to open file for reading: ", path);
-			return audioData; // Return an empty audioData on failure
+			return {}; // Return an empty audioData on failure
 		}
 
 		// Read version
-		inFile.read(std::bit_cast<char*>(&audioData.version.major), sizeof(audioData.version.major));
-		inFile.read(std::bit_cast<char*>(&audioData.version.minor), sizeof(audioData.version.minor));
-		inFile.read(std::bit_cast<char*>(&audioData.version.patch), sizeof(audioData.version.patch));
+		// Read the header file type
+		uint8_t headerFileType;
+		inFile.read(std::bit_cast<char*>(&headerFileType), sizeof(headerFileType));
+		audioData.headerFileType = static_cast<resource::FileType>(headerFileType);
+
+		// Read version
+		// Read the version information
+		uint32_t majorVersion, minorVersion, patchVersion;
+		inFile.read(std::bit_cast<char*>(&majorVersion), sizeof(majorVersion));
+		inFile.read(std::bit_cast<char*>(&minorVersion), sizeof(minorVersion));
+		inFile.read(std::bit_cast<char*>(&patchVersion), sizeof(patchVersion));
+
+		// Validate version compatibility
+		if (majorVersion != Version::major || minorVersion != Version::minor || patchVersion != Version::patch) {
+			vfLogError("Incompatible file version: {}.{}.{}", majorVersion, minorVersion, patchVersion);
+			return {};
+		}
 
 		// Read audio metadata: sample rate, channels, frames, total duration
 		inFile.read(std::bit_cast<char*>(&audioData.sampleRate), sizeof(audioData.sampleRate));
@@ -49,10 +63,8 @@ namespace resource {
 
 			currentOffset += bytesToRead;
 			bytesRemaining -= bytesToRead;
-
-			// Optionally, play the chunk in an audio engine here
-			// playAudioChunk(buffer);
 		}
+		
 		return audioData;
 	}
 }

@@ -7,7 +7,7 @@ namespace types {
 	class Audio
 	{
 	public:
-		void loadFromFile(const importConfig::ImportFiles& file, std::string_view fileName, std::string_view extension, std::string_view location) const;
+		void loadFromFile(const importConfig::ImportFiles& file, std::string_view fileName, std::string_view location) const;
 
 	private:
 		void loadOggFile(std::string_view path, std::string_view fileName, std::string_view location) const;

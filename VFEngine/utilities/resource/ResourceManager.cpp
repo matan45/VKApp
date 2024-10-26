@@ -31,6 +31,7 @@ namespace resource
     {
         // Remove the entry if the resource is no longer referenced
         std::erase_if(textureCache, [](const auto& pair) { return pair.second.expired(); });
+        std::erase_if(hdrCache, [](const auto& pair) { return pair.second.expired(); });
         std::erase_if(audioCache, [](const auto& pair) { return pair.second.expired(); });
         std::erase_if(meshCache, [](const auto& pair) { return pair.second.expired(); });
         std::erase_if(shaderCache, [](const auto& pair) { return pair.second.expired(); });
@@ -66,6 +67,14 @@ namespace resource
             [](std::string_view p) { return TextureResource::loadTexture(p); });
     }
 
+    std::future<std::shared_ptr<HDRData>> ResourceManager::loadHDRAsync(std::string_view path)
+    {
+		return loadResourceAsync<HDRData>(
+			path,
+			hdrCache,
+			[](std::string_view p) { return TextureResource::loadHDR(p); });
+    }
+
     std::future<std::shared_ptr<AudioData>> ResourceManager::loadAudioAsync(std::string_view path)
     {
         return loadResourceAsync<AudioData>(
@@ -74,9 +83,9 @@ namespace resource
             [](std::string_view p) { return AudioResource::loadAudio(p); });
     }
 
-    std::future<std::shared_ptr<MeshData>> ResourceManager::loadMeshAsync(std::string_view path)
+    std::future<std::shared_ptr<MeshesData>> ResourceManager::loadMeshAsync(std::string_view path)
     {
-        return loadResourceAsync<MeshData>(
+        return loadResourceAsync<MeshesData>(
             path,
             meshCache,
             [](std::string_view p) { return MeshResource::loadMesh(p); });

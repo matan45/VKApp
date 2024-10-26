@@ -37,7 +37,7 @@ namespace resource
         Version version;
         uint32_t width;
         uint32_t height;
-        std::string textureFormat;
+        uint32_t numbersOfChannels;
         std::vector<unsigned char> textureData;
     };
 
@@ -47,8 +47,8 @@ namespace resource
         Version version;
         uint32_t width;
         uint32_t height;
-        std::string textureFormat;
-        std::vector<unsigned char> textureData;
+        uint32_t numbersOfChannels;
+        std::vector<float> textureData;
     };
 
     struct Vertex
@@ -60,10 +60,16 @@ namespace resource
 
     struct MeshData
     {
-        FileType headerFileType;
-        Version version;
         std::vector<Vertex> vertices;
         std::vector<uint32_t> indices;
+    };
+
+    struct MeshesData
+    {
+        FileType headerFileType;
+        Version version;
+        uint32_t numberOfMeshes;
+        std::vector<MeshData> meshes;
     };
 
     struct Bone

@@ -26,7 +26,6 @@ namespace controllers
         static void processTexture(const importConfig::ImportFiles& file, std::string_view fileName);
         static void processHDR(const importConfig::ImportFiles& file, std::string_view fileName);
         static void processModel(const importConfig::ImportFiles& file, std::string_view fileName);
-        static void processAudio(const importConfig::ImportFiles& file, std::string_view fileName,
-                                 std::string_view extension);
+        static void processAudio(const importConfig::ImportFiles& file, std::string_view fileName);
     };
 }

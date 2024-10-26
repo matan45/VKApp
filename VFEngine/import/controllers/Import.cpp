@@ -49,7 +49,7 @@ namespace controllers
         else if (files::FileUtils::isAudioFile(file.path.data()))
         {
             // Handle model files
-            processAudio(file, fileName, files::FileUtils::getFileExtension(file.path.data()));
+            processAudio(file, fileName);
         }
         else
         {
@@ -67,10 +67,9 @@ namespace controllers
         mesh.loadFromFile(file, fileName, location);
     }
 
-    void Import::processAudio(const importConfig::ImportFiles& file, std::string_view fileName,
-                              std::string_view extension)
+    void Import::processAudio(const importConfig::ImportFiles& file, std::string_view fileName)
     {
-        audio.loadFromFile(file, fileName, extension, location);
+        audio.loadFromFile(file, fileName, location);
     }
 
     void Import::processHDR(const importConfig::ImportFiles& file, std::string_view fileName)

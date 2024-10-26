@@ -24,17 +24,20 @@ namespace windows
             "../../resources/editor/contentBrowser/glsl-file.vfImage");
         animationIcon = controllers::EditorTextureController::loadTexture(
             "../../resources/editor/contentBrowser/animation-file.vfImage");
+        hdrIcon = controllers::EditorTextureController::loadTexture(
+            "../../resources/editor/contentBrowser/hdr-file.vfImage");
     }
 
     ContentBrowser::~ContentBrowser()
     {
-		delete fileIcon;
+        delete fileIcon;
         delete folderIcon;
         delete textureIcon;
         delete audioIcon;
         delete meshIcon;
         delete glslIcon;
         delete animationIcon;
+        delete hdrIcon;
     }
 
     void ContentBrowser::draw()
@@ -67,7 +70,7 @@ namespace windows
             ImGui::Text("Current Path: %s", StringUtil::wstringToUtf8(currentPath.wstring()).c_str());
 
             // Draw search bar
-            ImGui::Text("Search:"); // Optional, if you want a label before the search bar.
+            ImGui::Text("Search:"); 
             ImGui::SameLine();
             ImGui::SetNextItemWidth(150.0f);
             char searchBuffer[256];
@@ -91,12 +94,12 @@ namespace windows
             {
                 drawFileWindow();
             }
-            else {
+            else
+            {
                 //clean the data if needed
             }
 
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-            // also add icons
             // Display contents of the current directory
             for (const auto& asset : assets)
             {
@@ -143,6 +146,10 @@ namespace windows
                 {
                     asset.type = Texture;
                 }
+                else if (ext == "." + FileExtension::hdr)
+                {
+                    asset.type = HDR;
+                }
                 else if (ext == "." + FileExtension::mesh)
                 {
                     asset.type = Model;
@@ -179,6 +186,12 @@ namespace windows
             ImGui::TextWrapped("%s", asset.name.c_str());
             ImGui::EndGroup();
             break;
+        case HDR:
+            ImGui::BeginGroup();
+            ImGui::Image(hdrIcon->getDescriptorSet(), ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
+            ImGui::TextWrapped("%s", asset.name.c_str());
+            ImGui::EndGroup();
+            break;
         case Model:
             ImGui::BeginGroup();
             ImGui::Image(meshIcon->getDescriptorSet(), ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE));
@@ -208,7 +221,8 @@ namespace windows
             {
                 ImGui::BeginGroup();
                 std::string folderName = asset.name;
-                if (ImGui::ImageButton(folderName.c_str(), folderIcon->getDescriptorSet(), ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE)))
+                if (ImGui::ImageButton(folderName.c_str(), folderIcon->getDescriptorSet(),
+                                       ImVec2(THUMBNAIL_SIZE, THUMBNAIL_SIZE)))
                 {
                     navigateFolder = true;
                 }
