@@ -1,5 +1,6 @@
 #include "ContentBrowser.hpp"
 #include "files/FileUtils.hpp"
+#include "resource/ResourceManager.hpp"
 #include "string/StringUtil.hpp"
 #include "print/EditorLogger.hpp"
 #include <IconsFontAwesome6.h>
@@ -85,7 +86,7 @@ namespace windows
 
             float panelWidth = ImGui::GetContentRegionAvail().x;
             float cellSize = PADDING + THUMBNAIL_SIZE;
-            int columnCount = max(1, static_cast<int>(panelWidth / cellSize));
+            int columnCount = std::max(1, static_cast<int>(panelWidth / cellSize));
             ImGui::Columns(columnCount, "", false);
 
             handleCreateFiles();
@@ -141,29 +142,29 @@ namespace windows
             else
             {
                 // Determine the asset type by its file extension.
-                std::string ext = files::FileUtils::getFileExtension(entry.path().string(), false);
+                resource::FileType ext = resource::ResourceManager::readHeaderFile(entry.path().string());
 
-                if (ext == "." + FileExtension::textrue)
+                if (ext == resource::FileType::TEXTURE)
                 {
                     asset.type = Texture;
                 }
-                else if (ext == "." + FileExtension::hdr)
+                else if (ext == resource::FileType::HDR)
                 {
                     asset.type = HDR;
                 }
-                else if (ext == "." + FileExtension::mesh)
+                else if (ext == resource::FileType::MESH)
                 {
                     asset.type = Model;
                 }
-                else if (ext == "." + FileExtension::shader)
+                else if (ext == resource::FileType::SHADER)
                 {
                     asset.type = Shader;
                 }
-                else if (ext == "." + FileExtension::audio)
+                else if (ext == resource::FileType::AUDIO)
                 {
                     asset.type = Audio;
                 }
-                else if (ext == "." + FileExtension::animation)
+                else if (ext == resource::FileType::ANIMATION)
                 {
                     asset.type = Animation;
                 }

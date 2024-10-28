@@ -1,6 +1,6 @@
 ﻿#include "FileUtils.hpp"
-#include "../string/StringUtil.hpp"
-#include "../print/EditorLogger.hpp"
+#include "string/StringUtil.hpp"
+#include "print/EditorLogger.hpp"
 #include <filesystem>
 #include <fstream>
 #include <bit>  // For std::bit_cast

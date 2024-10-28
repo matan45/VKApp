@@ -23,13 +23,70 @@ namespace core {
 		device.getLogicalDevice().destroySampler(sampler);
 	}
 
-	void Texture::loadFromFile(std::string_view filePath, vk::Format format, bool isEditor)
+	void Texture::loadHDRFromFile(std::string_view filePath, vk::Format format, bool isEditor)
 	{
 		auto textureData = resource::ResourceManager::loadTextureAsync(filePath);
 		auto texturePtr = textureData.get();
 		uint32_t imageWidth = texturePtr->width;
 		uint32_t imageHeight = texturePtr->height;
-		vk::DeviceSize imageSize = imageWidth * imageHeight * 4;
+		vk::DeviceSize imageSize = imageWidth * imageHeight * texturePtr->numbersOfChannels * 2;
+
+		vk::Buffer stagingBuffer;
+		vk::DeviceMemory stagingBufferMemory;
+
+		BufferInfoRequest bufferInfo(device.getLogicalDevice(), device.getPhysicalDevice());
+		bufferInfo.size = imageSize;
+		bufferInfo.usage = vk::BufferUsageFlagBits::eTransferSrc;
+		bufferInfo.properties = vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent;
+		Utilities::createBuffer(bufferInfo, stagingBuffer, stagingBufferMemory);
+
+		void* data;
+		if (vk::Result result = device.getLogicalDevice().mapMemory(stagingBufferMemory, 0, imageSize, {}, &data); result != vk::Result::eSuccess) {
+			loggerError("failed to map memory");
+		}
+		memcpy(data, texturePtr->textureData.data(), imageSize);
+		device.getLogicalDevice().unmapMemory(stagingBufferMemory);
+
+
+		ImageInfoRequest imageInfo(device.getLogicalDevice(), device.getPhysicalDevice());
+		imageInfo.width = imageWidth;
+		imageInfo.height = imageHeight;
+		imageInfo.format = format;
+		imageInfo.tiling = vk::ImageTiling::eOptimal;
+		imageInfo.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
+		imageInfo.properties = vk::MemoryPropertyFlagBits::eDeviceLocal;
+		Utilities::createImage(imageInfo, image, imageMemory);
+
+		vk::UniqueCommandBuffer commandTransitionA = core::Utilities::beginSingleTimeCommands(device.getLogicalDevice(), commandPool.get());
+		Utilities::transitionImageLayout(commandTransitionA.get(), image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, vk::ImageAspectFlagBits::eColor);
+		Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandTransitionA);
+
+		copyBufferToImage(stagingBuffer, imageWidth, imageHeight);
+
+		vk::UniqueCommandBuffer commandTransitionB = core::Utilities::beginSingleTimeCommands(device.getLogicalDevice(), commandPool.get());
+		Utilities::transitionImageLayout(commandTransitionB.get(), image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageAspectFlagBits::eColor);
+		Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandTransitionB);
+
+
+		device.getLogicalDevice().destroyBuffer(stagingBuffer);
+		device.getLogicalDevice().freeMemory(stagingBufferMemory);
+
+		createSampler();
+		core::ImageViewInfoRequest imageDepthRequest(device.getLogicalDevice(), image);
+		imageDepthRequest.format = format;
+		Utilities::createImageView(imageDepthRequest, imageView);
+		if (isEditor) {
+			descriptorSet = ImGui_ImplVulkan_AddTexture(sampler, imageView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		}
+	}
+
+	void Texture::loadTextureFromFile(std::string_view filePath, vk::Format format, bool isEditor)
+	{
+		auto textureData = resource::ResourceManager::loadTextureAsync(filePath);
+		auto texturePtr = textureData.get();
+		uint32_t imageWidth = texturePtr->width;
+		uint32_t imageHeight = texturePtr->height;
+		vk::DeviceSize imageSize = imageWidth * imageHeight * texturePtr->numbersOfChannels;
 
 		vk::Buffer stagingBuffer;
 		vk::DeviceMemory stagingBufferMemory;

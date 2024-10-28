@@ -1,6 +1,6 @@
 #include "Audio.hpp"
 #include "print/EditorLogger.hpp"
-#include "files/FileUtils.hpp"
+#include "../controllers/files/FileUtils.hpp"
 
 #include <vector>
 #include <fstream>

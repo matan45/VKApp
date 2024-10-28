@@ -17,7 +17,7 @@ namespace render {
 	void IBL::init(std::string_view path)
 	{
 		auto hdrTexture = std::make_shared<core::Texture>(device);
-		hdrTexture->loadFromFile(path, vk::Format::eR16G16B16A16Sfloat, false);
+		hdrTexture->loadHDRFromFile(path, vk::Format::eR16G16B16A16Sfloat, false);
 	}
 
 	void IBL::recreate()

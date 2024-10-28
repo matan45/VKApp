@@ -90,7 +90,6 @@
   <ItemGroup>
     <ClInclude Include="components\Components.hpp" />
     <ClInclude Include="config\Config.hpp" />
-    <ClInclude Include="files\FileUtils.hpp" />
     <ClInclude Include="math\MathHelper.hpp" />
     <ClInclude Include="nfd\FileDialog.hpp" />
     <ClInclude Include="print\EditorLogger.hpp" />
@@ -112,7 +111,6 @@
     <ClInclude Include="time\Timer.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="files\FileUtils.cpp" />
     <ClCompile Include="math\MathHelper.cpp" />
     <ClCompile Include="nfd\FileDialog.cpp" />
     <ClCompile Include="resource\AnimationResource.cpp" />
