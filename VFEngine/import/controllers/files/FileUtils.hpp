@@ -4,8 +4,7 @@
 
 namespace files
 {
-    //TODO move it to import
-    //change the ib name to commons
+    //change the utill lib name to commons
     class FileUtils
     {
     public:
