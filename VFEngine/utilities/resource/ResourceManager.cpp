@@ -41,7 +41,6 @@ namespace resource
     {
         std::ifstream file(path.data(), std::ios::binary);
         if (!file.is_open()) {
-            vfLogError( "Failed to open file for reading: {}", path.data());
             return FileType::UNKNOWN;
         }
 

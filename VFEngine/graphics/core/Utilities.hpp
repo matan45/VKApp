@@ -74,10 +74,10 @@ namespace core {
 		explicit ImageViewInfoRequest(
 			const vk::Device& logicalDevice,
 			const vk::Image& image,
-			vk::Format format = vk::Format::eR8G8B8A8Unorm, // Default format: 8-bit RGBA
-			vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor, // Default to color aspect
-			vk::ImageViewType imageType = vk::ImageViewType::e2D, // Default view type is 2D
-			uint32_t layerCount = 1 // Default to a single layer
+			vk::Format format = vk::Format::eR8G8B8A8Unorm,
+			vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor,
+			vk::ImageViewType imageType = vk::ImageViewType::e2D,
+			uint32_t layerCount = 1 
 		)
 			: logicalDevice{ logicalDevice },
 			image{ image },
