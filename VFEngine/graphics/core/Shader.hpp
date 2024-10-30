@@ -3,7 +3,6 @@
 #include <vulkan/vulkan.hpp>
 #include <shaderc/shaderc.hpp>
 #include <string>
-#include <string_view>
 #include "resource/ResourceManager.hpp"
 
 namespace core {
