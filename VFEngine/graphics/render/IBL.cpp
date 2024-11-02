@@ -99,7 +99,7 @@ namespace render
         vertexInputBindingDescription.binding = 0;
         vertexInputBindingDescription.stride = sizeof(glm::vec3);
         vertexInputBindingDescription.inputRate = vk::VertexInputRate::eVertex;
-        
+
         std::vector<vk::VertexInputAttributeDescription> vertexInputAttributes;
         vertexInputAttributes.push_back({0, 0, vk::Format::eR32G32Sfloat, 0});
 
@@ -108,7 +108,7 @@ namespace render
         vertexInputInfo.pVertexBindingDescriptions = &vertexInputBindingDescription;
         vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
         vertexInputInfo.pVertexAttributeDescriptions = vertexInputAttributes.data();
-        
+
         vk::Buffer vertexBuffer;
         vk::DeviceMemory vertexBufferMemory;
         {
@@ -120,14 +120,15 @@ namespace render
             core::Utilities::createBuffer(bufferInfo, vertexBuffer, vertexBufferMemory);
 
             void* data;
-            if(vk::Result result = device.getLogicalDevice().mapMemory(vertexBufferMemory, 0, bufferInfo.size, {}, &data);result != vk::Result::eSuccess)
+            if (vk::Result result = device.getLogicalDevice().mapMemory(vertexBufferMemory, 0, bufferInfo.size, {},
+                                                                        &data); result != vk::Result::eSuccess)
             {
                 loggerError("failed to map memory");
             }
             memcpy(data, cubeVertices.data(), bufferInfo.size);
             device.getLogicalDevice().unmapMemory(vertexBufferMemory);
         }
-        
+
         //DEFINE THE UNIFORM BUFFER LAYOUT
         vk::DescriptorPool descriptorPool;
         {
@@ -175,7 +176,7 @@ namespace render
         bufferRequest.usage = vk::BufferUsageFlagBits::eUniformBuffer;
         bufferRequest.size = sizeof(UniformBufferObject);
         core::Utilities::createBuffer(bufferRequest, uniformBuffer, uniformBufferMemory);
-        
+
         vk::DescriptorSet descriptorSet;
         {
             vk::DescriptorSetAllocateInfo allocInfo;
@@ -305,16 +306,6 @@ namespace render
 
             frameBuffers[face] = device.getLogicalDevice().createFramebuffer(framebufferInfo);
         }
-        
-        std::array<glm::mat4, 6> captureViews = {
-            glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(1, 0, 0), glm::vec3(0, -1, 0)),
-            glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(-1, 0, 0), glm::vec3(0, -1, 0)),
-            glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, 1)),
-            glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, -1, 0), glm::vec3(0, 0, -1)),
-            glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, 1), glm::vec3(0, -1, 0)),
-            glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, -1, 0))
-        };
-        glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 
         //setUp command buffer
         vk::UniqueCommandPool commandPool = device.getLogicalDevice().createCommandPoolUnique(poolInfo);
@@ -325,7 +316,7 @@ namespace render
         //DRAW COMMAND 
         for (uint32_t face = 0; face < 6; ++face)
         {
-            updateUniformBuffer(captureViews[face], captureProjection, uniformBufferMemory);
+            updateUniformBuffer(CameraViewMatrix::captureViews[face], CameraViewMatrix::captureProjection, uniformBufferMemory);
 
             vk::ClearValue clearColor{std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f}};
             vk::RenderPassBeginInfo renderPassBeginInfo{};
@@ -348,10 +339,32 @@ namespace render
             commandBuffer.get().endRenderPass();
         }
 
+        // Create a fence to wait for completion
+        vk::Fence renderFence = device.getLogicalDevice().createFence({});
+        core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandBuffer, renderFence);
+
+        // Wait for the command buffer to finish executing
+        vk::Result result = device.getLogicalDevice().waitForFences(renderFence, VK_TRUE, UINT64_MAX);
+        if (result != vk::Result::eSuccess)
+        {
+            loggerError("Failed to to wait for Fence IBL:");
+        }
+
+        vk::UniqueCommandBuffer transitionCommandBuffer = core::Utilities::beginSingleTimeCommands(
+            device.getLogicalDevice(), commandPool.get());
+        core::Utilities::transitionImageLayout(
+            transitionCommandBuffer.get(),
+            imageIrradianceCube.cubeMapImage,
+            vk::ImageLayout::eColorAttachmentOptimal,
+            vk::ImageLayout::eShaderReadOnlyOptimal,
+            vk::ImageAspectFlagBits::eColor
+        );
         core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandBuffer);
 
         //TODO cleanUp
-        for (auto framebuffer : frameBuffers) {
+        device.getLogicalDevice().destroyFence(renderFence);
+        for (auto framebuffer : frameBuffers)
+        {
             device.getLogicalDevice().destroyFramebuffer(framebuffer);
         }
         //TODO also if it works we can optimise it some buffers like the vertex buffer need to be define only ones

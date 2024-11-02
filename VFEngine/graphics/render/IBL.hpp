@@ -52,7 +52,7 @@ namespace render
         {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}
     };
 
-   inline static std::vector<glm::vec2> cubeTextureCoords = {
+    inline static std::vector<glm::vec2> cubeTextureCoords = {
         {0.0f, 0.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},
         {1.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 1.0f},
 
@@ -72,7 +72,8 @@ namespace render
         {1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}
     };
 
-    struct UniformBufferObject {
+    struct UniformBufferObject
+    {
         alignas(16) glm::mat4 view;
         alignas(16) glm::mat4 projection;
     };
@@ -83,6 +84,20 @@ namespace render
         vk::DeviceMemory cubeMapImageMemory;
         vk::ImageView cubeMapImageView;
     };
+
+    struct CameraViewMatrix
+    {
+        inline static const std::array<glm::mat4, 6> captureViews = {
+            glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(1, 0, 0), glm::vec3(0, -1, 0)),
+            glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(-1, 0, 0), glm::vec3(0, -1, 0)),
+            glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0), glm::vec3(0, 0, 1)),
+            glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, -1, 0), glm::vec3(0, 0, -1)),
+            glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, 1), glm::vec3(0, -1, 0)),
+            glm::lookAt(glm::vec3(0, 0, 0), glm::vec3(0, 0, -1), glm::vec3(0, -1, 0))
+        };
+        inline static const glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    };
+    
 
     class IBL
     {
@@ -96,7 +111,6 @@ namespace render
         static constexpr uint32_t CUBE_MAP_SIZE = 512;
         ImageData imageIrradianceCube;
         std::shared_ptr<core::Shader> shaderIrradianceCube;
-        
 
     public:
         explicit IBL(core::Device& device, core::SwapChain& swapChain,
@@ -113,6 +127,7 @@ namespace render
         void generateIrradianceCube();
         void generateBRDFLUT();
         void generatePrefilteredCube();
-        void updateUniformBuffer(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,const vk::DeviceMemory& uniformBufferMemory);
+        void updateUniformBuffer(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,
+                                 const vk::DeviceMemory& uniformBufferMemory);
     };
 }

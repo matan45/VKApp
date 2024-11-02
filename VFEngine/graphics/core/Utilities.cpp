@@ -93,7 +93,7 @@ namespace core {
 		return commandBuffer;
 	}
 
-	void Utilities::endSingleTimeCommands(const vk::Queue& queue, const vk::UniqueCommandBuffer& commandBuffer)
+	void Utilities::endSingleTimeCommands(const vk::Queue& queue, const vk::UniqueCommandBuffer& commandBuffer,const vk::Fence& renderFence)
 	{
 		commandBuffer->end();
 
@@ -102,7 +102,7 @@ namespace core {
 		submitInfo.pCommandBuffers = &(*commandBuffer);
 
 		try {
-			queue.submit(submitInfo, nullptr);
+			queue.submit(submitInfo, renderFence);
 			queue.waitIdle();
 		}
 		catch (const vk::SystemError& err) {
