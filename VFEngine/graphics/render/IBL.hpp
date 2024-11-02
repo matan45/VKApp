@@ -8,32 +8,80 @@ namespace core
 {
     class Device;
     class SwapChain;
-    class Shader;
 }
 
 namespace render
 {
-    // Cube vertices for a unit cube.
-    std::vector<glm::vec3> cubeVertices = {
-        // Positions
-        {-1.0f, -1.0f, -1.0f},
-        {1.0f, -1.0f, -1.0f},
-        {1.0f, 1.0f, -1.0f},
-        {-1.0f, 1.0f, -1.0f},
-        {-1.0f, -1.0f, 1.0f},
-        {1.0f, -1.0f, 1.0f},
-        {1.0f, 1.0f, 1.0f},
-        {-1.0f, 1.0f, 1.0f},
+    inline static std::vector<glm::vec3> cubeVertices = {
+        {-1.0f, 1.0f, -1.0f}, {-1.0f, -1.0f, -1.0f}, {1.0f, -1.0f, -1.0f},
+        {1.0f, -1.0f, -1.0f}, {1.0f, 1.0f, -1.0f}, {-1.0f, 1.0f, -1.0f},
+
+        {-1.0f, -1.0f, 1.0f}, {-1.0f, -1.0f, -1.0f}, {-1.0f, 1.0f, -1.0f},
+        {-1.0f, 1.0f, -1.0f}, {-1.0f, 1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f},
+
+        {1.0f, -1.0f, -1.0f}, {1.0f, -1.0f, 1.0f}, {1.0f, 1.0f, 1.0f},
+        {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, -1.0f}, {1.0f, -1.0f, -1.0f},
+
+        {-1.0f, -1.0f, 1.0f}, {-1.0f, 1.0f, 1.0f}, {1.0f, 1.0f, 1.0f},
+        {1.0f, 1.0f, 1.0f}, {1.0f, -1.0f, 1.0f}, {-1.0f, -1.0f, 1.0f},
+
+        {-1.0f, 1.0f, -1.0f}, {1.0f, 1.0f, -1.0f}, {1.0f, 1.0f, 1.0f},
+        {1.0f, 1.0f, 1.0f}, {-1.0f, 1.0f, 1.0f}, {-1.0f, 1.0f, -1.0f},
+
+        {-1.0f, -1.0f, -1.0f}, {-1.0f, -1.0f, 1.0f}, {1.0f, -1.0f, -1.0f},
+        {1.0f, -1.0f, -1.0f}, {-1.0f, -1.0f, 1.0f}, {1.0f, -1.0f, 1.0f}
     };
 
-    // Indices for drawing the cube with triangles.
-    std::vector<uint32_t> cubeIndices = {
-        0, 1, 2, 2, 3, 0, // -Z face
-        4, 5, 6, 6, 7, 4, // +Z face
-        0, 4, 7, 7, 3, 0, // -X face
-        1, 5, 6, 6, 2, 1, // +X face
-        3, 7, 6, 6, 2, 3, // +Y face
-        0, 4, 5, 5, 1, 0 // -Y face
+    inline static std::vector<glm::vec3> cubeNormals = {
+        {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f},
+        {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f},
+
+        {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
+        {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
+
+        {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f},
+        {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f},
+
+        {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f},
+        {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f},
+
+        {0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f},
+        {0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f},
+
+        {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
+        {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}
+    };
+
+   inline static std::vector<glm::vec2> cubeTextureCoords = {
+        {0.0f, 0.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},
+        {1.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 1.0f},
+
+        {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f},
+        {1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f},
+
+        {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},
+        {0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f},
+
+        {1.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f},
+        {0.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f},
+
+        {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},
+        {1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 1.0f},
+
+        {0.0f, 1.0f}, {1.0f, 0.0f}, {1.0f, 1.0f},
+        {1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}
+    };
+
+    struct UniformBufferObject {
+        alignas(16) glm::mat4 view;
+        alignas(16) glm::mat4 projection;
+    };
+
+    struct ImageData
+    {
+        vk::Image cubeMapImage;
+        vk::DeviceMemory cubeMapImageMemory;
+        vk::ImageView cubeMapImageView;
     };
 
     class IBL
@@ -42,8 +90,13 @@ namespace render
         core::Device& device;
         core::SwapChain& swapChain;
         std::vector<core::OffscreenResources>& offscreenResources;
-        std::shared_ptr<core::Shader> shader;
+        vk::CommandPoolCreateInfo poolInfo;
         std::shared_ptr<core::Texture> hdrTexture;
+
+        static constexpr uint32_t CUBE_MAP_SIZE = 512;
+        ImageData imageIrradianceCube;
+        std::shared_ptr<core::Shader> shaderIrradianceCube;
+        
 
     public:
         explicit IBL(core::Device& device, core::SwapChain& swapChain,
@@ -57,8 +110,9 @@ namespace render
         void cleanUp() const;
 
     private:
-        void generatePrefilteredCube();
         void generateIrradianceCube();
         void generateBRDFLUT();
+        void generatePrefilteredCube();
+        void updateUniformBuffer(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,const vk::DeviceMemory& uniformBufferMemory);
     };
 }

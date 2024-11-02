@@ -72,6 +72,7 @@ namespace core {
 		device.getLogicalDevice().freeMemory(stagingBufferMemory);
 
 		createSampler();
+		
 		core::ImageViewInfoRequest imageDepthRequest(device.getLogicalDevice(), image);
 		imageDepthRequest.format = format;
 		Utilities::createImageView(imageDepthRequest, imageView);
@@ -141,7 +142,7 @@ namespace core {
 	void Texture::createSampler()
 	{
 		using enum vk::SamplerAddressMode;
-		vk::SamplerCreateInfo samplerInfo{};
+		vk::SamplerCreateInfo samplerInfo;
 		samplerInfo.magFilter = vk::Filter::eLinear;
 		samplerInfo.minFilter = vk::Filter::eLinear;
 		samplerInfo.addressModeU = eRepeat;

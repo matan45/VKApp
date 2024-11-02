@@ -21,7 +21,7 @@ namespace render {
 		attributeDescriptions();
 		createVertexBuffer();
 		createRenderPass();
-		createFramebuffers();
+		createFrameBuffers();
 		createGraphicsPipeline();
 	}
 
@@ -37,7 +37,7 @@ namespace render {
 		device.getLogicalDevice().destroyRenderPass(renderPass);
 
 		createRenderPass();
-		createFramebuffers();
+		createFrameBuffers();
 		createGraphicsPipeline();
 	}
 
@@ -191,7 +191,7 @@ namespace render {
 
 	}
 
-	void TriangleRenderer::createFramebuffers()
+	void TriangleRenderer::createFrameBuffers()
 	{
 		framebuffers.resize(offscreenResources.size());
 

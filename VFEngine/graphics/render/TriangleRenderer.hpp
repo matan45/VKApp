@@ -53,7 +53,7 @@ namespace render {
 	private:
 		void createVertexBuffer();
 		void createGraphicsPipeline();
-		void createFramebuffers();
+		void createFrameBuffers();
 		void createRenderPass();
 
 		void bindingDescription();
