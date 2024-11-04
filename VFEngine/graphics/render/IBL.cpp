@@ -12,6 +12,8 @@ namespace render
                                                                           offscreenResources{offscreenResources}
     {
         shaderIrradianceCube = std::make_shared<core::Shader>(device);
+        brdfLUTShader = std::make_shared<core::Shader>(device);
+        prefilterShader = std::make_shared<core::Shader>(device);
         poolInfo.flags = vk::CommandPoolCreateFlagBits::eTransient;
         poolInfo.queueFamilyIndex = device.getQueueFamilyIndices().graphicsAndComputeFamily.value();
     }
@@ -21,12 +23,13 @@ namespace render
     }
 
     void IBL::init(std::string_view path)
-    {
+	{
+
         hdrTexture = std::make_shared<core::Texture>(device);
-        hdrTexture->loadHDRFromFile(path, vk::Format::eR16G16B16A16Sfloat, false);
+        hdrTexture->loadHDRFromFile(path, vk::Format::eR8G8B8A8Srgb, false);
         generateIrradianceCube();
         generateBRDFLUT();
-        generatePrefilteredCube();
+        //generatePrefilteredCube();
     }
 
     void IBL::recreate()
@@ -94,6 +97,8 @@ namespace render
         cubeMapImageRequest.layers = 6;
         cubeMapImageRequest.width = CUBE_MAP_SIZE;
         cubeMapImageRequest.height = CUBE_MAP_SIZE;
+        cubeMapImageRequest.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment;
+        cubeMapImageRequest.imageFlags = vk::ImageCreateFlagBits::eCubeCompatible;
         core::Utilities::createImage(cubeMapImageRequest, imageIrradianceCube.image,
                                      imageIrradianceCube.imageMemory);
 
@@ -128,10 +133,10 @@ namespace render
         vk::SubpassDependency dependency;
         dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
         dependency.dstSubpass = 0;
-        dependency.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-        dependency.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-        dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-        dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+		dependency.srcStageMask = vk::PipelineStageFlagBits::eTransfer;           // Use eTransfer for transfer write
+		dependency.srcAccessMask = vk::AccessFlagBits::eTransferWrite;            // Transfer write access
+		dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
 
         vk::RenderPassCreateInfo renderPassInfo;
         renderPassInfo.attachmentCount = 1;
@@ -243,7 +248,7 @@ namespace render
 
             vk::WriteDescriptorSet descriptorWrite;
             descriptorWrite.dstSet = descriptorSet;
-            descriptorWrite.dstBinding = 0;
+            descriptorWrite.dstBinding = 1;
             descriptorWrite.dstArrayElement = 0;
             descriptorWrite.descriptorType = vk::DescriptorType::eCombinedImageSampler;
             descriptorWrite.descriptorCount = 1;
@@ -315,6 +320,7 @@ namespace render
         colorBlending.pAttachments = &colorBlendAttachment;
 
         vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
+        pipelineLayoutInfo.setLayoutCount = 1;
         pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
         vk::PipelineLayout pipelineLayout = device.getLogicalDevice().createPipelineLayout(pipelineLayoutInfo);
 

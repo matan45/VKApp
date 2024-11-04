@@ -10,6 +10,7 @@ namespace core {
 namespace render {
 
 	class TriangleRenderer;
+	class IBL;
 
 	class RenderPassHandler
 	{
@@ -18,6 +19,7 @@ namespace render {
 		core::SwapChain& swapChain;
 
 		TriangleRenderer* triangleRenderer{ nullptr };
+		IBL* iblRenderer{ nullptr };
 
 		std::vector<core::OffscreenResources>& offscreenResources;
 	public:

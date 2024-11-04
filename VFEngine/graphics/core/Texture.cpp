@@ -25,11 +25,11 @@ namespace core {
 
 	void Texture::loadHDRFromFile(std::string_view filePath, vk::Format format, bool isEditor)
 	{
-		auto textureData = resource::ResourceManager::loadTextureAsync(filePath);
+		auto textureData = resource::ResourceManager::loadHDRAsync(filePath);
 		auto texturePtr = textureData.get();
 		uint32_t imageWidth = texturePtr->width;
 		uint32_t imageHeight = texturePtr->height;
-		vk::DeviceSize imageSize = imageWidth * imageHeight * texturePtr->numbersOfChannels * 2;
+		vk::DeviceSize imageSize = imageWidth * imageHeight * 4;
 
 		vk::Buffer stagingBuffer;
 		vk::DeviceMemory stagingBufferMemory;

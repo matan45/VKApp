@@ -12,7 +12,7 @@ layout(binding = 0) uniform UniformBufferObject {
 void main()
 {
     WorldPos = position;
-    gl_Position =  ubo.projection * ubo.view * vec4(WorldPos, 1.0);
+    gl_Position =  ubo.proj * ubo.view * vec4(WorldPos, 1.0);
 }
 
 #type FRAGMENT
