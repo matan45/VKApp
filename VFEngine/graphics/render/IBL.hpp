@@ -72,17 +72,34 @@ namespace render
         {1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}
     };
 
+    struct QuadVertex
+    {
+        glm::vec3 position;
+        glm::vec2 texture;
+    };
+
+    inline static std::vector<QuadVertex> quad = {
+        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, // Vertex 0
+        {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}, // Vertex 1
+        {{1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}}, // Vertex 2
+
+        {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, // Vertex 0 (repeated)
+        {{1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}}, // Vertex 2 (repeated)
+        {{1.0f, 1.0f, 0.0f}, {1.0f, 0.0f}} // Vertex 3
+    };
+
     struct UniformBufferObject
     {
         alignas(16) glm::mat4 view;
         alignas(16) glm::mat4 projection;
     };
 
+
     struct ImageData
     {
-        vk::Image cubeMapImage;
-        vk::DeviceMemory cubeMapImageMemory;
-        vk::ImageView cubeMapImageView;
+        vk::Image image;
+        vk::DeviceMemory imageMemory;
+        vk::ImageView imageView;
     };
 
     struct CameraViewMatrix
@@ -97,7 +114,7 @@ namespace render
         };
         inline static const glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     };
-    
+
 
     class IBL
     {
@@ -109,8 +126,15 @@ namespace render
         std::shared_ptr<core::Texture> hdrTexture;
 
         static constexpr uint32_t CUBE_MAP_SIZE = 512;
+        
         ImageData imageIrradianceCube;
         std::shared_ptr<core::Shader> shaderIrradianceCube;
+
+        ImageData brdfLUTImage;
+        std::shared_ptr<core::Shader> brdfLUTShader;
+
+        ImageData prefilterImage;
+        std::shared_ptr<core::Shader> prefilterShader;
 
     public:
         explicit IBL(core::Device& device, core::SwapChain& swapChain,

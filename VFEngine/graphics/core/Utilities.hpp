@@ -35,6 +35,7 @@ namespace core
         uint32_t width;
         uint32_t height;
         uint32_t layers;
+        uint32_t mipLevels;
         vk::Format format;
         vk::ImageTiling tiling;
         vk::ImageUsageFlags usage;
@@ -47,6 +48,7 @@ namespace core
             uint32_t width = 1,
             uint32_t height = 1,
             uint32_t layers = 1,
+            uint32_t mipLevels = 1,
             vk::Format format = vk::Format::eR8G8B8A8Unorm,
             vk::ImageTiling tiling = vk::ImageTiling::eOptimal,
             vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
@@ -58,6 +60,7 @@ namespace core
               width{width},
               height{height},
               layers{layers},
+              mipLevels{mipLevels},
               format{format},
               tiling{tiling},
               usage{usage},
@@ -75,6 +78,7 @@ namespace core
         vk::ImageAspectFlags aspectFlags;
         vk::ImageViewType imageType;
         uint32_t layerCount;
+        uint32_t mipLevels;
 
         explicit ImageViewInfoRequest(
             const vk::Device& logicalDevice,
@@ -82,14 +86,16 @@ namespace core
             vk::Format format = vk::Format::eR8G8B8A8Unorm,
             vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor,
             vk::ImageViewType imageType = vk::ImageViewType::e2D,
-            uint32_t layerCount = 1
+            uint32_t layerCount = 1,
+            uint32_t mipLevels = 1
         )
             : logicalDevice{logicalDevice},
               image{image},
               format{format},
               aspectFlags{aspectFlags},
               imageType{imageType},
-              layerCount{layerCount}
+              layerCount{layerCount},
+              mipLevels{mipLevels}
         {
         }
     };

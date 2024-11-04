@@ -213,7 +213,7 @@ namespace core {
 		imageCreateInfo.extent.width = imageInfo.width;
 		imageCreateInfo.extent.height = imageInfo.height;
 		imageCreateInfo.extent.depth = 1;
-		imageCreateInfo.mipLevels = 1;
+		imageCreateInfo.mipLevels = imageInfo.mipLevels;
 		imageCreateInfo.arrayLayers = imageInfo.layers;
 		imageCreateInfo.format = imageInfo.format;
 		imageCreateInfo.tiling = imageInfo.tiling;
@@ -242,7 +242,7 @@ namespace core {
 		viewInfo.format = imageInfoView.format;
 		viewInfo.subresourceRange.aspectMask = imageInfoView.aspectFlags;
 		viewInfo.subresourceRange.baseMipLevel = 0;
-		viewInfo.subresourceRange.levelCount = 1;
+		viewInfo.subresourceRange.levelCount = imageInfoView.mipLevels;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
 		viewInfo.subresourceRange.layerCount = imageInfoView.layerCount;
 

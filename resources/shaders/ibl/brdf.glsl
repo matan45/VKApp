@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec2 texCoords;
 
-out vec2 TexCoords;
+layout (location = 0) out vec2 TexCoords;
 
 void main()
 {
@@ -13,8 +13,8 @@ void main()
 
 #type FRAGMENT
 #version 460 core
-out vec2 FragColor;
-in vec2 TexCoords;
+layout (location = 0) out vec2 FragColor;
+layout (location = 0) in vec2 TexCoords;
 
 const float PI = 3.14159265359;
 
