@@ -12,7 +12,7 @@ namespace core
 
 namespace render
 {
-    inline static std::vector<glm::vec3> cubeVertices = {
+    inline static const std::vector<glm::vec3> cubeVertices = {
         {-1.0f, 1.0f, -1.0f}, {-1.0f, -1.0f, -1.0f}, {1.0f, -1.0f, -1.0f},
         {1.0f, -1.0f, -1.0f}, {1.0f, 1.0f, -1.0f}, {-1.0f, 1.0f, -1.0f},
 
@@ -32,7 +32,7 @@ namespace render
         {1.0f, -1.0f, -1.0f}, {-1.0f, -1.0f, 1.0f}, {1.0f, -1.0f, 1.0f}
     };
 
-    inline static std::vector<glm::vec3> cubeNormals = {
+    inline static const std::vector<glm::vec3> cubeNormals = {
         {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f},
         {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f},
 
@@ -52,7 +52,7 @@ namespace render
         {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}
     };
 
-    inline static std::vector<glm::vec2> cubeTextureCoords = {
+    inline static const std::vector<glm::vec2> cubeTextureCoords = {
         {0.0f, 0.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},
         {1.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 1.0f},
 
@@ -78,7 +78,7 @@ namespace render
         glm::vec2 texture;
     };
 
-    inline static std::vector<QuadVertex> quad = {
+    inline static const std::vector<QuadVertex> quad = {
         {{-1.0f, 1.0f, 0.0f}, {0.0f, 1.0f}}, // Vertex 0
         {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}}, // Vertex 1
         {{1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}}, // Vertex 2
@@ -136,6 +136,16 @@ namespace render
         ImageData prefilterImage;
         std::shared_ptr<core::Shader> prefilterShader;
 
+        std::shared_ptr<core::Shader> skyboxShader;
+        vk::RenderPass renderPass;
+        vk::Pipeline graphicsPipeline;
+        std::vector<vk::Framebuffer> framebuffers;
+        vk::Buffer vertexBuffer;
+		vk::Buffer uniformBuffer;
+		vk::DeviceMemory uniformBufferMemory;
+        vk::PipelineLayout pipelineLayout;
+        vk::DescriptorSet descriptorSet;
+
     public:
         explicit IBL(core::Device& device, core::SwapChain& swapChain,
                      std::vector<core::OffscreenResources>& offscreenResources);
@@ -151,6 +161,7 @@ namespace render
         void generateIrradianceCube();
         void generateBRDFLUT();
         void generatePrefilteredCube();
+        void drawCube();
         void updateUniformBuffer(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,
                                  const vk::DeviceMemory& uniformBufferMemory) const;
     };

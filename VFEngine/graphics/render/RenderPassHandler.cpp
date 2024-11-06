@@ -19,7 +19,7 @@ namespace render {
 
 	void RenderPassHandler::init()
 	{
-		triangleRenderer->init();
+		//triangleRenderer->init();
 		iblRenderer->init("../../resources/shaders/ibl/immenstadter_horn_4k.vfHdr");
 	}
 
@@ -35,7 +35,8 @@ namespace render {
 
 	void RenderPassHandler::draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const
 	{
-		triangleRenderer->recordCommandBuffer(commandBuffer,imageIndex);
+		//triangleRenderer->recordCommandBuffer(commandBuffer,imageIndex);
+		iblRenderer->recordCommandBuffer(commandBuffer, imageIndex);
 	}
 
 }

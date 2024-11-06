@@ -2,6 +2,7 @@
 #include "../core/Utilities.hpp"
 #include "print/Logger.hpp"
 #include "../core/Device.hpp"
+#include "../core/SwapChain.hpp"
 #include <memory>
 
 namespace render
@@ -14,12 +15,41 @@ namespace render
 		shaderIrradianceCube = std::make_shared<core::Shader>(device);
 		brdfLUTShader = std::make_shared<core::Shader>(device);
 		prefilterShader = std::make_shared<core::Shader>(device);
+		skyboxShader = std::make_shared<core::Shader>(device);
 		poolInfo.flags = vk::CommandPoolCreateFlagBits::eTransient;
 		poolInfo.queueFamilyIndex = device.getQueueFamilyIndices().graphicsAndComputeFamily.value();
 	}
 
 	void IBL::recordCommandBuffer(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const
 	{
+		updateUniformBuffer(CameraViewMatrix::captureViews[1], CameraViewMatrix::captureProjection, uniformBufferMemory);
+		vk::RenderPassBeginInfo renderPassInfo{};
+		renderPassInfo.renderPass = renderPass;
+		renderPassInfo.framebuffer = framebuffers[imageIndex];
+		renderPassInfo.renderArea.offset.x = 0;
+		renderPassInfo.renderArea.offset.y = 0;
+		renderPassInfo.renderArea.extent = swapChain.getSwapchainExtent();
+
+		std::array<vk::ClearValue, 1> clearValues{};
+		clearValues[0].color = vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});
+		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		renderPassInfo.pClearValues = clearValues.data();
+
+		// Begin render pass
+		commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+
+		// Bind the graphics pipeline
+		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
+		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet,
+			{});
+
+		// Bind vertex buffer
+		vk::DeviceSize offsets[] = { 0 };
+		commandBuffer.bindVertexBuffers(0, vertexBuffer, offsets);
+		commandBuffer.draw(static_cast<uint32_t>(cubeVertices.size()), 1, 0, 0);
+
+		// End render pass
+		commandBuffer.endRenderPass();
 	}
 
 	void IBL::init(std::string_view path)
@@ -28,6 +58,7 @@ namespace render
 		hdrTexture->loadHDRFromFile(path, vk::Format::eR8G8B8A8Srgb, false);
 		generateIrradianceCube();
 		generateBRDFLUT();
+		drawCube();
 		//generatePrefilteredCube();
 	}
 
@@ -87,6 +118,257 @@ namespace render
 		renderPassInfo.pSubpasses = &subpass;
 
 		vk::RenderPass renderPass = device.getLogicalDevice().createRenderPass(renderPassInfo);
+	}
+
+	void IBL::drawCube()
+	{
+		skyboxShader->readShader("../../resources/shaders/ibl/skybox.glsl");
+
+		vk::AttachmentDescription colorAttachment{};
+		colorAttachment.format = swapChain.getSwapchainImageFormat();
+		colorAttachment.samples = vk::SampleCountFlagBits::e1;
+		colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+		colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
+		colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
+		colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+		colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
+		colorAttachment.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+
+		vk::AttachmentReference colorAttachmentRef{};
+		colorAttachmentRef.attachment = 0;
+		colorAttachmentRef.layout = vk::ImageLayout::eColorAttachmentOptimal;
+
+		vk::SubpassDescription subpass{};
+		subpass.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &colorAttachmentRef;
+
+		vk::RenderPassCreateInfo renderPassInfo{};
+		renderPassInfo.attachmentCount = 1;
+		renderPassInfo.pAttachments = &colorAttachment;
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &subpass;
+
+		renderPass = device.getLogicalDevice().createRenderPass(renderPassInfo);
+
+		//DEFINE THE VERTEX BUFFER
+		vk::VertexInputBindingDescription vertexInputBindingDescription;
+		vertexInputBindingDescription.binding = 0;
+		vertexInputBindingDescription.stride = sizeof(glm::vec3);
+		vertexInputBindingDescription.inputRate = vk::VertexInputRate::eVertex;
+
+		std::vector<vk::VertexInputAttributeDescription> vertexInputAttributes;
+		vertexInputAttributes.push_back({ 0, 0, vk::Format::eR32G32B32Sfloat, 0 });
+
+		vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
+		vertexInputInfo.vertexBindingDescriptionCount = 1;
+		vertexInputInfo.pVertexBindingDescriptions = &vertexInputBindingDescription;
+		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
+		vertexInputInfo.pVertexAttributeDescriptions = vertexInputAttributes.data();
+
+		vk::DeviceMemory vertexBufferMemory;
+		{
+			core::BufferInfoRequest bufferInfo(device.getLogicalDevice(), device.getPhysicalDevice());
+			bufferInfo.size = sizeof(cubeVertices[0]) * cubeVertices.size();
+			bufferInfo.usage = vk::BufferUsageFlagBits::eVertexBuffer;
+			bufferInfo.properties = vk::MemoryPropertyFlagBits::eHostVisible |
+				vk::MemoryPropertyFlagBits::eHostCoherent;
+			core::Utilities::createBuffer(bufferInfo, vertexBuffer, vertexBufferMemory);
+
+			void* data;
+			if (vk::Result result = device.getLogicalDevice().mapMemory(vertexBufferMemory, 0, bufferInfo.size, {},
+				&data); result != vk::Result::eSuccess)
+			{
+				loggerError("failed to map memory");
+			}
+			memcpy(data, cubeVertices.data(), bufferInfo.size);
+			device.getLogicalDevice().unmapMemory(vertexBufferMemory);
+		}
+
+		//DEFINE THE UNIFORM BUFFER LAYOUT
+		vk::DescriptorPool descriptorPool;
+		{
+			std::vector<vk::DescriptorPoolSize> poolSizes(2);
+			poolSizes[0].type = vk::DescriptorType::eCombinedImageSampler;
+			poolSizes[0].descriptorCount = 1;
+			poolSizes[1].type = vk::DescriptorType::eUniformBuffer;
+			poolSizes[1].descriptorCount = 1;
+
+			vk::DescriptorPoolCreateInfo poolInfo{};
+			poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+			poolInfo.pPoolSizes = poolSizes.data();
+			poolInfo.maxSets = 1;
+
+			descriptorPool = device.getLogicalDevice().createDescriptorPool(poolInfo);
+		}
+
+		vk::DescriptorSetLayout descriptorSetLayout;
+		{
+			std::vector<vk::DescriptorSetLayoutBinding> bindings(2);
+
+			bindings[0].binding = 0;
+			bindings[0].descriptorType = vk::DescriptorType::eUniformBuffer;
+			bindings[0].descriptorCount = 1;
+			bindings[0].stageFlags = vk::ShaderStageFlagBits::eVertex;
+			bindings[0].pImmutableSamplers = nullptr;
+
+			bindings[1].binding = 1;
+			bindings[1].descriptorType = vk::DescriptorType::eCombinedImageSampler;
+			bindings[1].descriptorCount = 1;
+			bindings[1].stageFlags = vk::ShaderStageFlagBits::eFragment;
+			bindings[1].pImmutableSamplers = nullptr;
+
+			vk::DescriptorSetLayoutCreateInfo layoutInfo;
+			layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+			layoutInfo.pBindings = bindings.data();
+
+			descriptorSetLayout = device.getLogicalDevice().createDescriptorSetLayout(layoutInfo);
+		}
+
+		//DEFINE THE UNIFORM BUFFER AND SAMPLER
+		core::BufferInfoRequest bufferRequest(device.getLogicalDevice(), device.getPhysicalDevice());
+		bufferRequest.usage = vk::BufferUsageFlagBits::eUniformBuffer;
+		bufferRequest.properties = vk::MemoryPropertyFlagBits::eHostVisible |
+			vk::MemoryPropertyFlagBits::eHostCoherent;
+		bufferRequest.size = sizeof(UniformBufferObject);
+		core::Utilities::createBuffer(bufferRequest, uniformBuffer, uniformBufferMemory);
+
+		
+		{
+			vk::DescriptorSetAllocateInfo allocInfo;
+			allocInfo.descriptorPool = descriptorPool;
+			allocInfo.descriptorSetCount = 1;
+			allocInfo.pSetLayouts = &descriptorSetLayout;
+
+			descriptorSet = device.getLogicalDevice().allocateDescriptorSets(allocInfo)[0];
+		}
+		{
+			vk::SamplerCreateInfo samplerInfo;
+			samplerInfo.magFilter = vk::Filter::eLinear;
+			samplerInfo.minFilter = vk::Filter::eLinear;
+			samplerInfo.addressModeU = vk::SamplerAddressMode::eClampToEdge;
+			samplerInfo.addressModeV = vk::SamplerAddressMode::eClampToEdge;
+			samplerInfo.addressModeW = vk::SamplerAddressMode::eClampToEdge;
+			samplerInfo.anisotropyEnable = VK_TRUE;
+			samplerInfo.maxAnisotropy = 16;
+			samplerInfo.borderColor = vk::BorderColor::eIntOpaqueBlack;
+			samplerInfo.unnormalizedCoordinates = VK_FALSE;
+
+			vk::Sampler sampler = device.getLogicalDevice().createSampler(samplerInfo);
+
+			vk::DescriptorImageInfo imageInfo;
+			imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+			imageInfo.imageView = imageIrradianceCube.imageView;
+			imageInfo.sampler = sampler;
+
+			vk::WriteDescriptorSet descriptorWrite;
+			descriptorWrite.dstSet = descriptorSet;
+			descriptorWrite.dstBinding = 1;
+			descriptorWrite.dstArrayElement = 0;
+			descriptorWrite.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+			descriptorWrite.descriptorCount = 1;
+			descriptorWrite.pImageInfo = &imageInfo;
+
+			device.getLogicalDevice().updateDescriptorSets(descriptorWrite, nullptr);
+		}
+		{
+			vk::DescriptorBufferInfo bufferInfo;
+			bufferInfo.buffer = uniformBuffer;
+			bufferInfo.offset = 0;
+			bufferInfo.range = sizeof(UniformBufferObject);
+
+			vk::WriteDescriptorSet descriptorWrite;
+			descriptorWrite.dstSet = descriptorSet;
+			descriptorWrite.dstBinding = 0;
+			descriptorWrite.dstArrayElement = 0;
+			descriptorWrite.descriptorType = vk::DescriptorType::eUniformBuffer;
+			descriptorWrite.descriptorCount = 1;
+			descriptorWrite.pBufferInfo = &bufferInfo;
+
+			device.getLogicalDevice().updateDescriptorSets(descriptorWrite, nullptr);
+		}
+
+		//DEFINE GRAPHICS PIPELINE
+		vk::PipelineInputAssemblyStateCreateInfo inputAssembly;
+		inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
+		inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+		vk::Viewport viewport;
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = static_cast<float>(CUBE_MAP_SIZE);
+		viewport.height = static_cast<float>(CUBE_MAP_SIZE);
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+
+		vk::Rect2D scissor;
+		scissor.offset = vk::Offset2D(0, 0);
+		scissor.extent = vk::Extent2D(CUBE_MAP_SIZE, CUBE_MAP_SIZE);
+
+		vk::PipelineViewportStateCreateInfo viewportState;
+		viewportState.viewportCount = 1;
+		viewportState.pViewports = &viewport;
+		viewportState.scissorCount = 1;
+		viewportState.pScissors = &scissor;
+
+		vk::PipelineRasterizationStateCreateInfo rasterizer;
+		rasterizer.depthClampEnable = VK_FALSE;
+		rasterizer.rasterizerDiscardEnable = VK_FALSE;
+		rasterizer.polygonMode = vk::PolygonMode::eFill;
+		rasterizer.lineWidth = 1.0f;
+		rasterizer.cullMode = vk::CullModeFlagBits::eBack;
+		rasterizer.frontFace = vk::FrontFace::eClockwise;
+		rasterizer.depthBiasEnable = VK_FALSE;
+
+		vk::PipelineMultisampleStateCreateInfo multisampling;
+		multisampling.sampleShadingEnable = VK_FALSE;
+		multisampling.rasterizationSamples = vk::SampleCountFlagBits::e1;
+
+		vk::PipelineColorBlendAttachmentState colorBlendAttachment;
+		colorBlendAttachment.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG
+			| vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+		colorBlendAttachment.blendEnable = VK_FALSE;
+
+		vk::PipelineColorBlendStateCreateInfo colorBlending;
+		colorBlending.logicOpEnable = VK_FALSE;
+		colorBlending.attachmentCount = 1;
+		colorBlending.pAttachments = &colorBlendAttachment;
+
+		vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
+		pipelineLayoutInfo.setLayoutCount = 1;
+		pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+		pipelineLayout = device.getLogicalDevice().createPipelineLayout(pipelineLayoutInfo);
+
+		vk::GraphicsPipelineCreateInfo pipelineInfo;
+		pipelineInfo.stageCount = static_cast<uint32_t>(skyboxShader->getShaderStages().size());
+		pipelineInfo.pStages = skyboxShader->getShaderStages().data();
+		pipelineInfo.pVertexInputState = &vertexInputInfo;
+		pipelineInfo.pInputAssemblyState = &inputAssembly;
+		pipelineInfo.pViewportState = &viewportState;
+		pipelineInfo.pRasterizationState = &rasterizer;
+		pipelineInfo.pMultisampleState = &multisampling;
+		pipelineInfo.pColorBlendState = &colorBlending;
+		pipelineInfo.layout = pipelineLayout;
+		pipelineInfo.renderPass = renderPass;
+		pipelineInfo.subpass = 0;
+
+		graphicsPipeline = device.getLogicalDevice().createGraphicsPipeline(nullptr, pipelineInfo).value;
+
+		framebuffers.resize(offscreenResources.size());
+
+		for (uint32_t i = 0; i < framebuffers.size(); i++) {
+			vk::ImageView viewImage = offscreenResources[i].colorImageView;
+
+			vk::FramebufferCreateInfo framebufferInfo{};
+			framebufferInfo.renderPass = renderPass;
+			framebufferInfo.attachmentCount = 1;
+			framebufferInfo.pAttachments = &viewImage;
+			framebufferInfo.width = swapChain.getSwapchainExtent().width;
+			framebufferInfo.height = swapChain.getSwapchainExtent().height;
+			framebufferInfo.layers = 1;
+
+			framebuffers[i] = device.getLogicalDevice().createFramebuffer(framebufferInfo);
+		}
 	}
 
 	void IBL::generateIrradianceCube()

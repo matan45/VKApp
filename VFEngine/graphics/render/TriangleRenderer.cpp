@@ -72,7 +72,7 @@ namespace render {
 		renderPassInfo.renderArea.extent = swapChain.getSwapchainExtent();
 
 		std::array<vk::ClearValue, 1> clearValues{};
-		clearValues[0].color = vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});  // Sky color
+		clearValues[0].color = vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});
 		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 		renderPassInfo.pClearValues = clearValues.data();
 
