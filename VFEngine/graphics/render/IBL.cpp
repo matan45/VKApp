@@ -24,7 +24,6 @@ namespace render
 
 	void IBL::init(std::string_view path)
 	{
-
 		hdrTexture = std::make_shared<core::Texture>(device);
 		hdrTexture->loadHDRFromFile(path, vk::Format::eR8G8B8A8Srgb, false);
 		generateIrradianceCube();
@@ -97,7 +96,8 @@ namespace render
 		cubeMapImageRequest.layers = 6;
 		cubeMapImageRequest.width = CUBE_MAP_SIZE;
 		cubeMapImageRequest.height = CUBE_MAP_SIZE;
-		cubeMapImageRequest.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment;
+		cubeMapImageRequest.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled |
+			vk::ImageUsageFlagBits::eColorAttachment;
 		cubeMapImageRequest.imageFlags = vk::ImageCreateFlagBits::eCubeCompatible;
 		core::Utilities::createImage(cubeMapImageRequest, imageIrradianceCube.image,
 			imageIrradianceCube.imageMemory);
@@ -130,21 +130,33 @@ namespace render
 		subPass.colorAttachmentCount = 1;
 		subPass.pColorAttachments = &colorAttachmentRef;
 
-		vk::SubpassDependency dependency;
-		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependency.dstSubpass = 0;
-		dependency.srcStageMask = vk::PipelineStageFlagBits::eTransfer;           // Use eTransfer for transfer write
-		dependency.srcAccessMask = vk::AccessFlagBits::eTransferWrite;            // Transfer write access
-		dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-		dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+		// Use subpass dependencies for layout transitions
+		std::array<vk::SubpassDependency, 2> dependencies;
+		dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[0].dstSubpass = 0;
+		dependencies[0].srcStageMask = vk::PipelineStageFlagBits::eBottomOfPipe;
+		dependencies[0].dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		dependencies[0].srcAccessMask = vk::AccessFlagBits::eMemoryRead;
+		dependencies[0].dstAccessMask = vk::AccessFlagBits::eColorAttachmentRead |
+			vk::AccessFlagBits::eColorAttachmentWrite;
+		dependencies[0].dependencyFlags = vk::DependencyFlagBits::eByRegion;
+
+		dependencies[1].srcSubpass = 0;
+		dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+		dependencies[1].srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		dependencies[1].dstStageMask = vk::PipelineStageFlagBits::eBottomOfPipe;
+		dependencies[1].srcAccessMask = vk::AccessFlagBits::eColorAttachmentRead |
+			vk::AccessFlagBits::eColorAttachmentWrite;
+		dependencies[1].dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+		dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
 		vk::RenderPassCreateInfo renderPassInfo;
 		renderPassInfo.attachmentCount = 1;
 		renderPassInfo.pAttachments = &colorAttachment;
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subPass;
-		renderPassInfo.dependencyCount = 1;
-		renderPassInfo.pDependencies = &dependency;
+		renderPassInfo.dependencyCount = 2;
+		renderPassInfo.pDependencies = dependencies.data();
 
 		vk::RenderPass renderPass = device.getLogicalDevice().createRenderPass(renderPassInfo);
 
@@ -341,43 +353,82 @@ namespace render
 
 		vk::Pipeline graphicsPipeline = device.getLogicalDevice().createGraphicsPipeline(nullptr, pipelineInfo).value;
 
+		vk::Image image;
+		vk::ImageView view;
+		vk::DeviceMemory memory;
+		vk::Framebuffer framebuffer;
+
+		core::ImageInfoRequest imageRequest(device.getLogicalDevice(), device.getPhysicalDevice());
+		imageRequest.format = vk::Format::eR16G16B16A16Sfloat;
+		imageRequest.width = CUBE_MAP_SIZE;
+		imageRequest.height = CUBE_MAP_SIZE;
+		imageRequest.usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
+		core::Utilities::createImage(imageRequest, image, memory);
+
+		core::ImageViewInfoRequest imageViewRequest(device.getLogicalDevice(), image);
+		imageViewRequest.format = vk::Format::eR16G16B16A16Sfloat;
+		core::Utilities::createImageView(imageViewRequest, view);
+
 		//Create frame buffers for each face.
 		vk::FramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.renderPass = renderPass;
 		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = &imageIrradianceCube.imageView;  // Use the cube map view
+		framebufferInfo.pAttachments = &view; // Use the cube map view
 		framebufferInfo.width = CUBE_MAP_SIZE;
 		framebufferInfo.height = CUBE_MAP_SIZE;
-		framebufferInfo.layers = 1;  // Only 1 layer for a single framebuffer
+		framebufferInfo.layers = 1; // Only 1 layer for a single framebuffer
 
-		vk::Framebuffer framebuffer = device.getLogicalDevice().createFramebuffer(framebufferInfo);
+		framebuffer = device.getLogicalDevice().createFramebuffer(framebufferInfo);
 
 		//setUp command buffer
 		vk::UniqueCommandPool commandPool = device.getLogicalDevice().createCommandPoolUnique(poolInfo);
+
+		vk::UniqueCommandBuffer commandImageBuffer = core::Utilities::beginSingleTimeCommands(
+			device.getLogicalDevice(), commandPool.get());
+
+		core::Utilities::transitionImageLayout(commandImageBuffer.get(), image, vk::ImageLayout::eUndefined,
+			vk::ImageLayout::eColorAttachmentOptimal,
+			vk::ImageAspectFlagBits::eColor);
+		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandImageBuffer);
+
+
+		// Begin a new single-time command buffer for the final layout transition
+		vk::UniqueCommandBuffer transitionCommandBuffer = core::Utilities::beginSingleTimeCommands(
+			device.getLogicalDevice(), commandPool.get());
+
+		core::Utilities::transitionImageLayout(transitionCommandBuffer.get(), imageIrradianceCube.image,
+			vk::ImageLayout::eUndefined,
+			vk::ImageLayout::eTransferDstOptimal,
+			vk::ImageAspectFlagBits::eColor, 6);
+
+		// End the layout transition command buffer
+		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), transitionCommandBuffer);
 
 		vk::UniqueCommandBuffer commandBuffer = core::Utilities::beginSingleTimeCommands(
 			device.getLogicalDevice(), commandPool.get());
 
 		vk::ClearValue clearColor{ std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f} };
 
+		vk::RenderPassBeginInfo renderPassBeginInfo{};
+		renderPassBeginInfo.renderPass = renderPass;
+		renderPassBeginInfo.framebuffer = framebuffer;
+		renderPassBeginInfo.renderArea = vk::Rect2D({ 0, 0 }, { CUBE_MAP_SIZE, CUBE_MAP_SIZE });
+		renderPassBeginInfo.clearValueCount = 1;
+		renderPassBeginInfo.pClearValues = &clearColor;
+
 		//DRAW COMMAND 
 		for (uint32_t face = 0; face < 6; ++face)
 		{
-			updateUniformBuffer(CameraViewMatrix::captureViews[face], CameraViewMatrix::captureProjection, uniformBufferMemory);
-
-			vk::RenderPassBeginInfo renderPassBeginInfo{};
-			renderPassBeginInfo.renderPass = renderPass;
-			renderPassBeginInfo.framebuffer = framebuffer;
-			renderPassBeginInfo.renderArea = vk::Rect2D({ 0, 0 }, { CUBE_MAP_SIZE, CUBE_MAP_SIZE });
-			renderPassBeginInfo.clearValueCount = 1;
-			renderPassBeginInfo.pClearValues = &clearColor;
+			updateUniformBuffer(CameraViewMatrix::captureViews[face], CameraViewMatrix::captureProjection,
+				uniformBufferMemory);
 
 			// Begin render pass and render to the specific cube face
 			commandBuffer.get().beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			// Bind pipeline, descriptor sets, and draw commands
 			commandBuffer.get().bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-			commandBuffer.get().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet, {});
+			commandBuffer.get().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet,
+				{});
 
 			// Bind vertex buffer
 			vk::DeviceSize offsets[] = { 0 };
@@ -385,6 +436,40 @@ namespace render
 			commandBuffer.get().draw(static_cast<uint32_t>(cubeVertices.size()), 1, 0, 0);
 
 			commandBuffer.get().endRenderPass();
+
+			// Ensure synchronization between rendering and copying by transitioning the image layout
+			core::Utilities::transitionImageLayout(commandBuffer.get(), image,
+				vk::ImageLayout::eColorAttachmentOptimal,
+				vk::ImageLayout::eTransferSrcOptimal,
+				vk::ImageAspectFlagBits::eColor);
+
+			// Set up the copy region for the transfer operation
+			vk::ImageCopy copyRegion = {};
+			copyRegion.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+			copyRegion.srcSubresource.baseArrayLayer = 0;
+			copyRegion.srcSubresource.mipLevel = 0;
+			copyRegion.srcSubresource.layerCount = 1;
+			copyRegion.srcOffset = vk::Offset3D{ 0, 0, 0 };
+
+			copyRegion.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
+			copyRegion.dstSubresource.baseArrayLayer = face;
+			copyRegion.dstSubresource.mipLevel = 0;  // Set mip level to 0 for each face
+			copyRegion.dstSubresource.layerCount = 1;
+			copyRegion.dstOffset = vk::Offset3D{ 0, 0, 0 };
+
+			copyRegion.extent.width = static_cast<uint32_t>(viewport.width);
+			copyRegion.extent.height = static_cast<uint32_t>(viewport.height);
+			copyRegion.extent.depth = 1;
+
+			// Copy the image from the framebuffer to the cube map face
+			commandBuffer.get().copyImage(image, vk::ImageLayout::eTransferSrcOptimal, imageIrradianceCube.image,
+				vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
+
+			// Transition the image back to color attachment layout for the next face
+			core::Utilities::transitionImageLayout(commandBuffer.get(), image,
+				vk::ImageLayout::eTransferSrcOptimal,
+				vk::ImageLayout::eColorAttachmentOptimal,
+				vk::ImageAspectFlagBits::eColor);
 
 		}
 
@@ -400,43 +485,33 @@ namespace render
 		}
 
 		// Begin a new single-time command buffer for the final layout transition
-		vk::UniqueCommandBuffer transitionCommandBuffer = core::Utilities::beginSingleTimeCommands(
+		vk::UniqueCommandBuffer transitionCommandBuffer2 = core::Utilities::beginSingleTimeCommands(
 			device.getLogicalDevice(), commandPool.get());
 
-		// Define the range covering the entire cube map
-		vk::ImageSubresourceRange subresourceRange{};
-		subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
-		subresourceRange.baseMipLevel = 0;
-		subresourceRange.levelCount = 1;
-		subresourceRange.baseArrayLayer = 0;
-		subresourceRange.layerCount = 6; // All six faces of the cube
-
-		// Transition all faces of the cube map to shader-read-only layout
-		vk::ImageMemoryBarrier barrier{};
-		barrier.oldLayout = vk::ImageLayout::eColorAttachmentOptimal;
-		barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-		barrier.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-		barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-		barrier.image = imageIrradianceCube.image;
-		barrier.subresourceRange = subresourceRange;
-
-		transitionCommandBuffer->pipelineBarrier(
-			vk::PipelineStageFlagBits::eColorAttachmentOutput,
-			vk::PipelineStageFlagBits::eFragmentShader,
-			{},
-			nullptr,
-			nullptr,
-			barrier);
+		core::Utilities::transitionImageLayout(transitionCommandBuffer2.get(), imageIrradianceCube.image,
+			vk::ImageLayout::eTransferDstOptimal,
+			vk::ImageLayout::eShaderReadOnlyOptimal,
+			vk::ImageAspectFlagBits::eColor, 6);
 
 		// End the layout transition command buffer
-		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), transitionCommandBuffer);
+		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), transitionCommandBuffer2);
 
-		//TODO cleanUp
+		//cleanUp
 		device.getLogicalDevice().destroyFence(renderFence);
 
-		device.getLogicalDevice().destroyFramebuffer(framebuffer);
+		device.getLogicalDevice().destroyBuffer(vertexBuffer);
+		device.getLogicalDevice().freeMemory(vertexBufferMemory);
 
-		//TODO also if it works we can optimise it some buffers like the vertex buffer need to be define only ones
+		device.getLogicalDevice().destroyFramebuffer(framebuffer);
+		device.getLogicalDevice().freeMemory(memory);
+		device.getLogicalDevice().destroyImageView(view);
+		device.getLogicalDevice().destroyImage(image);
+
+		device.getLogicalDevice().destroyRenderPass(renderPass);
+		device.getLogicalDevice().destroyDescriptorPool(descriptorPool);
+		device.getLogicalDevice().destroyDescriptorSetLayout(descriptorSetLayout);
+		device.getLogicalDevice().destroyPipeline(graphicsPipeline);
+		device.getLogicalDevice().destroyPipelineLayout(pipelineLayout);
 	}
 
 	void IBL::generateBRDFLUT()
@@ -494,7 +569,7 @@ namespace render
 
 		//SET UP RENDER PASS
 		vk::AttachmentDescription colorAttachment;
-		colorAttachment.format = vk::Format::eR32G32Sfloat;  // 2 channels, 32-bit floats
+		colorAttachment.format = vk::Format::eR32G32Sfloat; // 2 channels, 32-bit floats
 		colorAttachment.samples = vk::SampleCountFlagBits::e1;
 		colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
 		colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
@@ -669,119 +744,4 @@ namespace render
 		}
 	}
 
-	//TODO use sub pass render
-	/*
-	void IBL::generateIBLTextures()
-{
-	// Attachment descriptions
-	vk::AttachmentDescription irradianceAttachment{};
-	irradianceAttachment.format = vk::Format::eR16G16B16A16Sfloat;
-	irradianceAttachment.samples = vk::SampleCountFlagBits::e1;
-	irradianceAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-	irradianceAttachment.storeOp = vk::AttachmentStoreOp::eStore;
-	irradianceAttachment.initialLayout = vk::ImageLayout::eUndefined;
-	irradianceAttachment.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-
-	vk::AttachmentDescription brdfLUTAttachment{};
-	brdfLUTAttachment.format = vk::Format::eR16G16B16A16Sfloat;
-	brdfLUTAttachment.samples = vk::SampleCountFlagBits::e1;
-	brdfLUTAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-	brdfLUTAttachment.storeOp = vk::AttachmentStoreOp::eStore;
-	brdfLUTAttachment.initialLayout = vk::ImageLayout::eUndefined;
-	brdfLUTAttachment.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-
-	vk::AttachmentDescription prefilteredAttachment{};
-	prefilteredAttachment.format = vk::Format::eR16G16B16A16Sfloat;
-	prefilteredAttachment.samples = vk::SampleCountFlagBits::e1;
-	prefilteredAttachment.loadOp = vk::AttachmentLoadOp::eClear;
-	prefilteredAttachment.storeOp = vk::AttachmentStoreOp::eStore;
-	prefilteredAttachment.initialLayout = vk::ImageLayout::eUndefined;
-	prefilteredAttachment.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-
-	// Attachment references for subpasses
-	//Attachment Index (vk::AttachmentReference): This index (0, 1, 2 in our case) refers to the attachment description in the attachments array in the render pass.
-	vk::AttachmentReference irradianceAttachmentRef{0, vk::ImageLayout::eColorAttachmentOptimal};
-	vk::AttachmentReference brdfLUTAttachmentRef{1, vk::ImageLayout::eColorAttachmentOptimal};
-	vk::AttachmentReference prefilteredAttachmentRef{2, vk::ImageLayout::eColorAttachmentOptimal};
-
-	// Subpass 1: Irradiance Cube
-	vk::SubpassDescription subpass1{};
-	subpass1.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
-	subpass1.colorAttachmentCount = 1;
-	subpass1.pColorAttachments = &irradianceAttachmentRef;
-
-	// Subpass 2: BRDF LUT
-	vk::SubpassDescription subpass2{};
-	subpass2.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
-	subpass2.colorAttachmentCount = 1;
-	subpass2.pColorAttachments = &brdfLUTAttachmentRef;
-
-	// Subpass 3: Prefiltered Environment Map
-	vk::SubpassDescription subpass3{};
-	subpass3.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
-	subpass3.colorAttachmentCount = 1;
-	subpass3.pColorAttachments = &prefilteredAttachmentRef;
-
-	// Dependencies between subpasses
-	std::array<vk::SubpassDependency, 3> dependencies{};
-
-	dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependencies[0].dstSubpass = 0;
-	dependencies[0].srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-	dependencies[0].srcAccessMask = vk::AccessFlagBits::eNoneKHR;
-	dependencies[0].dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-	dependencies[0].dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-
-	dependencies[1].srcSubpass = 0;
-	dependencies[1].dstSubpass = 1;
-	dependencies[1].srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-	dependencies[1].srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-	dependencies[1].dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-	dependencies[1].dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-
-	dependencies[2].srcSubpass = 1;
-	dependencies[2].dstSubpass = 2;
-	dependencies[2].srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-	dependencies[2].srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-	dependencies[2].dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-	dependencies[2].dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
-
-	// Render pass setup
-	std::array<vk::AttachmentDescription, 3> attachments = {irradianceAttachment, brdfLUTAttachment, prefilteredAttachment};
-	std::array<vk::SubpassDescription, 3> subpasses = {subpass1, subpass2, subpass3};
-
-	vk::RenderPassCreateInfo renderPassInfo{};
-	renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-	renderPassInfo.pAttachments = attachments.data();
-	renderPassInfo.subpassCount = static_cast<uint32_t>(subpasses.size());
-	renderPassInfo.pSubpasses = subpasses.data();
-	renderPassInfo.dependencyCount = static_cast<uint32_t>(dependencies.size());
-	renderPassInfo.pDependencies = dependencies.data();
-
-	vk::RenderPass renderPass = device.getLogicalDevice().createRenderPass(renderPassInfo);
-	// Ensure this render pass is used correctly in the pipeline creation for each subpass.
-
-	// Continue with creating framebuffers, command buffers, and pipelines for each subpass...
-}
-
-
-	commandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
-
-// Subpass 1: Irradiance Cube
-commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, irradiancePipeline);
-commandBuffer.draw(...);
-commandBuffer.nextSubpass(vk::SubpassContents::eInline);
-
-// Subpass 2: BRDF LUT
-commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, brdfPipeline);
-commandBuffer.draw(...);
-commandBuffer.nextSubpass(vk::SubpassContents::eInline);
-
-// Subpass 3: Prefiltered Environment Map
-commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, prefilteredPipeline);
-commandBuffer.draw(...);
-
-commandBuffer.endRenderPass();
-
-	 **/
 }

@@ -93,7 +93,7 @@ namespace core {
 		return commandBuffer;
 	}
 
-	void Utilities::endSingleTimeCommands(const vk::Queue& queue, const vk::UniqueCommandBuffer& commandBuffer,const vk::Fence& renderFence)
+	void Utilities::endSingleTimeCommands(const vk::Queue& queue, const vk::UniqueCommandBuffer& commandBuffer, const vk::Fence& renderFence)
 	{
 		commandBuffer->end();
 
@@ -110,7 +110,7 @@ namespace core {
 		}
 	}
 
-	void Utilities::transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageAspectFlags aspectMask)
+	void Utilities::transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageAspectFlags aspectMask, uint32_t layer)
 	{
 		using enum vk::AccessFlagBits;
 		using enum vk::ImageLayout;
@@ -125,7 +125,7 @@ namespace core {
 		barrier.subresourceRange.baseMipLevel = 0;
 		barrier.subresourceRange.levelCount = 1;
 		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
+		barrier.subresourceRange.layerCount = layer;
 
 		vk::PipelineStageFlags sourceStage;
 		vk::PipelineStageFlags destinationStage;
@@ -157,6 +157,13 @@ namespace core {
 			sourceStage = vk::PipelineStageFlagBits::eLateFragmentTests;
 			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
 		}
+		else if (oldLayout == eTransferSrcOptimal && newLayout == eColorAttachmentOptimal) {
+			barrier.srcAccessMask = eTransferRead;
+			barrier.dstAccessMask = eColorAttachmentWrite;
+			sourceStage = vk::PipelineStageFlagBits::eTransfer;
+			destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		}
+
 		else if (oldLayout == eUndefined && newLayout == eShaderReadOnlyOptimal) {
 			barrier.srcAccessMask = eNone;
 			barrier.dstAccessMask = eShaderRead;
@@ -169,10 +176,15 @@ namespace core {
 			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
 			destinationStage = vk::PipelineStageFlagBits::eTransfer;
 		}
+		else if (oldLayout == eColorAttachmentOptimal && newLayout == eTransferSrcOptimal) {
+			barrier.srcAccessMask = eColorAttachmentWrite;
+			barrier.dstAccessMask = eTransferRead;
+			sourceStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+			destinationStage = vk::PipelineStageFlagBits::eTransfer;
+		}
 		else if (oldLayout == eTransferDstOptimal && newLayout == eShaderReadOnlyOptimal) {
 			barrier.srcAccessMask = eTransferWrite;
 			barrier.dstAccessMask = eShaderRead;
-
 			sourceStage = vk::PipelineStageFlagBits::eTransfer;
 			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
 		}
