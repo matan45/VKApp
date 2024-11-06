@@ -144,6 +144,13 @@ namespace core {
 			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
 
 		}
+		else if (oldLayout == eShaderReadOnlyOptimal && newLayout == eTransferSrcOptimal) {
+			barrier.srcAccessMask = eShaderRead;
+			barrier.dstAccessMask = eTransferRead;
+			sourceStage = vk::PipelineStageFlagBits::eFragmentShader;
+			destinationStage = vk::PipelineStageFlagBits::eTransfer;
+		}
+
 		else if (oldLayout == eUndefined && newLayout == eDepthStencilAttachmentOptimal) {
 			barrier.srcAccessMask = eNoneKHR;
 			barrier.dstAccessMask = eDepthStencilAttachmentWrite;

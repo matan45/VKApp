@@ -20,7 +20,7 @@ namespace render {
 	void RenderPassHandler::init()
 	{
 		triangleRenderer->init();
-		iblRenderer->init("../../resources/shaders/ibl/Arches_E_PineTree_3k.vfHdr");
+		iblRenderer->init("../../resources/shaders/ibl/immenstadter_horn_4k.vfHdr");
 	}
 
 	void RenderPassHandler::recreate() const

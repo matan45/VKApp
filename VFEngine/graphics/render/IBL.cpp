@@ -27,7 +27,7 @@ namespace render
 		hdrTexture = std::make_shared<core::Texture>(device);
 		hdrTexture->loadHDRFromFile(path, vk::Format::eR8G8B8A8Srgb, false);
 		generateIrradianceCube();
-		//generateBRDFLUT();
+		generateBRDFLUT();
 		//generatePrefilteredCube();
 	}
 
@@ -92,7 +92,7 @@ namespace render
 	void IBL::generateIrradianceCube()
 	{
 		core::ImageInfoRequest cubeMapImageRequest(device.getLogicalDevice(), device.getPhysicalDevice());
-		cubeMapImageRequest.format = vk::Format::eR16G16B16A16Sfloat;
+		cubeMapImageRequest.format = vk::Format::eR8G8B8A8Srgb;
 		cubeMapImageRequest.layers = 6;
 		cubeMapImageRequest.width = CUBE_MAP_SIZE;
 		cubeMapImageRequest.height = CUBE_MAP_SIZE;
@@ -103,7 +103,7 @@ namespace render
 			imageIrradianceCube.imageMemory);
 
 		core::ImageViewInfoRequest cubeMapImageViewRequest(device.getLogicalDevice(), imageIrradianceCube.image);
-		cubeMapImageViewRequest.format = vk::Format::eR16G16B16A16Sfloat;
+		cubeMapImageViewRequest.format = vk::Format::eR8G8B8A8Srgb;
 		cubeMapImageViewRequest.layerCount = 6;
 		cubeMapImageViewRequest.imageType = vk::ImageViewType::eCube;
 		core::Utilities::createImageView(cubeMapImageViewRequest, imageIrradianceCube.imageView);
@@ -112,7 +112,7 @@ namespace render
 
 		//SET UP RENDER PASS
 		vk::AttachmentDescription colorAttachment;
-		colorAttachment.format = vk::Format::eR16G16B16A16Sfloat;
+		colorAttachment.format = vk::Format::eR8G8B8A8Srgb;
 		colorAttachment.samples = vk::SampleCountFlagBits::e1;
 		colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
 		colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
@@ -359,24 +359,24 @@ namespace render
 		vk::Framebuffer framebuffer;
 
 		core::ImageInfoRequest imageRequest(device.getLogicalDevice(), device.getPhysicalDevice());
-		imageRequest.format = vk::Format::eR16G16B16A16Sfloat;
+		imageRequest.format = vk::Format::eR8G8B8A8Srgb;
 		imageRequest.width = CUBE_MAP_SIZE;
 		imageRequest.height = CUBE_MAP_SIZE;
 		imageRequest.usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
 		core::Utilities::createImage(imageRequest, image, memory);
 
 		core::ImageViewInfoRequest imageViewRequest(device.getLogicalDevice(), image);
-		imageViewRequest.format = vk::Format::eR16G16B16A16Sfloat;
+		imageViewRequest.format = vk::Format::eR8G8B8A8Srgb;
 		core::Utilities::createImageView(imageViewRequest, view);
 
 		//Create frame buffers for each face.
 		vk::FramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.renderPass = renderPass;
 		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = &view; // Use the cube map view
+		framebufferInfo.pAttachments = &view;
 		framebufferInfo.width = CUBE_MAP_SIZE;
 		framebufferInfo.height = CUBE_MAP_SIZE;
-		framebufferInfo.layers = 1; // Only 1 layer for a single framebuffer
+		framebufferInfo.layers = 1;
 
 		framebuffer = device.getLogicalDevice().createFramebuffer(framebufferInfo);
 
@@ -569,7 +569,7 @@ namespace render
 
 		//SET UP RENDER PASS
 		vk::AttachmentDescription colorAttachment;
-		colorAttachment.format = vk::Format::eR32G32Sfloat; // 2 channels, 32-bit floats
+		colorAttachment.format = vk::Format::eR16G16Sfloat;
 		colorAttachment.samples = vk::SampleCountFlagBits::e1;
 		colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
 		colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
@@ -590,7 +590,7 @@ namespace render
 		vk::SubpassDependency dependency;
 		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 		dependency.dstSubpass = 0;
-		dependency.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		dependency.srcStageMask = vk::PipelineStageFlagBits::eTransfer;
 		dependency.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
 		dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 		dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
@@ -722,14 +722,20 @@ namespace render
 		);
 		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), transitionCommandBuffer);
 
-		//TODO cleanUp
-		device.getLogicalDevice().destroyFence(renderFence);
+		//cleanUp
 		device.getLogicalDevice().destroyFramebuffer(framebuffer);
-		//TODO also if it works we can optimise it some buffers like the vertex buffer need to be define only ones
+		device.getLogicalDevice().destroyFence(renderFence);
+
+		device.getLogicalDevice().destroyBuffer(vertexBuffer);
+		device.getLogicalDevice().freeMemory(vertexBufferMemory);
+
+		device.getLogicalDevice().destroyRenderPass(renderPass);
+		device.getLogicalDevice().destroyPipeline(graphicsPipeline);
+		device.getLogicalDevice().destroyPipelineLayout(pipelineLayout);
 	}
 
 	void IBL::updateUniformBuffer(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,
-		const vk::DeviceMemory& uniformBufferMemory)
+		const vk::DeviceMemory& uniformBufferMemory) const
 	{
 		UniformBufferObject ubo;
 		ubo.view = viewMatrix;

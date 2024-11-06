@@ -152,6 +152,6 @@ namespace render
         void generateBRDFLUT();
         void generatePrefilteredCube();
         void updateUniformBuffer(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,
-                                 const vk::DeviceMemory& uniformBufferMemory);
+                                 const vk::DeviceMemory& uniformBufferMemory) const;
     };
 }
