@@ -15,27 +15,30 @@ namespace render {
 	RenderPassHandler::~RenderPassHandler()
 	{
 		delete triangleRenderer;
+		delete iblRenderer;
 	}
 
 	void RenderPassHandler::init()
 	{
-		//triangleRenderer->init();
-		iblRenderer->init("../../resources/shaders/ibl/immenstadter_horn_4k.vfHdr");
+		triangleRenderer->init();
+		iblRenderer->init("../../resources/shaders/ibl/HDR_029_Sky_Cloudy_Ref.vfHdr");
 	}
 
 	void RenderPassHandler::recreate() const
 	{
 		triangleRenderer->recreate();
+		iblRenderer->recreate();
 	}
 
 	void RenderPassHandler::cleanUp() const
 	{
 		triangleRenderer->cleanUp();
+		iblRenderer->cleanUp();
 	}
 
 	void RenderPassHandler::draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const
 	{
-		//triangleRenderer->recordCommandBuffer(commandBuffer,imageIndex);
+		triangleRenderer->recordCommandBuffer(commandBuffer,imageIndex);
 		iblRenderer->recordCommandBuffer(commandBuffer, imageIndex);
 	}
 

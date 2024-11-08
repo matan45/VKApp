@@ -5,6 +5,7 @@
 #include "../core/SwapChain.hpp"
 #include <memory>
 
+
 namespace render
 {
 	IBL::IBL(core::Device& device, core::SwapChain& swapChain,
@@ -55,7 +56,9 @@ namespace render
 	void IBL::init(std::string_view path)
 	{
 		hdrTexture = std::make_shared<core::Texture>(device);
-		hdrTexture->loadHDRFromFile(path, vk::Format::eR8G8B8A8Srgb, false);
+		hdrTexture->loadHDRFromFile(path, vk::Format::eR32G32B32Sfloat, false);
+		// Use a library like stb_image_write to save
+
 		generateIrradianceCube();
 		generateBRDFLUT();
 		drawCube();
@@ -152,17 +155,19 @@ namespace render
 		renderPass = device.getLogicalDevice().createRenderPass(renderPassInfo);
 
 		//DEFINE THE VERTEX BUFFER
-		vk::VertexInputBindingDescription vertexInputBindingDescription;
-		vertexInputBindingDescription.binding = 0;
-		vertexInputBindingDescription.stride = sizeof(glm::vec3);
-		vertexInputBindingDescription.inputRate = vk::VertexInputRate::eVertex;
+		std::vector<vk::VertexInputBindingDescription> vertexInputBindingDescriptiones;
+		vk::VertexInputBindingDescription vertexInputBindingDescription1;
+		vertexInputBindingDescription1.binding = 0;
+		vertexInputBindingDescription1.stride = sizeof(glm::vec3);
+		vertexInputBindingDescription1.inputRate = vk::VertexInputRate::eVertex;
+		vertexInputBindingDescriptiones.push_back(vertexInputBindingDescription1);
 
 		std::vector<vk::VertexInputAttributeDescription> vertexInputAttributes;
 		vertexInputAttributes.push_back({ 0, 0, vk::Format::eR32G32B32Sfloat, 0 });
 
 		vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.vertexBindingDescriptionCount = 1;
-		vertexInputInfo.pVertexBindingDescriptions = &vertexInputBindingDescription;
+		vertexInputInfo.pVertexBindingDescriptions = vertexInputBindingDescriptiones.data();
 		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
 		vertexInputInfo.pVertexAttributeDescriptions = vertexInputAttributes.data();
 
@@ -296,14 +301,14 @@ namespace render
 		vk::Viewport viewport;
 		viewport.x = 0.0f;
 		viewport.y = 0.0f;
-		viewport.width = static_cast<float>(CUBE_MAP_SIZE);
-		viewport.height = static_cast<float>(CUBE_MAP_SIZE);
+		viewport.width = static_cast<float>(swapChain.getSwapchainExtent().width);
+		viewport.height = static_cast<float>(swapChain.getSwapchainExtent().height);
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 
 		vk::Rect2D scissor;
 		scissor.offset = vk::Offset2D(0, 0);
-		scissor.extent = vk::Extent2D(CUBE_MAP_SIZE, CUBE_MAP_SIZE);
+		scissor.extent = vk::Extent2D(swapChain.getSwapchainExtent().width, swapChain.getSwapchainExtent().height);
 
 		vk::PipelineViewportStateCreateInfo viewportState;
 		viewportState.viewportCount = 1;
@@ -374,7 +379,7 @@ namespace render
 	void IBL::generateIrradianceCube()
 	{
 		core::ImageInfoRequest cubeMapImageRequest(device.getLogicalDevice(), device.getPhysicalDevice());
-		cubeMapImageRequest.format = vk::Format::eR8G8B8A8Srgb;
+		cubeMapImageRequest.format = vk::Format::eR16G16B16A16Sfloat;
 		cubeMapImageRequest.layers = 6;
 		cubeMapImageRequest.width = CUBE_MAP_SIZE;
 		cubeMapImageRequest.height = CUBE_MAP_SIZE;
@@ -385,7 +390,7 @@ namespace render
 			imageIrradianceCube.imageMemory);
 
 		core::ImageViewInfoRequest cubeMapImageViewRequest(device.getLogicalDevice(), imageIrradianceCube.image);
-		cubeMapImageViewRequest.format = vk::Format::eR8G8B8A8Srgb;
+		cubeMapImageViewRequest.format = vk::Format::eR16G16B16A16Sfloat;
 		cubeMapImageViewRequest.layerCount = 6;
 		cubeMapImageViewRequest.imageType = vk::ImageViewType::eCube;
 		core::Utilities::createImageView(cubeMapImageViewRequest, imageIrradianceCube.imageView);
@@ -394,7 +399,7 @@ namespace render
 
 		//SET UP RENDER PASS
 		vk::AttachmentDescription colorAttachment;
-		colorAttachment.format = vk::Format::eR8G8B8A8Srgb;
+		colorAttachment.format = vk::Format::eR16G16B16A16Sfloat;
 		colorAttachment.samples = vk::SampleCountFlagBits::e1;
 		colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
 		colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
@@ -641,14 +646,14 @@ namespace render
 		vk::Framebuffer framebuffer;
 
 		core::ImageInfoRequest imageRequest(device.getLogicalDevice(), device.getPhysicalDevice());
-		imageRequest.format = vk::Format::eR8G8B8A8Srgb;
+		imageRequest.format = vk::Format::eR16G16B16A16Sfloat;
 		imageRequest.width = CUBE_MAP_SIZE;
 		imageRequest.height = CUBE_MAP_SIZE;
 		imageRequest.usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
 		core::Utilities::createImage(imageRequest, image, memory);
 
 		core::ImageViewInfoRequest imageViewRequest(device.getLogicalDevice(), image);
-		imageViewRequest.format = vk::Format::eR8G8B8A8Srgb;
+		imageViewRequest.format = vk::Format::eR16G16B16A16Sfloat;
 		core::Utilities::createImageView(imageViewRequest, view);
 
 		//Create frame buffers for each face.

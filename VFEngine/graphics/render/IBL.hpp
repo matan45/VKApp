@@ -145,6 +145,7 @@ namespace render
 		vk::DeviceMemory uniformBufferMemory;
         vk::PipelineLayout pipelineLayout;
         vk::DescriptorSet descriptorSet;
+        vk::Buffer vertexBufferQuad;
 
     public:
         explicit IBL(core::Device& device, core::SwapChain& swapChain,
@@ -164,5 +165,6 @@ namespace render
         void drawCube();
         void updateUniformBuffer(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,
                                  const vk::DeviceMemory& uniformBufferMemory) const;
+       
     };
 }

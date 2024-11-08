@@ -255,10 +255,10 @@ namespace types
 		outFile.write(std::bit_cast<const char*>(&hdrData.numbersOfChannels), sizeof(hdrData.numbersOfChannels));
 
 		// Write the size of the texture data and then the raw texture data
-		auto textureDataSize = static_cast<uint32_t>(hdrData.textureData.size());
+		auto textureDataSize = hdrData.width * hdrData.height * hdrData.numbersOfChannels;
 		outFile.write(std::bit_cast<const char*>(&textureDataSize), sizeof(textureDataSize));
 		// Write the size of the texture data
-		outFile.write(std::bit_cast<const char*>(hdrData.textureData.data()), textureDataSize);
+		outFile.write(std::bit_cast<const char*>(hdrData.textureData.data()), textureDataSize * sizeof(float));
 		// Write the raw texture data
 
 		// Close the file

@@ -25,11 +25,10 @@ namespace core {
 
 	void Texture::loadHDRFromFile(std::string_view filePath, vk::Format format, bool isEditor)
 	{
+		
 		auto textureData = resource::ResourceManager::loadHDRAsync(filePath);
 		auto texturePtr = textureData.get();
-		uint32_t imageWidth = texturePtr->width;
-		uint32_t imageHeight = texturePtr->height;
-		vk::DeviceSize imageSize = imageWidth * imageHeight * 4;
+		vk::DeviceSize imageSize = texturePtr->width * texturePtr->height * texturePtr->numbersOfChannels * sizeof(float);
 
 		vk::Buffer stagingBuffer;
 		vk::DeviceMemory stagingBufferMemory;
@@ -49,10 +48,10 @@ namespace core {
 
 
 		ImageInfoRequest imageInfo(device.getLogicalDevice(), device.getPhysicalDevice());
-		imageInfo.width = imageWidth;
-		imageInfo.height = imageHeight;
+		imageInfo.width = texturePtr->width;
+		imageInfo.height = texturePtr->height;
 		imageInfo.format = format;
-		imageInfo.tiling = vk::ImageTiling::eOptimal;
+		imageInfo.tiling = vk::ImageTiling::eLinear;
 		imageInfo.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
 		imageInfo.properties = vk::MemoryPropertyFlagBits::eDeviceLocal;
 		Utilities::createImage(imageInfo, image, imageMemory);
@@ -61,7 +60,7 @@ namespace core {
 		Utilities::transitionImageLayout(commandTransitionA.get(), image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, vk::ImageAspectFlagBits::eColor);
 		Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandTransitionA);
 
-		copyBufferToImage(stagingBuffer, imageWidth, imageHeight);
+		copyBufferToImage(stagingBuffer, texturePtr->width, texturePtr->height);
 
 		vk::UniqueCommandBuffer commandTransitionB = core::Utilities::beginSingleTimeCommands(device.getLogicalDevice(), commandPool.get());
 		Utilities::transitionImageLayout(commandTransitionB.get(), image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageAspectFlagBits::eColor);
@@ -85,9 +84,7 @@ namespace core {
 	{
 		auto textureData = resource::ResourceManager::loadTextureAsync(filePath);
 		auto texturePtr = textureData.get();
-		uint32_t imageWidth = texturePtr->width;
-		uint32_t imageHeight = texturePtr->height;
-		vk::DeviceSize imageSize = imageWidth * imageHeight * texturePtr->numbersOfChannels;
+		vk::DeviceSize imageSize = texturePtr->width * texturePtr->height * texturePtr->numbersOfChannels * sizeof(int);
 
 		vk::Buffer stagingBuffer;
 		vk::DeviceMemory stagingBufferMemory;
@@ -107,8 +104,8 @@ namespace core {
 
 
 		ImageInfoRequest imageInfo(device.getLogicalDevice(), device.getPhysicalDevice());
-		imageInfo.width = imageWidth;
-		imageInfo.height = imageHeight;
+		imageInfo.width = texturePtr->width;
+		imageInfo.height = texturePtr->height;
 		imageInfo.format = format;
 		imageInfo.tiling = vk::ImageTiling::eOptimal;
 		imageInfo.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
@@ -119,7 +116,7 @@ namespace core {
 		Utilities::transitionImageLayout(commandTransitionA.get(), image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, vk::ImageAspectFlagBits::eColor);
 		Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandTransitionA);
 
-		copyBufferToImage(stagingBuffer, imageWidth, imageHeight);
+		copyBufferToImage(stagingBuffer, texturePtr->width, texturePtr->height);
 
 		vk::UniqueCommandBuffer commandTransitionB = core::Utilities::beginSingleTimeCommands(device.getLogicalDevice(), commandPool.get());
 		Utilities::transitionImageLayout(commandTransitionB.get(), image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageAspectFlagBits::eColor);
@@ -149,7 +146,7 @@ namespace core {
 		samplerInfo.addressModeV = eRepeat;
 		samplerInfo.addressModeW = eRepeat;
 		samplerInfo.anisotropyEnable = VK_TRUE;
-		samplerInfo.maxAnisotropy = 16;
+		samplerInfo.maxAnisotropy = 1;
 		samplerInfo.borderColor = vk::BorderColor::eIntOpaqueBlack;
 		samplerInfo.unnormalizedCoordinates = VK_FALSE;
 

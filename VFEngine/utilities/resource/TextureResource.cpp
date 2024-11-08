@@ -103,23 +103,19 @@ namespace resource {
 		inFile.read(std::bit_cast<char*>(&hdrData.numbersOfChannels), sizeof(hdrData.numbersOfChannels));
 
 		// Read the texture data size and then the texture data itself
-		uint32_t textureDataSize;
-		inFile.read(std::bit_cast<char*>(&textureDataSize), sizeof(textureDataSize)); // Read the size of the texture data
-		hdrData.textureData.resize(textureDataSize);                                  // Resize the textureData vector
+		size_t textureDataSize = hdrData.width * hdrData.height * hdrData.numbersOfChannels;
+		hdrData.textureData.resize(textureDataSize); // Resize the textureData vector
 
-		size_t bytesRemaining = textureDataSize;
-
-		hdrData.textureData.resize(textureDataSize);  // Reserve space in advance if possible
 		size_t currentOffset = 0;
 
-		while (bytesRemaining > 0) {
-			size_t bytesToRead = std::min(chunkSize, bytesRemaining);
+		while (textureDataSize > 0) {
+			size_t bytesToRead = std::min(chunkSize, textureDataSize);
 
 			// Read chunk into memory
-			inFile.read(std::bit_cast<char*>(&hdrData.textureData[currentOffset]), bytesToRead);
+			inFile.read(std::bit_cast<char*>(&hdrData.textureData[currentOffset]), bytesToRead * sizeof(float));
 
 			currentOffset += bytesToRead;
-			bytesRemaining -= bytesToRead;
+			textureDataSize -= bytesToRead;
 		}
 
 		// Close the file
