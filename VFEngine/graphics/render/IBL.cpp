@@ -16,17 +16,26 @@ namespace render
 		shaderIrradianceCube = std::make_shared<core::Shader>(device);
 		brdfLUTShader = std::make_shared<core::Shader>(device);
 		prefilterShader = std::make_shared<core::Shader>(device);
-		skyboxShader = std::make_shared<core::Shader>(device);
-		poolInfo.flags = vk::CommandPoolCreateFlagBits::eTransient;
-		poolInfo.queueFamilyIndex = device.getQueueFamilyIndices().graphicsAndComputeFamily.value();
+		skybox.skyboxShader = std::make_shared<core::Shader>(device);
+
+		skybox.skyboxShader->readShader("../../resources/shaders/ibl/skybox.glsl");
+		shaderIrradianceCube->readShader("../../resources/shaders/ibl/equirectangular_convolution.glsl");
+		brdfLUTShader->readShader("../../resources/shaders/ibl/brdf.glsl");
+		prefilterShader->readShader("../../resources/shaders/ibl/prefilter.glsl");
+
+		vk::CommandPoolCreateInfo commandPoolInfo;
+		commandPoolInfo.flags = vk::CommandPoolCreateFlagBits::eTransient;
+		commandPoolInfo.queueFamilyIndex = device.getQueueFamilyIndices().graphicsAndComputeFamily.value();
+		commandPool = device.getLogicalDevice().createCommandPoolUnique(commandPoolInfo);
 	}
 
 	void IBL::recordCommandBuffer(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const
 	{
-		updateUniformBuffer(CameraViewMatrix::captureViews[1], CameraViewMatrix::captureProjection, uniformBufferMemory);
+		//TODO get the camera component
+		updateUniformBuffer(CameraViewMatrix::captureViews[1], CameraViewMatrix::captureProjection, skybox.uniformBufferMemory);
 		vk::RenderPassBeginInfo renderPassInfo{};
-		renderPassInfo.renderPass = renderPass;
-		renderPassInfo.framebuffer = framebuffers[imageIndex];
+		renderPassInfo.renderPass = skybox.renderPass;
+		renderPassInfo.framebuffer = skybox.framebuffers[imageIndex];
 		renderPassInfo.renderArea.offset.x = 0;
 		renderPassInfo.renderArea.offset.y = 0;
 		renderPassInfo.renderArea.extent = swapChain.getSwapchainExtent();
@@ -40,13 +49,13 @@ namespace render
 		commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
 		// Bind the graphics pipeline
-		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet,
+		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, skybox.graphicsPipeline);
+		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, skybox.pipelineLayout, 0, skybox.descriptorSet,
 			{});
 
 		// Bind vertex buffer
 		vk::DeviceSize offsets[] = { 0 };
-		commandBuffer.bindVertexBuffers(0, vertexBuffer, offsets);
+		commandBuffer.bindVertexBuffers(0, skybox.vertexBuffer, offsets);
 		commandBuffer.draw(static_cast<uint32_t>(cubeVertices.size()), 1, 0, 0);
 
 		// End render pass
@@ -68,14 +77,53 @@ namespace render
 	{
 	}
 
-	void IBL::cleanUp() const
+	void IBL::cleanUp()
 	{
+		device.getLogicalDevice().waitIdle();
+		skybox.skyboxShader->cleanUp();
+		shaderIrradianceCube->cleanUp();
+		brdfLUTShader->cleanUp();
+		prefilterShader->cleanUp();
+
+		commandPool.reset();
+		hdrTexture.reset();
+
+		for (auto const& frame : skybox.framebuffers) {
+			device.getLogicalDevice().destroyFramebuffer(frame);
+		}
+		device.getLogicalDevice().destroyBuffer(skybox.vertexBuffer);
+		device.getLogicalDevice().freeMemory(skybox.vertexBufferMemory);
+
+		device.getLogicalDevice().destroyBuffer(skybox.uniformBuffer);
+		device.getLogicalDevice().freeMemory(skybox.uniformBufferMemory);
+
+		device.getLogicalDevice().destroyRenderPass(skybox.renderPass);
+		device.getLogicalDevice().destroyPipeline(skybox.graphicsPipeline);
+		device.getLogicalDevice().destroyPipelineLayout(skybox.pipelineLayout);
+		device.getLogicalDevice().freeDescriptorSets(skybox.descriptorPool, skybox.descriptorSet);
+		device.getLogicalDevice().destroyDescriptorPool(skybox.descriptorPool);
+		device.getLogicalDevice().destroyDescriptorSetLayout(skybox.descriptorSetLayout);
+
+		device.getLogicalDevice().destroyImage(imageIrradianceCube.image);
+		device.getLogicalDevice().destroyImageView(imageIrradianceCube.imageView);
+		device.getLogicalDevice().destroySampler(imageIrradianceCube.sampler);
+		device.getLogicalDevice().freeMemory(imageIrradianceCube.imageMemory);
+
+		device.getLogicalDevice().destroyImage(brdfLUTImage.image);
+		device.getLogicalDevice().destroyImageView(brdfLUTImage.imageView);
+		device.getLogicalDevice().destroySampler(brdfLUTImage.sampler);
+		device.getLogicalDevice().freeMemory(brdfLUTImage.imageMemory);
+
+		device.getLogicalDevice().destroyImage(prefilterImage.image);
+		device.getLogicalDevice().destroyImageView(prefilterImage.imageView);
+		device.getLogicalDevice().destroySampler(prefilterImage.sampler);
+		device.getLogicalDevice().freeMemory(prefilterImage.imageMemory);
 	}
 
 	void IBL::generatePrefilteredCube()
 	{
 		const uint32_t mipLevels = static_cast<uint32_t>(floor(log2(CUBE_MAP_SIZE))) + 1;
-
+#pragma region ImageAndSamplerCreate
 		core::ImageInfoRequest cubeMapImageRequest(device.getLogicalDevice(), device.getPhysicalDevice());
 		cubeMapImageRequest.format = vk::Format::eR16G16B16A16Sfloat;
 		cubeMapImageRequest.layers = 6;
@@ -95,9 +143,6 @@ namespace render
 		cubeMapImageViewRequest.imageType = vk::ImageViewType::eCube;
 		core::Utilities::createImageView(cubeMapImageViewRequest, prefilterImage.imageView);
 
-
-		prefilterShader->readShader("../../resources/shaders/ibl/prefilter.glsl");
-
 		vk::SamplerCreateInfo samplerInfo;
 		samplerInfo.magFilter = vk::Filter::eLinear;
 		samplerInfo.minFilter = vk::Filter::eLinear;
@@ -110,8 +155,9 @@ namespace render
 		samplerInfo.unnormalizedCoordinates = VK_FALSE;
 
 		prefilterImage.sampler = device.getLogicalDevice().createSampler(samplerInfo);
+#pragma endregion ImageAndSamplerCreate
+#pragma region RenderPass
 
-		// 2. Create a render pass for the cubemap with multiple mip levels
 		vk::AttachmentDescription colorAttachment{};
 		colorAttachment.format = vk::Format::eR16G16B16A16Sfloat;
 		colorAttachment.samples = vk::SampleCountFlagBits::e1;
@@ -158,8 +204,9 @@ namespace render
 		renderPassInfo.pDependencies = dependencies.data();
 
 		vk::RenderPass renderPass = device.getLogicalDevice().createRenderPass(renderPassInfo);
-
-		//DEFINE THE VERTEX BUFFER
+#pragma endregion RenderPass
+#pragma region VertexBuffer
+		//DEFINE THE VERTEX BUFFER LAYOUT
 		vk::VertexInputBindingDescription vertexInputBindingDescription;
 		vertexInputBindingDescription.binding = 0;
 		vertexInputBindingDescription.stride = sizeof(glm::vec3);
@@ -174,149 +221,147 @@ namespace render
 		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
 		vertexInputInfo.pVertexAttributeDescriptions = vertexInputAttributes.data();
 
-		vk::Buffer vertexBuffer;
-		vk::DeviceMemory vertexBufferMemory;
+		vk::Buffer cubeVertexBuffer;
+		vk::DeviceMemory cubeVertexBufferMemory;
+
+		core::BufferInfoRequest cubeVertexBufferInfo(device.getLogicalDevice(), device.getPhysicalDevice());
+		cubeVertexBufferInfo.size = sizeof(cubeVertices[0]) * cubeVertices.size();
+		cubeVertexBufferInfo.usage = vk::BufferUsageFlagBits::eVertexBuffer;
+		cubeVertexBufferInfo.properties = vk::MemoryPropertyFlagBits::eHostVisible |
+			vk::MemoryPropertyFlagBits::eHostCoherent;
+		core::Utilities::createBuffer(cubeVertexBufferInfo, cubeVertexBuffer, cubeVertexBufferMemory);
+
+		void* data;
+		if (vk::Result result = device.getLogicalDevice().mapMemory(cubeVertexBufferMemory, 0, cubeVertexBufferInfo.size, {},
+			&data); result != vk::Result::eSuccess)
 		{
-			core::BufferInfoRequest bufferInfo(device.getLogicalDevice(), device.getPhysicalDevice());
-			bufferInfo.size = sizeof(cubeVertices[0]) * cubeVertices.size();
-			bufferInfo.usage = vk::BufferUsageFlagBits::eVertexBuffer;
-			bufferInfo.properties = vk::MemoryPropertyFlagBits::eHostVisible |
-				vk::MemoryPropertyFlagBits::eHostCoherent;
-			core::Utilities::createBuffer(bufferInfo, vertexBuffer, vertexBufferMemory);
-
-			void* data;
-			if (vk::Result result = device.getLogicalDevice().mapMemory(vertexBufferMemory, 0, bufferInfo.size, {},
-				&data); result != vk::Result::eSuccess)
-			{
-				loggerError("failed to map memory");
-			}
-			memcpy(data, cubeVertices.data(), bufferInfo.size);
-			device.getLogicalDevice().unmapMemory(vertexBufferMemory);
+			loggerError("failed to map memory");
 		}
+		memcpy(data, cubeVertices.data(), cubeVertexBufferInfo.size);
+		device.getLogicalDevice().unmapMemory(cubeVertexBufferMemory);
 
+#pragma endregion VertexBuffer
+#pragma region UniformBuffer
 		//DEFINE THE UNIFORM BUFFER LAYOUT
 		vk::DescriptorPool descriptorPool;
-		{
-			std::vector<vk::DescriptorPoolSize> poolSizes(2);
-			poolSizes[0].type = vk::DescriptorType::eCombinedImageSampler;
-			poolSizes[0].descriptorCount = 1;
-			poolSizes[1].type = vk::DescriptorType::eUniformBuffer;
-			poolSizes[1].descriptorCount = 2;
 
-			vk::DescriptorPoolCreateInfo poolInfo{};
-			poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-			poolInfo.pPoolSizes = poolSizes.data();
-			poolInfo.maxSets = 1;
+		std::vector<vk::DescriptorPoolSize> poolSizes(2);
+		poolSizes[0].type = vk::DescriptorType::eCombinedImageSampler;
+		poolSizes[0].descriptorCount = 1;
+		poolSizes[1].type = vk::DescriptorType::eUniformBuffer;
+		poolSizes[1].descriptorCount = 2;
 
-			descriptorPool = device.getLogicalDevice().createDescriptorPool(poolInfo);
-		}
+		vk::DescriptorPoolCreateInfo poolInfo{};
+		poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
+		poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+		poolInfo.pPoolSizes = poolSizes.data();
+		poolInfo.maxSets = 1;
+
+		descriptorPool = device.getLogicalDevice().createDescriptorPool(poolInfo);
 
 		vk::DescriptorSetLayout descriptorSetLayout;
-		{
-			std::vector<vk::DescriptorSetLayoutBinding> bindings(3);
 
-			bindings[0].binding = 0;
-			bindings[0].descriptorType = vk::DescriptorType::eUniformBuffer;
-			bindings[0].descriptorCount = 1;
-			bindings[0].stageFlags = vk::ShaderStageFlagBits::eVertex;
-			bindings[0].pImmutableSamplers = nullptr;
+		std::vector<vk::DescriptorSetLayoutBinding> bindings(3);
 
-			bindings[1].binding = 1;
-			bindings[1].descriptorType = vk::DescriptorType::eCombinedImageSampler;
-			bindings[1].descriptorCount = 1;
-			bindings[1].stageFlags = vk::ShaderStageFlagBits::eFragment;
-			bindings[1].pImmutableSamplers = nullptr;
+		bindings[0].binding = 0;
+		bindings[0].descriptorType = vk::DescriptorType::eUniformBuffer;
+		bindings[0].descriptorCount = 1;
+		bindings[0].stageFlags = vk::ShaderStageFlagBits::eVertex;
+		bindings[0].pImmutableSamplers = nullptr;
 
-			bindings[2].binding = 2;
-			bindings[2].descriptorType = vk::DescriptorType::eUniformBuffer;
-			bindings[2].descriptorCount = 1;
-			bindings[2].stageFlags = vk::ShaderStageFlagBits::eFragment;
-			bindings[2].pImmutableSamplers = nullptr;
+		bindings[1].binding = 1;
+		bindings[1].descriptorType = vk::DescriptorType::eCombinedImageSampler;
+		bindings[1].descriptorCount = 1;
+		bindings[1].stageFlags = vk::ShaderStageFlagBits::eFragment;
+		bindings[1].pImmutableSamplers = nullptr;
 
-			vk::DescriptorSetLayoutCreateInfo layoutInfo;
-			layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-			layoutInfo.pBindings = bindings.data();
+		bindings[2].binding = 2;
+		bindings[2].descriptorType = vk::DescriptorType::eUniformBuffer;
+		bindings[2].descriptorCount = 1;
+		bindings[2].stageFlags = vk::ShaderStageFlagBits::eFragment;
+		bindings[2].pImmutableSamplers = nullptr;
 
-			descriptorSetLayout = device.getLogicalDevice().createDescriptorSetLayout(layoutInfo);
-		}
+		vk::DescriptorSetLayoutCreateInfo layoutInfo;
+		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+		layoutInfo.pBindings = bindings.data();
+
+		descriptorSetLayout = device.getLogicalDevice().createDescriptorSetLayout(layoutInfo);
 
 		//DEFINE THE UNIFORM BUFFER AND SAMPLER
-		vk::Buffer uniformBuffer;
-		vk::DeviceMemory uniformBufferMemory;
-		core::BufferInfoRequest bufferRequest(device.getLogicalDevice(), device.getPhysicalDevice());
-		bufferRequest.usage = vk::BufferUsageFlagBits::eUniformBuffer;
-		bufferRequest.properties = vk::MemoryPropertyFlagBits::eHostVisible |
-			vk::MemoryPropertyFlagBits::eHostCoherent;
-		bufferRequest.size = sizeof(UniformBufferObject);
-		core::Utilities::createBuffer(bufferRequest, uniformBuffer, uniformBufferMemory);
-
-		vk::Buffer runiformBuffer;
-		vk::DeviceMemory runiformBufferMemory;
-		core::BufferInfoRequest rbufferRequest(device.getLogicalDevice(), device.getPhysicalDevice());
-		rbufferRequest.usage = vk::BufferUsageFlagBits::eUniformBuffer;
-		rbufferRequest.properties = vk::MemoryPropertyFlagBits::eHostVisible |
-			vk::MemoryPropertyFlagBits::eHostCoherent;
-		rbufferRequest.size = sizeof(float);
-		core::Utilities::createBuffer(rbufferRequest, runiformBuffer, runiformBufferMemory);
-
 		vk::DescriptorSet descriptorSet;
-		{
-			vk::DescriptorSetAllocateInfo allocInfo;
-			allocInfo.descriptorPool = descriptorPool;
-			allocInfo.descriptorSetCount = 1;
-			allocInfo.pSetLayouts = &descriptorSetLayout;
 
-			descriptorSet = device.getLogicalDevice().allocateDescriptorSets(allocInfo)[0];
-		}
-		{
-			vk::DescriptorImageInfo imageInfo;
-			imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-			imageInfo.imageView = imageIrradianceCube.imageView;
-			imageInfo.sampler = imageIrradianceCube.sampler;
+		vk::DescriptorSetAllocateInfo allocInfo;
+		allocInfo.descriptorPool = descriptorPool;
+		allocInfo.descriptorSetCount = 1;
+		allocInfo.pSetLayouts = &descriptorSetLayout;
 
-			vk::WriteDescriptorSet descriptorWrite;
-			descriptorWrite.dstSet = descriptorSet;
-			descriptorWrite.dstBinding = 1;
-			descriptorWrite.dstArrayElement = 0;
-			descriptorWrite.descriptorType = vk::DescriptorType::eCombinedImageSampler;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pImageInfo = &imageInfo;
+		descriptorSet = device.getLogicalDevice().allocateDescriptorSets(allocInfo)[0];
 
-			device.getLogicalDevice().updateDescriptorSets(descriptorWrite, nullptr);
-		}
-		{
-			vk::DescriptorBufferInfo bufferInfo;
-			bufferInfo.buffer = uniformBuffer;
-			bufferInfo.offset = 0;
-			bufferInfo.range = sizeof(UniformBufferObject);
+		vk::DescriptorImageInfo cubeImageInfo;
+		cubeImageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+		cubeImageInfo.imageView = imageIrradianceCube.imageView;
+		cubeImageInfo.sampler = imageIrradianceCube.sampler;
 
-			vk::WriteDescriptorSet descriptorWrite;
-			descriptorWrite.dstSet = descriptorSet;
-			descriptorWrite.dstBinding = 0;
-			descriptorWrite.dstArrayElement = 0;
-			descriptorWrite.descriptorType = vk::DescriptorType::eUniformBuffer;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pBufferInfo = &bufferInfo;
+		vk::WriteDescriptorSet descriptorWriteCube;
+		descriptorWriteCube.dstSet = descriptorSet;
+		descriptorWriteCube.dstBinding = 1;
+		descriptorWriteCube.dstArrayElement = 0;
+		descriptorWriteCube.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+		descriptorWriteCube.descriptorCount = 1;
+		descriptorWriteCube.pImageInfo = &cubeImageInfo;
 
-			device.getLogicalDevice().updateDescriptorSets(descriptorWrite, nullptr);
-		}
-		{
-			vk::DescriptorBufferInfo bufferInfo;
-			bufferInfo.buffer = uniformBuffer;
-			bufferInfo.offset = 0;
-			bufferInfo.range = sizeof(float);
+		device.getLogicalDevice().updateDescriptorSets(descriptorWriteCube, nullptr);
 
-			vk::WriteDescriptorSet descriptorWrite;
-			descriptorWrite.dstSet = descriptorSet;
-			descriptorWrite.dstBinding = 2;
-			descriptorWrite.dstArrayElement = 0;
-			descriptorWrite.descriptorType = vk::DescriptorType::eUniformBuffer;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pBufferInfo = &bufferInfo;
+		vk::Buffer uboUniformBuffer;
+		vk::DeviceMemory uboUniformBufferMemory;
+		core::BufferInfoRequest uboBufferRequest(device.getLogicalDevice(), device.getPhysicalDevice());
+		uboBufferRequest.usage = vk::BufferUsageFlagBits::eUniformBuffer;
+		uboBufferRequest.properties = vk::MemoryPropertyFlagBits::eHostVisible |
+			vk::MemoryPropertyFlagBits::eHostCoherent;
+		uboBufferRequest.size = sizeof(UniformBufferObject);
+		core::Utilities::createBuffer(uboBufferRequest, uboUniformBuffer, uboUniformBufferMemory);
 
-			device.getLogicalDevice().updateDescriptorSets(descriptorWrite, nullptr);
-		}
+		vk::DescriptorBufferInfo uboBufferInfo;
+		uboBufferInfo.buffer = uboUniformBuffer;
+		uboBufferInfo.offset = 0;
+		uboBufferInfo.range = sizeof(UniformBufferObject);
 
+		vk::WriteDescriptorSet descriptorWriteUbo;
+		descriptorWriteUbo.dstSet = descriptorSet;
+		descriptorWriteUbo.dstBinding = 0;
+		descriptorWriteUbo.dstArrayElement = 0;
+		descriptorWriteUbo.descriptorType = vk::DescriptorType::eUniformBuffer;
+		descriptorWriteUbo.descriptorCount = 1;
+		descriptorWriteUbo.pBufferInfo = &uboBufferInfo;
+
+		device.getLogicalDevice().updateDescriptorSets(descriptorWriteUbo, nullptr);
+
+		vk::Buffer roughnessUniformBuffer;
+		vk::DeviceMemory roughnessUniformBufferMemory;
+		core::BufferInfoRequest roughnessBufferRequest(device.getLogicalDevice(), device.getPhysicalDevice());
+		roughnessBufferRequest.usage = vk::BufferUsageFlagBits::eUniformBuffer;
+		roughnessBufferRequest.properties = vk::MemoryPropertyFlagBits::eHostVisible |
+			vk::MemoryPropertyFlagBits::eHostCoherent;
+		roughnessBufferRequest.size = sizeof(float);
+		core::Utilities::createBuffer(roughnessBufferRequest, roughnessUniformBuffer, roughnessUniformBufferMemory);
+
+		vk::DescriptorBufferInfo roughnessBufferInfo;
+		roughnessBufferInfo.buffer = roughnessUniformBuffer;
+		roughnessBufferInfo.offset = 0;
+		roughnessBufferInfo.range = sizeof(float);
+
+		vk::WriteDescriptorSet descriptorWriteRoughness;
+		descriptorWriteRoughness.dstSet = descriptorSet;
+		descriptorWriteRoughness.dstBinding = 2;
+		descriptorWriteRoughness.dstArrayElement = 0;
+		descriptorWriteRoughness.descriptorType = vk::DescriptorType::eUniformBuffer;
+		descriptorWriteRoughness.descriptorCount = 1;
+		descriptorWriteRoughness.pBufferInfo = &roughnessBufferInfo;
+
+		device.getLogicalDevice().updateDescriptorSets(descriptorWriteRoughness, nullptr);
+
+#pragma endregion UniformBuffer
+#pragma region GraphicsPipline
 		vk::PipelineInputAssemblyStateCreateInfo inputAssembly;
 		inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
 		inputAssembly.primitiveRestartEnable = VK_FALSE;
@@ -387,102 +432,98 @@ namespace render
 		pipelineInfo.pDynamicState = &dynamicState;
 
 		vk::Pipeline graphicsPipeline = device.getLogicalDevice().createGraphicsPipeline(nullptr, pipelineInfo).value;
+#pragma endregion GraphicsPipline
+#pragma region ImageHelper
+		OffScreenHelper imageHelper;
 
-		vk::Image image;
-		vk::ImageView view;
-		vk::DeviceMemory memory;
-		vk::Framebuffer framebuffer;
-		{
-			core::ImageInfoRequest imageRequest(device.getLogicalDevice(), device.getPhysicalDevice());
-			imageRequest.format = vk::Format::eR16G16B16A16Sfloat;
-			imageRequest.width = CUBE_MAP_SIZE;
-			imageRequest.height = CUBE_MAP_SIZE;
-			imageRequest.usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
-			core::Utilities::createImage(imageRequest, image, memory);
+		core::ImageInfoRequest imageRequest(device.getLogicalDevice(), device.getPhysicalDevice());
+		imageRequest.format = vk::Format::eR16G16B16A16Sfloat;
+		imageRequest.width = CUBE_MAP_SIZE;
+		imageRequest.height = CUBE_MAP_SIZE;
+		imageRequest.usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
+		core::Utilities::createImage(imageRequest, imageHelper.image, imageHelper.memory);
 
-			core::ImageViewInfoRequest imageViewRequest(device.getLogicalDevice(), image);
-			imageViewRequest.format = vk::Format::eR16G16B16A16Sfloat;
-			core::Utilities::createImageView(imageViewRequest, view);
-		}
-		
-		//Create frame buffers for each face.
+		core::ImageViewInfoRequest imageViewRequest(device.getLogicalDevice(), imageHelper.image);
+		imageViewRequest.format = vk::Format::eR16G16B16A16Sfloat;
+		core::Utilities::createImageView(imageViewRequest, imageHelper.view);
+
 		vk::FramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.renderPass = renderPass;
 		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = &view;
+		framebufferInfo.pAttachments = &imageHelper.view;
 		framebufferInfo.width = CUBE_MAP_SIZE;
 		framebufferInfo.height = CUBE_MAP_SIZE;
 		framebufferInfo.layers = 1;
 
-		framebuffer = device.getLogicalDevice().createFramebuffer(framebufferInfo);
-
-		vk::UniqueCommandPool commandPool = device.getLogicalDevice().createCommandPoolUnique(poolInfo);
-
-		vk::UniqueCommandBuffer commandImageBuffer = core::Utilities::beginSingleTimeCommands(
+		imageHelper.framebuffer = device.getLogicalDevice().createFramebuffer(framebufferInfo);
+#pragma endregion ImageHelper
+#pragma region ImageTransition
+		//transition helper image layout
+		vk::UniqueCommandBuffer commandBufferInitHelperImageTransition = core::Utilities::beginSingleTimeCommands(
 			device.getLogicalDevice(), commandPool.get());
 
-		core::Utilities::transitionImageLayout(commandImageBuffer.get(), image, vk::ImageLayout::eUndefined,
+		core::Utilities::transitionImageLayout(commandBufferInitHelperImageTransition.get(), imageHelper.image, vk::ImageLayout::eUndefined,
 			vk::ImageLayout::eColorAttachmentOptimal,
 			vk::ImageAspectFlagBits::eColor);
-		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandImageBuffer);
 
+		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandBufferInitHelperImageTransition);
 
-		// Begin a new single-time command buffer for the final layout transition
-		vk::UniqueCommandBuffer transitionCommandBuffer = core::Utilities::beginSingleTimeCommands(
+		//transition cube image layout
+		vk::UniqueCommandBuffer commandBufferInitCubeImage = core::Utilities::beginSingleTimeCommands(
 			device.getLogicalDevice(), commandPool.get());
 
-		core::Utilities::transitionImageLayout(transitionCommandBuffer.get(), prefilterImage.image,
+		core::Utilities::transitionImageLayout(commandBufferInitCubeImage.get(), prefilterImage.image,
 			vk::ImageLayout::eUndefined,
 			vk::ImageLayout::eTransferDstOptimal,
 			vk::ImageAspectFlagBits::eColor, 6, mipLevels);
 
-		// End the layout transition command buffer
-		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), transitionCommandBuffer);
+		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandBufferInitCubeImage);
+#pragma endregion ImageTransition
+#pragma region Draw
 
-		vk::UniqueCommandBuffer commandBuffer = core::Utilities::beginSingleTimeCommands(
+		vk::UniqueCommandBuffer commandBufferDraw = core::Utilities::beginSingleTimeCommands(
 			device.getLogicalDevice(), commandPool.get());
 
 		vk::ClearValue clearColor{ std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f} };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo{};
 		renderPassBeginInfo.renderPass = renderPass;
-		renderPassBeginInfo.framebuffer = framebuffer;
+		renderPassBeginInfo.framebuffer = imageHelper.framebuffer;
 		renderPassBeginInfo.renderArea = vk::Rect2D({ 0, 0 }, { CUBE_MAP_SIZE, CUBE_MAP_SIZE });
 		renderPassBeginInfo.clearValueCount = 1;
 		renderPassBeginInfo.pClearValues = &clearColor;
 
-
-		commandBuffer.get().setScissor(0, 1, &scissor);
-		float roughness = 0; 
+		commandBufferDraw.get().setScissor(0, 1, &scissor);
+		float roughness = 0;
 		for (uint32_t m = 0; m < mipLevels; m++) {
 			roughness = (float)m / (float)(mipLevels - 1);
 			for (uint32_t face = 0; face < 6; face++)
 			{
 				viewport.width = static_cast<float>(CUBE_MAP_SIZE * std::pow(0.5f, m));
 				viewport.height = static_cast<float>(CUBE_MAP_SIZE * std::pow(0.5f, m));
-				commandBuffer.get().setViewport(0, 1, &viewport);
+				commandBufferDraw.get().setViewport(0, 1, &viewport);
 
-				updateRUniformBuffer(roughness, runiformBufferMemory);
+				updateRUniformBuffer(roughness, roughnessUniformBufferMemory);
 				updateUniformBuffer(CameraViewMatrix::captureViews[face], CameraViewMatrix::captureProjection,
-					uniformBufferMemory);
+					uboUniformBufferMemory);
 
 				// Begin render pass and render to the specific cube face
-				commandBuffer.get().beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+				commandBufferDraw.get().beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 				// Bind pipeline, descriptor sets, and draw commands
-				commandBuffer.get().bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-				commandBuffer.get().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet,
+				commandBufferDraw.get().bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
+				commandBufferDraw.get().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet,
 					{});
 
 				// Bind vertex buffer
 				vk::DeviceSize offsets[] = { 0 };
-				commandBuffer.get().bindVertexBuffers(0, vertexBuffer, offsets);
-				commandBuffer.get().draw(static_cast<uint32_t>(cubeVertices.size()), 1, 0, 0);
+				commandBufferDraw.get().bindVertexBuffers(0, cubeVertexBuffer, offsets);
+				commandBufferDraw.get().draw(static_cast<uint32_t>(cubeVertices.size()), 1, 0, 0);
 
-				commandBuffer.get().endRenderPass();
+				commandBufferDraw.get().endRenderPass();
 
 				// Ensure synchronization between rendering and copying by transitioning the image layout
-				core::Utilities::transitionImageLayout(commandBuffer.get(), image,
+				core::Utilities::transitionImageLayout(commandBufferDraw.get(), imageHelper.image,
 					vk::ImageLayout::eColorAttachmentOptimal,
 					vk::ImageLayout::eTransferSrcOptimal,
 					vk::ImageAspectFlagBits::eColor);
@@ -506,11 +547,11 @@ namespace render
 				copyRegion.extent.depth = 1;
 
 				// Copy the image from the framebuffer to the cube map face
-				commandBuffer.get().copyImage(image, vk::ImageLayout::eTransferSrcOptimal, prefilterImage.image,
+				commandBufferDraw.get().copyImage(imageHelper.image, vk::ImageLayout::eTransferSrcOptimal, prefilterImage.image,
 					vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
 
 				// Transition the image back to color attachment layout for the next face
-				core::Utilities::transitionImageLayout(commandBuffer.get(), image,
+				core::Utilities::transitionImageLayout(commandBufferDraw.get(), imageHelper.image,
 					vk::ImageLayout::eTransferSrcOptimal,
 					vk::ImageLayout::eColorAttachmentOptimal,
 					vk::ImageAspectFlagBits::eColor);
@@ -520,51 +561,55 @@ namespace render
 
 		// Create a fence to wait for completion
 		vk::Fence renderFence = device.getLogicalDevice().createFence({});
-		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandBuffer, renderFence);
+		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandBufferDraw, renderFence);
 
 		// Wait for the command buffer to finish executing
-		vk::Result result = device.getLogicalDevice().waitForFences(renderFence, VK_TRUE, UINT64_MAX);
-		if (result != vk::Result::eSuccess)
+		if (vk::Result result = device.getLogicalDevice().waitForFences(renderFence, VK_TRUE, UINT64_MAX); result != vk::Result::eSuccess)
 		{
 			loggerError("Failed to to wait for Fence IBL:");
 		}
-
+#pragma endregion Draw
+#pragma region EndImageTransition
 		// Begin a new single-time command buffer for the final layout transition
-		vk::UniqueCommandBuffer transitionCommandBuffer2 = core::Utilities::beginSingleTimeCommands(
+		vk::UniqueCommandBuffer commandBufferEndTransition = core::Utilities::beginSingleTimeCommands(
 			device.getLogicalDevice(), commandPool.get());
 
-		core::Utilities::transitionImageLayout(transitionCommandBuffer2.get(), prefilterImage.image,
+		core::Utilities::transitionImageLayout(commandBufferEndTransition.get(), prefilterImage.image,
 			vk::ImageLayout::eTransferDstOptimal,
 			vk::ImageLayout::eShaderReadOnlyOptimal,
 			vk::ImageAspectFlagBits::eColor, 6, mipLevels);
 
 		// End the layout transition command buffer
-		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), transitionCommandBuffer2);
-
+		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandBufferEndTransition);
+#pragma endregion EndImageTransition
+#pragma region CleanUp
 		device.getLogicalDevice().destroyFence(renderFence);
 
-		device.getLogicalDevice().destroyBuffer(vertexBuffer);
-		device.getLogicalDevice().freeMemory(vertexBufferMemory);
+		device.getLogicalDevice().destroyBuffer(cubeVertexBuffer);
+		device.getLogicalDevice().freeMemory(cubeVertexBufferMemory);
 
-		device.getLogicalDevice().freeMemory(uniformBufferMemory);
-		device.getLogicalDevice().freeMemory(runiformBufferMemory);
+		device.getLogicalDevice().destroyBuffer(uboUniformBuffer);
+		device.getLogicalDevice().freeMemory(uboUniformBufferMemory);
 
-		device.getLogicalDevice().destroyFramebuffer(framebuffer);
-		device.getLogicalDevice().freeMemory(memory);
-		device.getLogicalDevice().destroyImageView(view);
-		device.getLogicalDevice().destroyImage(image);
+		device.getLogicalDevice().destroyBuffer(roughnessUniformBuffer);
+		device.getLogicalDevice().freeMemory(roughnessUniformBufferMemory);
+
+		device.getLogicalDevice().destroyFramebuffer(imageHelper.framebuffer);
+		device.getLogicalDevice().freeMemory(imageHelper.memory);
+		device.getLogicalDevice().destroyImageView(imageHelper.view);
+		device.getLogicalDevice().destroyImage(imageHelper.image);
 
 		device.getLogicalDevice().destroyRenderPass(renderPass);
 		device.getLogicalDevice().destroyDescriptorPool(descriptorPool);
 		device.getLogicalDevice().destroyDescriptorSetLayout(descriptorSetLayout);
 		device.getLogicalDevice().destroyPipeline(graphicsPipeline);
 		device.getLogicalDevice().destroyPipelineLayout(pipelineLayout);
+#pragma endregion CleanUp
 	}
 
 	void IBL::drawCube()
 	{
-		skyboxShader->readShader("../../resources/shaders/ibl/skybox.glsl");
-
+#pragma region RenderPass
 		vk::AttachmentDescription colorAttachment{};
 		colorAttachment.format = swapChain.getSwapchainImageFormat();
 		colorAttachment.samples = vk::SampleCountFlagBits::e1;
@@ -590,9 +635,10 @@ namespace render
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
 
-		renderPass = device.getLogicalDevice().createRenderPass(renderPassInfo);
-
-		//DEFINE THE VERTEX BUFFER
+		skybox.renderPass = device.getLogicalDevice().createRenderPass(renderPassInfo);
+#pragma endregion RenderPass
+#pragma region VertexBuffer
+		//DEFINE THE VERTEX BUFFER LAYOUT
 		std::vector<vk::VertexInputBindingDescription> vertexInputBindingDescriptiones;
 		vk::VertexInputBindingDescription vertexInputBindingDescription1;
 		vertexInputBindingDescription1.binding = 0;
@@ -609,64 +655,58 @@ namespace render
 		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
 		vertexInputInfo.pVertexAttributeDescriptions = vertexInputAttributes.data();
 
-		vk::DeviceMemory vertexBufferMemory;
+		//DEFINE THE VERTEX BUFFER
+		core::BufferInfoRequest vertexCubeVerticesBufferRequest(device.getLogicalDevice(), device.getPhysicalDevice());
+		vertexCubeVerticesBufferRequest.size = sizeof(cubeVertices[0]) * cubeVertices.size();
+		vertexCubeVerticesBufferRequest.usage = vk::BufferUsageFlagBits::eVertexBuffer;
+		vertexCubeVerticesBufferRequest.properties = vk::MemoryPropertyFlagBits::eHostVisible |
+			vk::MemoryPropertyFlagBits::eHostCoherent;
+		core::Utilities::createBuffer(vertexCubeVerticesBufferRequest, skybox.vertexBuffer, skybox.vertexBufferMemory);
+
+		void* data;
+		if (vk::Result result = device.getLogicalDevice().mapMemory(skybox.vertexBufferMemory, 0, vertexCubeVerticesBufferRequest.size, {},
+			&data); result != vk::Result::eSuccess)
 		{
-			core::BufferInfoRequest bufferInfo(device.getLogicalDevice(), device.getPhysicalDevice());
-			bufferInfo.size = sizeof(cubeVertices[0]) * cubeVertices.size();
-			bufferInfo.usage = vk::BufferUsageFlagBits::eVertexBuffer;
-			bufferInfo.properties = vk::MemoryPropertyFlagBits::eHostVisible |
-				vk::MemoryPropertyFlagBits::eHostCoherent;
-			core::Utilities::createBuffer(bufferInfo, vertexBuffer, vertexBufferMemory);
-
-			void* data;
-			if (vk::Result result = device.getLogicalDevice().mapMemory(vertexBufferMemory, 0, bufferInfo.size, {},
-				&data); result != vk::Result::eSuccess)
-			{
-				loggerError("failed to map memory");
-			}
-			memcpy(data, cubeVertices.data(), bufferInfo.size);
-			device.getLogicalDevice().unmapMemory(vertexBufferMemory);
+			loggerError("failed to map memory");
 		}
-
+		memcpy(data, cubeVertices.data(), vertexCubeVerticesBufferRequest.size);
+		device.getLogicalDevice().unmapMemory(skybox.vertexBufferMemory);
+#pragma endregion VertexBuffer
+#pragma region UniformBuffer
 		//DEFINE THE UNIFORM BUFFER LAYOUT
-		vk::DescriptorPool descriptorPool;
-		{
-			std::vector<vk::DescriptorPoolSize> poolSizes(2);
-			poolSizes[0].type = vk::DescriptorType::eCombinedImageSampler;
-			poolSizes[0].descriptorCount = 1;
-			poolSizes[1].type = vk::DescriptorType::eUniformBuffer;
-			poolSizes[1].descriptorCount = 1;
+		std::vector<vk::DescriptorPoolSize> poolSizes(2);
+		poolSizes[0].type = vk::DescriptorType::eCombinedImageSampler;
+		poolSizes[0].descriptorCount = 1;
+		poolSizes[1].type = vk::DescriptorType::eUniformBuffer;
+		poolSizes[1].descriptorCount = 1;
 
-			vk::DescriptorPoolCreateInfo poolInfo{};
-			poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-			poolInfo.pPoolSizes = poolSizes.data();
-			poolInfo.maxSets = 1;
+		vk::DescriptorPoolCreateInfo poolInfo{};
+		poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
+		poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+		poolInfo.pPoolSizes = poolSizes.data();
+		poolInfo.maxSets = 1;
 
-			descriptorPool = device.getLogicalDevice().createDescriptorPool(poolInfo);
-		}
+		skybox.descriptorPool = device.getLogicalDevice().createDescriptorPool(poolInfo);
 
-		vk::DescriptorSetLayout descriptorSetLayout;
-		{
-			std::vector<vk::DescriptorSetLayoutBinding> bindings(2);
+		std::vector<vk::DescriptorSetLayoutBinding> bindings(2);
 
-			bindings[0].binding = 0;
-			bindings[0].descriptorType = vk::DescriptorType::eUniformBuffer;
-			bindings[0].descriptorCount = 1;
-			bindings[0].stageFlags = vk::ShaderStageFlagBits::eVertex;
-			bindings[0].pImmutableSamplers = nullptr;
+		bindings[0].binding = 0;
+		bindings[0].descriptorType = vk::DescriptorType::eUniformBuffer;
+		bindings[0].descriptorCount = 1;
+		bindings[0].stageFlags = vk::ShaderStageFlagBits::eVertex;
+		bindings[0].pImmutableSamplers = nullptr;
 
-			bindings[1].binding = 1;
-			bindings[1].descriptorType = vk::DescriptorType::eCombinedImageSampler;
-			bindings[1].descriptorCount = 1;
-			bindings[1].stageFlags = vk::ShaderStageFlagBits::eFragment;
-			bindings[1].pImmutableSamplers = nullptr;
+		bindings[1].binding = 1;
+		bindings[1].descriptorType = vk::DescriptorType::eCombinedImageSampler;
+		bindings[1].descriptorCount = 1;
+		bindings[1].stageFlags = vk::ShaderStageFlagBits::eFragment;
+		bindings[1].pImmutableSamplers = nullptr;
 
-			vk::DescriptorSetLayoutCreateInfo layoutInfo;
-			layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-			layoutInfo.pBindings = bindings.data();
+		vk::DescriptorSetLayoutCreateInfo layoutInfo;
+		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+		layoutInfo.pBindings = bindings.data();
 
-			descriptorSetLayout = device.getLogicalDevice().createDescriptorSetLayout(layoutInfo);
-		}
+		skybox.descriptorSetLayout = device.getLogicalDevice().createDescriptorSetLayout(layoutInfo);
 
 		//DEFINE THE UNIFORM BUFFER AND SAMPLER
 		core::BufferInfoRequest bufferRequest(device.getLogicalDevice(), device.getPhysicalDevice());
@@ -674,51 +714,46 @@ namespace render
 		bufferRequest.properties = vk::MemoryPropertyFlagBits::eHostVisible |
 			vk::MemoryPropertyFlagBits::eHostCoherent;
 		bufferRequest.size = sizeof(UniformBufferObject);
-		core::Utilities::createBuffer(bufferRequest, uniformBuffer, uniformBufferMemory);
+		core::Utilities::createBuffer(bufferRequest, skybox.uniformBuffer, skybox.uniformBufferMemory);
 
-		
-		{
-			vk::DescriptorSetAllocateInfo allocInfo;
-			allocInfo.descriptorPool = descriptorPool;
-			allocInfo.descriptorSetCount = 1;
-			allocInfo.pSetLayouts = &descriptorSetLayout;
+		vk::DescriptorSetAllocateInfo allocInfo;
+		allocInfo.descriptorPool = skybox.descriptorPool;
+		allocInfo.descriptorSetCount = 1;
+		allocInfo.pSetLayouts = &skybox.descriptorSetLayout;
 
-			descriptorSet = device.getLogicalDevice().allocateDescriptorSets(allocInfo)[0];
-		}
-		{
-			
-			vk::DescriptorImageInfo imageInfo;
-			imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-			imageInfo.imageView = imageIrradianceCube.imageView;
-			imageInfo.sampler = imageIrradianceCube.sampler;
+		skybox.descriptorSet = device.getLogicalDevice().allocateDescriptorSets(allocInfo)[0];
 
-			vk::WriteDescriptorSet descriptorWrite;
-			descriptorWrite.dstSet = descriptorSet;
-			descriptorWrite.dstBinding = 1;
-			descriptorWrite.dstArrayElement = 0;
-			descriptorWrite.descriptorType = vk::DescriptorType::eCombinedImageSampler;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pImageInfo = &imageInfo;
+		vk::DescriptorImageInfo imageInfo;
+		imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+		imageInfo.imageView = imageIrradianceCube.imageView;
+		imageInfo.sampler = imageIrradianceCube.sampler;
 
-			device.getLogicalDevice().updateDescriptorSets(descriptorWrite, nullptr);
-		}
-		{
-			vk::DescriptorBufferInfo bufferInfo;
-			bufferInfo.buffer = uniformBuffer;
-			bufferInfo.offset = 0;
-			bufferInfo.range = sizeof(UniformBufferObject);
+		vk::WriteDescriptorSet descriptorWriteImageSampler;
+		descriptorWriteImageSampler.dstSet = skybox.descriptorSet;
+		descriptorWriteImageSampler.dstBinding = 1;
+		descriptorWriteImageSampler.dstArrayElement = 0;
+		descriptorWriteImageSampler.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+		descriptorWriteImageSampler.descriptorCount = 1;
+		descriptorWriteImageSampler.pImageInfo = &imageInfo;
 
-			vk::WriteDescriptorSet descriptorWrite;
-			descriptorWrite.dstSet = descriptorSet;
-			descriptorWrite.dstBinding = 0;
-			descriptorWrite.dstArrayElement = 0;
-			descriptorWrite.descriptorType = vk::DescriptorType::eUniformBuffer;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pBufferInfo = &bufferInfo;
+		device.getLogicalDevice().updateDescriptorSets(descriptorWriteImageSampler, nullptr);
 
-			device.getLogicalDevice().updateDescriptorSets(descriptorWrite, nullptr);
-		}
+		vk::DescriptorBufferInfo uboBufferInfo;
+		uboBufferInfo.buffer = skybox.uniformBuffer;
+		uboBufferInfo.offset = 0;
+		uboBufferInfo.range = sizeof(UniformBufferObject);
 
+		vk::WriteDescriptorSet descriptorWriteUbo;
+		descriptorWriteUbo.dstSet = skybox.descriptorSet;
+		descriptorWriteUbo.dstBinding = 0;
+		descriptorWriteUbo.dstArrayElement = 0;
+		descriptorWriteUbo.descriptorType = vk::DescriptorType::eUniformBuffer;
+		descriptorWriteUbo.descriptorCount = 1;
+		descriptorWriteUbo.pBufferInfo = &uboBufferInfo;
+
+		device.getLogicalDevice().updateDescriptorSets(descriptorWriteUbo, nullptr);
+#pragma endregion UniformBuffer
+#pragma region GraphicsPipline
 		//DEFINE GRAPHICS PIPELINE
 		vk::PipelineInputAssemblyStateCreateInfo inputAssembly;
 		inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
@@ -767,43 +802,46 @@ namespace render
 
 		vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
 		pipelineLayoutInfo.setLayoutCount = 1;
-		pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-		pipelineLayout = device.getLogicalDevice().createPipelineLayout(pipelineLayoutInfo);
+		pipelineLayoutInfo.pSetLayouts = &skybox.descriptorSetLayout;
+		skybox.pipelineLayout = device.getLogicalDevice().createPipelineLayout(pipelineLayoutInfo);
 
 		vk::GraphicsPipelineCreateInfo pipelineInfo;
-		pipelineInfo.stageCount = static_cast<uint32_t>(skyboxShader->getShaderStages().size());
-		pipelineInfo.pStages = skyboxShader->getShaderStages().data();
+		pipelineInfo.stageCount = static_cast<uint32_t>(skybox.skyboxShader->getShaderStages().size());
+		pipelineInfo.pStages = skybox.skyboxShader->getShaderStages().data();
 		pipelineInfo.pVertexInputState = &vertexInputInfo;
 		pipelineInfo.pInputAssemblyState = &inputAssembly;
 		pipelineInfo.pViewportState = &viewportState;
 		pipelineInfo.pRasterizationState = &rasterizer;
 		pipelineInfo.pMultisampleState = &multisampling;
 		pipelineInfo.pColorBlendState = &colorBlending;
-		pipelineInfo.layout = pipelineLayout;
-		pipelineInfo.renderPass = renderPass;
+		pipelineInfo.layout = skybox.pipelineLayout;
+		pipelineInfo.renderPass = skybox.renderPass;
 		pipelineInfo.subpass = 0;
 
-		graphicsPipeline = device.getLogicalDevice().createGraphicsPipeline(nullptr, pipelineInfo).value;
+		skybox.graphicsPipeline = device.getLogicalDevice().createGraphicsPipeline(nullptr, pipelineInfo).value;
+#pragma endregion GraphicsPipline
+#pragma region FrameBuffers
+		skybox.framebuffers.resize(offscreenResources.size());
 
-		framebuffers.resize(offscreenResources.size());
-
-		for (uint32_t i = 0; i < framebuffers.size(); i++) {
+		for (uint32_t i = 0; i < skybox.framebuffers.size(); i++) {
 			vk::ImageView viewImage = offscreenResources[i].colorImageView;
 
 			vk::FramebufferCreateInfo framebufferInfo{};
-			framebufferInfo.renderPass = renderPass;
+			framebufferInfo.renderPass = skybox.renderPass;
 			framebufferInfo.attachmentCount = 1;
 			framebufferInfo.pAttachments = &viewImage;
 			framebufferInfo.width = swapChain.getSwapchainExtent().width;
 			framebufferInfo.height = swapChain.getSwapchainExtent().height;
 			framebufferInfo.layers = 1;
 
-			framebuffers[i] = device.getLogicalDevice().createFramebuffer(framebufferInfo);
+			skybox.framebuffers[i] = device.getLogicalDevice().createFramebuffer(framebufferInfo);
 		}
+#pragma endregion FrameBuffers
 	}
 
 	void IBL::generateIrradianceCube()
 	{
+#pragma region ImageAndSamplerCreate
 		core::ImageInfoRequest cubeMapImageRequest(device.getLogicalDevice(), device.getPhysicalDevice());
 		cubeMapImageRequest.format = vk::Format::eR16G16B16A16Sfloat;
 		cubeMapImageRequest.layers = 6;
@@ -833,10 +871,8 @@ namespace render
 		samplerInfo.unnormalizedCoordinates = VK_FALSE;
 
 		imageIrradianceCube.sampler = device.getLogicalDevice().createSampler(samplerInfo);
-		
-
-		shaderIrradianceCube->readShader("../../resources/shaders/ibl/equirectangular_convolution.glsl");
-
+#pragma endregion ImageAndSamplerCreate
+#pragma region RenderPass
 		//SET UP RENDER PASS
 		vk::AttachmentDescription colorAttachment;
 		colorAttachment.format = vk::Format::eR16G16B16A16Sfloat;
@@ -886,8 +922,9 @@ namespace render
 		renderPassInfo.pDependencies = dependencies.data();
 
 		vk::RenderPass renderPass = device.getLogicalDevice().createRenderPass(renderPassInfo);
-
-		//DEFINE THE VERTEX BUFFER
+#pragma endregion RenderPass
+#pragma region VertexBuffer
+		//DEFINE THE VERTEX BUFFER LAYOUT
 		vk::VertexInputBindingDescription vertexInputBindingDescription;
 		vertexInputBindingDescription.binding = 0;
 		vertexInputBindingDescription.stride = sizeof(glm::vec3);
@@ -902,118 +939,115 @@ namespace render
 		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
 		vertexInputInfo.pVertexAttributeDescriptions = vertexInputAttributes.data();
 
+		//DEFINE THE VERTEX BUFFER
 		vk::Buffer vertexBuffer;
 		vk::DeviceMemory vertexBufferMemory;
+
+		core::BufferInfoRequest vertexCubeVerticesBufferRequest(device.getLogicalDevice(), device.getPhysicalDevice());
+		vertexCubeVerticesBufferRequest.size = sizeof(cubeVertices[0]) * cubeVertices.size();
+		vertexCubeVerticesBufferRequest.usage = vk::BufferUsageFlagBits::eVertexBuffer;
+		vertexCubeVerticesBufferRequest.properties = vk::MemoryPropertyFlagBits::eHostVisible |
+			vk::MemoryPropertyFlagBits::eHostCoherent;
+		core::Utilities::createBuffer(vertexCubeVerticesBufferRequest, vertexBuffer, vertexBufferMemory);
+
+		void* data;
+		if (vk::Result result = device.getLogicalDevice().mapMemory(vertexBufferMemory, 0, vertexCubeVerticesBufferRequest.size, {},
+			&data); result != vk::Result::eSuccess)
 		{
-			core::BufferInfoRequest bufferInfo(device.getLogicalDevice(), device.getPhysicalDevice());
-			bufferInfo.size = sizeof(cubeVertices[0]) * cubeVertices.size();
-			bufferInfo.usage = vk::BufferUsageFlagBits::eVertexBuffer;
-			bufferInfo.properties = vk::MemoryPropertyFlagBits::eHostVisible |
-				vk::MemoryPropertyFlagBits::eHostCoherent;
-			core::Utilities::createBuffer(bufferInfo, vertexBuffer, vertexBufferMemory);
-
-			void* data;
-			if (vk::Result result = device.getLogicalDevice().mapMemory(vertexBufferMemory, 0, bufferInfo.size, {},
-				&data); result != vk::Result::eSuccess)
-			{
-				loggerError("failed to map memory");
-			}
-			memcpy(data, cubeVertices.data(), bufferInfo.size);
-			device.getLogicalDevice().unmapMemory(vertexBufferMemory);
+			loggerError("failed to map memory");
 		}
-
+		memcpy(data, cubeVertices.data(), vertexCubeVerticesBufferRequest.size);
+		device.getLogicalDevice().unmapMemory(vertexBufferMemory);
+#pragma endregion VertexBuffer
+#pragma region UniformBuffer
 		//DEFINE THE UNIFORM BUFFER LAYOUT
 		vk::DescriptorPool descriptorPool;
-		{
-			std::vector<vk::DescriptorPoolSize> poolSizes(2);
-			poolSizes[0].type = vk::DescriptorType::eCombinedImageSampler;
-			poolSizes[0].descriptorCount = 1;
-			poolSizes[1].type = vk::DescriptorType::eUniformBuffer;
-			poolSizes[1].descriptorCount = 1;
 
-			vk::DescriptorPoolCreateInfo poolInfo{};
-			poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-			poolInfo.pPoolSizes = poolSizes.data();
-			poolInfo.maxSets = 1;
+		std::vector<vk::DescriptorPoolSize> poolSizes(2);
+		poolSizes[0].type = vk::DescriptorType::eCombinedImageSampler;
+		poolSizes[0].descriptorCount = 1;
+		poolSizes[1].type = vk::DescriptorType::eUniformBuffer;
+		poolSizes[1].descriptorCount = 1;
 
-			descriptorPool = device.getLogicalDevice().createDescriptorPool(poolInfo);
-		}
+		vk::DescriptorPoolCreateInfo poolInfo{};
+		poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
+		poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+		poolInfo.pPoolSizes = poolSizes.data();
+		poolInfo.maxSets = 1;
 
-		vk::DescriptorSetLayout descriptorSetLayout;
-		{
-			std::vector<vk::DescriptorSetLayoutBinding> bindings(2);
+		descriptorPool = device.getLogicalDevice().createDescriptorPool(poolInfo);
 
-			bindings[0].binding = 0;
-			bindings[0].descriptorType = vk::DescriptorType::eUniformBuffer;
-			bindings[0].descriptorCount = 1;
-			bindings[0].stageFlags = vk::ShaderStageFlagBits::eVertex;
-			bindings[0].pImmutableSamplers = nullptr;
+		std::vector<vk::DescriptorSetLayoutBinding> bindings(2);
 
-			bindings[1].binding = 1;
-			bindings[1].descriptorType = vk::DescriptorType::eCombinedImageSampler;
-			bindings[1].descriptorCount = 1;
-			bindings[1].stageFlags = vk::ShaderStageFlagBits::eFragment;
-			bindings[1].pImmutableSamplers = nullptr;
+		bindings[0].binding = 0;
+		bindings[0].descriptorType = vk::DescriptorType::eUniformBuffer;
+		bindings[0].descriptorCount = 1;
+		bindings[0].stageFlags = vk::ShaderStageFlagBits::eVertex;
+		bindings[0].pImmutableSamplers = nullptr;
 
-			vk::DescriptorSetLayoutCreateInfo layoutInfo;
-			layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-			layoutInfo.pBindings = bindings.data();
+		bindings[1].binding = 1;
+		bindings[1].descriptorType = vk::DescriptorType::eCombinedImageSampler;
+		bindings[1].descriptorCount = 1;
+		bindings[1].stageFlags = vk::ShaderStageFlagBits::eFragment;
+		bindings[1].pImmutableSamplers = nullptr;
 
-			descriptorSetLayout = device.getLogicalDevice().createDescriptorSetLayout(layoutInfo);
-		}
+		vk::DescriptorSetLayoutCreateInfo layoutInfo;
+		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+		layoutInfo.pBindings = bindings.data();
+
+		vk::DescriptorSetLayout descriptorSetLayout = device.getLogicalDevice().createDescriptorSetLayout(layoutInfo);
 
 		//DEFINE THE UNIFORM BUFFER AND SAMPLER
-		vk::Buffer uniformBuffer;
-		vk::DeviceMemory uniformBufferMemory;
-		core::BufferInfoRequest bufferRequest(device.getLogicalDevice(), device.getPhysicalDevice());
-		bufferRequest.usage = vk::BufferUsageFlagBits::eUniformBuffer;
-		bufferRequest.properties = vk::MemoryPropertyFlagBits::eHostVisible |
-			vk::MemoryPropertyFlagBits::eHostCoherent;
-		bufferRequest.size = sizeof(UniformBufferObject);
-		core::Utilities::createBuffer(bufferRequest, uniformBuffer, uniformBufferMemory);
-
 		vk::DescriptorSet descriptorSet;
-		{
-			vk::DescriptorSetAllocateInfo allocInfo;
-			allocInfo.descriptorPool = descriptorPool;
-			allocInfo.descriptorSetCount = 1;
-			allocInfo.pSetLayouts = &descriptorSetLayout;
 
-			descriptorSet = device.getLogicalDevice().allocateDescriptorSets(allocInfo)[0];
-		}
-		{
-			vk::DescriptorImageInfo imageInfo;
-			imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-			imageInfo.imageView = hdrTexture->getImageView();
-			imageInfo.sampler = hdrTexture->getSampler();
+		vk::DescriptorSetAllocateInfo allocInfo;
+		allocInfo.descriptorPool = descriptorPool;
+		allocInfo.descriptorSetCount = 1;
+		allocInfo.pSetLayouts = &descriptorSetLayout;
 
-			vk::WriteDescriptorSet descriptorWrite;
-			descriptorWrite.dstSet = descriptorSet;
-			descriptorWrite.dstBinding = 1;
-			descriptorWrite.dstArrayElement = 0;
-			descriptorWrite.descriptorType = vk::DescriptorType::eCombinedImageSampler;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pImageInfo = &imageInfo;
+		descriptorSet = device.getLogicalDevice().allocateDescriptorSets(allocInfo)[0];
 
-			device.getLogicalDevice().updateDescriptorSets(descriptorWrite, nullptr);
-		}
-		{
-			vk::DescriptorBufferInfo bufferInfo;
-			bufferInfo.buffer = uniformBuffer;
-			bufferInfo.offset = 0;
-			bufferInfo.range = sizeof(UniformBufferObject);
+		vk::DescriptorImageInfo hdrImageInfo;
+		hdrImageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+		hdrImageInfo.imageView = hdrTexture->getImageView();
+		hdrImageInfo.sampler = hdrTexture->getSampler();
 
-			vk::WriteDescriptorSet descriptorWrite;
-			descriptorWrite.dstSet = descriptorSet;
-			descriptorWrite.dstBinding = 0;
-			descriptorWrite.dstArrayElement = 0;
-			descriptorWrite.descriptorType = vk::DescriptorType::eUniformBuffer;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pBufferInfo = &bufferInfo;
+		vk::WriteDescriptorSet hdrDescriptorWrite;
+		hdrDescriptorWrite.dstSet = descriptorSet;
+		hdrDescriptorWrite.dstBinding = 1;
+		hdrDescriptorWrite.dstArrayElement = 0;
+		hdrDescriptorWrite.descriptorType = vk::DescriptorType::eCombinedImageSampler;
+		hdrDescriptorWrite.descriptorCount = 1;
+		hdrDescriptorWrite.pImageInfo = &hdrImageInfo;
 
-			device.getLogicalDevice().updateDescriptorSets(descriptorWrite, nullptr);
-		}
+		device.getLogicalDevice().updateDescriptorSets(hdrDescriptorWrite, nullptr);
 
+		vk::Buffer uboUniformBuffer;
+		vk::DeviceMemory uboUniformBufferMemory;
+		core::BufferInfoRequest uboBufferRequest(device.getLogicalDevice(), device.getPhysicalDevice());
+		uboBufferRequest.usage = vk::BufferUsageFlagBits::eUniformBuffer;
+		uboBufferRequest.properties = vk::MemoryPropertyFlagBits::eHostVisible |
+			vk::MemoryPropertyFlagBits::eHostCoherent;
+		uboBufferRequest.size = sizeof(UniformBufferObject);
+		core::Utilities::createBuffer(uboBufferRequest, uboUniformBuffer, uboUniformBufferMemory);
+
+		vk::DescriptorBufferInfo uboBufferInfo;
+		uboBufferInfo.buffer = uboUniformBuffer;
+		uboBufferInfo.offset = 0;
+		uboBufferInfo.range = sizeof(UniformBufferObject);
+
+		vk::WriteDescriptorSet uboDescriptorWrite;
+		uboDescriptorWrite.dstSet = descriptorSet;
+		uboDescriptorWrite.dstBinding = 0;
+		uboDescriptorWrite.dstArrayElement = 0;
+		uboDescriptorWrite.descriptorType = vk::DescriptorType::eUniformBuffer;
+		uboDescriptorWrite.descriptorCount = 1;
+		uboDescriptorWrite.pBufferInfo = &uboBufferInfo;
+
+		device.getLogicalDevice().updateDescriptorSets(uboDescriptorWrite, nullptr);
+
+#pragma endregion UniformBuffer
+#pragma region GraphicsPipline
 		//DEFINE GRAPHICS PIPELINE
 		vk::PipelineInputAssemblyStateCreateInfo inputAssembly;
 		inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
@@ -1079,66 +1113,63 @@ namespace render
 		pipelineInfo.subpass = 0;
 
 		vk::Pipeline graphicsPipeline = device.getLogicalDevice().createGraphicsPipeline(nullptr, pipelineInfo).value;
-
-		vk::Image image;
-		vk::ImageView view;
-		vk::DeviceMemory memory;
-		vk::Framebuffer framebuffer;
+#pragma endregion GraphicsPipline
+#pragma region ImageHelper
+		OffScreenHelper imageHelper;
 
 		core::ImageInfoRequest imageRequest(device.getLogicalDevice(), device.getPhysicalDevice());
 		imageRequest.format = vk::Format::eR16G16B16A16Sfloat;
 		imageRequest.width = CUBE_MAP_SIZE;
 		imageRequest.height = CUBE_MAP_SIZE;
 		imageRequest.usage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
-		core::Utilities::createImage(imageRequest, image, memory);
+		core::Utilities::createImage(imageRequest, imageHelper.image, imageHelper.memory);
 
-		core::ImageViewInfoRequest imageViewRequest(device.getLogicalDevice(), image);
+		core::ImageViewInfoRequest imageViewRequest(device.getLogicalDevice(), imageHelper.image);
 		imageViewRequest.format = vk::Format::eR16G16B16A16Sfloat;
-		core::Utilities::createImageView(imageViewRequest, view);
+		core::Utilities::createImageView(imageViewRequest, imageHelper.view);
 
 		//Create frame buffers for each face.
 		vk::FramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.renderPass = renderPass;
 		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = &view;
+		framebufferInfo.pAttachments = &imageHelper.view;
 		framebufferInfo.width = CUBE_MAP_SIZE;
 		framebufferInfo.height = CUBE_MAP_SIZE;
 		framebufferInfo.layers = 1;
 
-		framebuffer = device.getLogicalDevice().createFramebuffer(framebufferInfo);
-
-		//setUp command buffer
-		vk::UniqueCommandPool commandPool = device.getLogicalDevice().createCommandPoolUnique(poolInfo);
-
-		vk::UniqueCommandBuffer commandImageBuffer = core::Utilities::beginSingleTimeCommands(
+		imageHelper.framebuffer = device.getLogicalDevice().createFramebuffer(framebufferInfo);
+#pragma endregion ImageHelper
+#pragma region ImageTransition
+		//transition helper image layout
+		vk::UniqueCommandBuffer commandBufferInitHelperImageTransition = core::Utilities::beginSingleTimeCommands(
 			device.getLogicalDevice(), commandPool.get());
 
-		core::Utilities::transitionImageLayout(commandImageBuffer.get(), image, vk::ImageLayout::eUndefined,
+		core::Utilities::transitionImageLayout(commandBufferInitHelperImageTransition.get(), imageHelper.image, vk::ImageLayout::eUndefined,
 			vk::ImageLayout::eColorAttachmentOptimal,
 			vk::ImageAspectFlagBits::eColor);
-		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandImageBuffer);
 
+		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandBufferInitHelperImageTransition);
 
-		// Begin a new single-time command buffer for the final layout transition
-		vk::UniqueCommandBuffer transitionCommandBuffer = core::Utilities::beginSingleTimeCommands(
+		//transition cube image layout
+		vk::UniqueCommandBuffer commandBufferInitCubeImage = core::Utilities::beginSingleTimeCommands(
 			device.getLogicalDevice(), commandPool.get());
 
-		core::Utilities::transitionImageLayout(transitionCommandBuffer.get(), imageIrradianceCube.image,
+		core::Utilities::transitionImageLayout(commandBufferInitCubeImage.get(), imageIrradianceCube.image,
 			vk::ImageLayout::eUndefined,
 			vk::ImageLayout::eTransferDstOptimal,
 			vk::ImageAspectFlagBits::eColor, 6);
 
-		// End the layout transition command buffer
-		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), transitionCommandBuffer);
-
-		vk::UniqueCommandBuffer commandBuffer = core::Utilities::beginSingleTimeCommands(
+		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandBufferInitCubeImage);
+#pragma endregion ImageTransition
+#pragma region Draw
+		vk::UniqueCommandBuffer commandBufferDraw = core::Utilities::beginSingleTimeCommands(
 			device.getLogicalDevice(), commandPool.get());
 
 		vk::ClearValue clearColor{ std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f} };
 
 		vk::RenderPassBeginInfo renderPassBeginInfo{};
 		renderPassBeginInfo.renderPass = renderPass;
-		renderPassBeginInfo.framebuffer = framebuffer;
+		renderPassBeginInfo.framebuffer = imageHelper.framebuffer;
 		renderPassBeginInfo.renderArea = vk::Rect2D({ 0, 0 }, { CUBE_MAP_SIZE, CUBE_MAP_SIZE });
 		renderPassBeginInfo.clearValueCount = 1;
 		renderPassBeginInfo.pClearValues = &clearColor;
@@ -1147,25 +1178,25 @@ namespace render
 		for (uint32_t face = 0; face < 6; ++face)
 		{
 			updateUniformBuffer(CameraViewMatrix::captureViews[face], CameraViewMatrix::captureProjection,
-				uniformBufferMemory);
+				uboUniformBufferMemory);
 
 			// Begin render pass and render to the specific cube face
-			commandBuffer.get().beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+			commandBufferDraw.get().beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
 			// Bind pipeline, descriptor sets, and draw commands
-			commandBuffer.get().bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
-			commandBuffer.get().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet,
+			commandBufferDraw.get().bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
+			commandBufferDraw.get().bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, descriptorSet,
 				{});
 
 			// Bind vertex buffer
 			vk::DeviceSize offsets[] = { 0 };
-			commandBuffer.get().bindVertexBuffers(0, vertexBuffer, offsets);
-			commandBuffer.get().draw(static_cast<uint32_t>(cubeVertices.size()), 1, 0, 0);
+			commandBufferDraw.get().bindVertexBuffers(0, vertexBuffer, offsets);
+			commandBufferDraw.get().draw(static_cast<uint32_t>(cubeVertices.size()), 1, 0, 0);
 
-			commandBuffer.get().endRenderPass();
+			commandBufferDraw.get().endRenderPass();
 
 			// Ensure synchronization between rendering and copying by transitioning the image layout
-			core::Utilities::transitionImageLayout(commandBuffer.get(), image,
+			core::Utilities::transitionImageLayout(commandBufferDraw.get(), imageHelper.image,
 				vk::ImageLayout::eColorAttachmentOptimal,
 				vk::ImageLayout::eTransferSrcOptimal,
 				vk::ImageAspectFlagBits::eColor);
@@ -1189,11 +1220,11 @@ namespace render
 			copyRegion.extent.depth = 1;
 
 			// Copy the image from the framebuffer to the cube map face
-			commandBuffer.get().copyImage(image, vk::ImageLayout::eTransferSrcOptimal, imageIrradianceCube.image,
+			commandBufferDraw.get().copyImage(imageHelper.image, vk::ImageLayout::eTransferSrcOptimal, imageIrradianceCube.image,
 				vk::ImageLayout::eTransferDstOptimal, 1, &copyRegion);
 
 			// Transition the image back to color attachment layout for the next face
-			core::Utilities::transitionImageLayout(commandBuffer.get(), image,
+			core::Utilities::transitionImageLayout(commandBufferDraw.get(), imageHelper.image,
 				vk::ImageLayout::eTransferSrcOptimal,
 				vk::ImageLayout::eColorAttachmentOptimal,
 				vk::ImageAspectFlagBits::eColor);
@@ -1202,48 +1233,52 @@ namespace render
 
 		// Create a fence to wait for completion
 		vk::Fence renderFence = device.getLogicalDevice().createFence({});
-		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandBuffer, renderFence);
+		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandBufferDraw, renderFence);
 
 		// Wait for the command buffer to finish executing
-		vk::Result result = device.getLogicalDevice().waitForFences(renderFence, VK_TRUE, UINT64_MAX);
-		if (result != vk::Result::eSuccess)
+		if (vk::Result result = device.getLogicalDevice().waitForFences(renderFence, VK_TRUE, UINT64_MAX); result != vk::Result::eSuccess)
 		{
 			loggerError("Failed to to wait for Fence IBL:");
 		}
-
-		// Begin a new single-time command buffer for the final layout transition
-		vk::UniqueCommandBuffer transitionCommandBuffer2 = core::Utilities::beginSingleTimeCommands(
+#pragma endregion Draw
+#pragma region EndImageTransition
+		//transition cube image layout to the finial layout
+		vk::UniqueCommandBuffer commandBufferEndTransition = core::Utilities::beginSingleTimeCommands(
 			device.getLogicalDevice(), commandPool.get());
 
-		core::Utilities::transitionImageLayout(transitionCommandBuffer2.get(), imageIrradianceCube.image,
+		core::Utilities::transitionImageLayout(commandBufferEndTransition.get(), imageIrradianceCube.image,
 			vk::ImageLayout::eTransferDstOptimal,
 			vk::ImageLayout::eShaderReadOnlyOptimal,
 			vk::ImageAspectFlagBits::eColor, 6);
 
-		// End the layout transition command buffer
-		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), transitionCommandBuffer2);
-
+		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandBufferEndTransition);
+#pragma endregion EndImageTransition
+#pragma region CleanUp
 		//cleanUp
 		device.getLogicalDevice().destroyFence(renderFence);
 
 		device.getLogicalDevice().destroyBuffer(vertexBuffer);
 		device.getLogicalDevice().freeMemory(vertexBufferMemory);
-		device.getLogicalDevice().freeMemory(uniformBufferMemory);
 
-		device.getLogicalDevice().destroyFramebuffer(framebuffer);
-		device.getLogicalDevice().freeMemory(memory);
-		device.getLogicalDevice().destroyImageView(view);
-		device.getLogicalDevice().destroyImage(image);
+		device.getLogicalDevice().destroyBuffer(uboUniformBuffer);
+		device.getLogicalDevice().freeMemory(uboUniformBufferMemory);
+
+		device.getLogicalDevice().destroyFramebuffer(imageHelper.framebuffer);
+		device.getLogicalDevice().freeMemory(imageHelper.memory);
+		device.getLogicalDevice().destroyImageView(imageHelper.view);
+		device.getLogicalDevice().destroyImage(imageHelper.image);
 
 		device.getLogicalDevice().destroyRenderPass(renderPass);
 		device.getLogicalDevice().destroyDescriptorPool(descriptorPool);
 		device.getLogicalDevice().destroyDescriptorSetLayout(descriptorSetLayout);
 		device.getLogicalDevice().destroyPipeline(graphicsPipeline);
 		device.getLogicalDevice().destroyPipelineLayout(pipelineLayout);
+#pragma endregion CleanUp
 	}
 
 	void IBL::generateBRDFLUT()
 	{
+#pragma region ImageCreate
 		// BRDF LUT image setup
 		core::ImageInfoRequest brdfLUTImageRequest(device.getLogicalDevice(), device.getPhysicalDevice());
 		brdfLUTImageRequest.format = vk::Format::eR16G16Sfloat;
@@ -1271,45 +1306,8 @@ namespace render
 		samplerInfo.unnormalizedCoordinates = VK_FALSE;
 
 		brdfLUTImage.sampler = device.getLogicalDevice().createSampler(samplerInfo);
-
-		brdfLUTShader->readShader("../../resources/shaders/ibl/brdf.glsl");
-
-		//DEFINE THE VERTEX BUFFER
-		vk::VertexInputBindingDescription vertexInputBindingDescription;
-		vertexInputBindingDescription.binding = 0;
-		vertexInputBindingDescription.stride = sizeof(QuadVertex);
-		vertexInputBindingDescription.inputRate = vk::VertexInputRate::eVertex;
-
-		std::vector<vk::VertexInputAttributeDescription> vertexInputAttributes;
-		vertexInputAttributes.push_back({ 0, 0, vk::Format::eR32G32B32Sfloat, offsetof(QuadVertex, position) });
-		vertexInputAttributes.push_back({ 1, 0, vk::Format::eR32G32Sfloat, offsetof(QuadVertex, texture) });
-
-		vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
-		vertexInputInfo.vertexBindingDescriptionCount = 1;
-		vertexInputInfo.pVertexBindingDescriptions = &vertexInputBindingDescription;
-		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
-		vertexInputInfo.pVertexAttributeDescriptions = vertexInputAttributes.data();
-
-		vk::Buffer vertexBuffer;
-		vk::DeviceMemory vertexBufferMemory;
-		{
-			core::BufferInfoRequest bufferInfo(device.getLogicalDevice(), device.getPhysicalDevice());
-			bufferInfo.size = sizeof(quad[0]) * quad.size();
-			bufferInfo.usage = vk::BufferUsageFlagBits::eVertexBuffer;
-			bufferInfo.properties = vk::MemoryPropertyFlagBits::eHostVisible |
-				vk::MemoryPropertyFlagBits::eHostCoherent;
-			core::Utilities::createBuffer(bufferInfo, vertexBuffer, vertexBufferMemory);
-
-			void* data;
-			if (vk::Result result = device.getLogicalDevice().mapMemory(vertexBufferMemory, 0, bufferInfo.size, {},
-				&data); result != vk::Result::eSuccess)
-			{
-				loggerError("failed to map memory");
-			}
-			memcpy(data, quad.data(), bufferInfo.size);
-			device.getLogicalDevice().unmapMemory(vertexBufferMemory);
-		}
-
+#pragma endregion ImageCreate
+#pragma region RenderPass
 		//SET UP RENDER PASS
 		vk::AttachmentDescription colorAttachment;
 		colorAttachment.format = vk::Format::eR16G16Sfloat;
@@ -1347,7 +1345,44 @@ namespace render
 		renderPassInfo.pDependencies = &dependency;
 
 		vk::RenderPass renderPass = device.getLogicalDevice().createRenderPass(renderPassInfo);
+#pragma endregion RenderPass
+#pragma region VertexBuffer
+		//DEFINE THE VERTEX BUFFER
+		vk::VertexInputBindingDescription vertexInputBindingDescription;
+		vertexInputBindingDescription.binding = 0;
+		vertexInputBindingDescription.stride = sizeof(QuadVertex);
+		vertexInputBindingDescription.inputRate = vk::VertexInputRate::eVertex;
 
+		std::vector<vk::VertexInputAttributeDescription> vertexInputAttributes;
+		vertexInputAttributes.push_back({ 0, 0, vk::Format::eR32G32B32Sfloat, offsetof(QuadVertex, position) });
+		vertexInputAttributes.push_back({ 1, 0, vk::Format::eR32G32Sfloat, offsetof(QuadVertex, texture) });
+
+		vk::PipelineVertexInputStateCreateInfo vertexInputInfo{};
+		vertexInputInfo.vertexBindingDescriptionCount = 1;
+		vertexInputInfo.pVertexBindingDescriptions = &vertexInputBindingDescription;
+		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
+		vertexInputInfo.pVertexAttributeDescriptions = vertexInputAttributes.data();
+
+		vk::Buffer quadVertexBuffer;
+		vk::DeviceMemory quadVertexBufferMemory;
+
+		core::BufferInfoRequest quadBufferInfo(device.getLogicalDevice(), device.getPhysicalDevice());
+		quadBufferInfo.size = sizeof(quad[0]) * quad.size();
+		quadBufferInfo.usage = vk::BufferUsageFlagBits::eVertexBuffer;
+		quadBufferInfo.properties = vk::MemoryPropertyFlagBits::eHostVisible |
+			vk::MemoryPropertyFlagBits::eHostCoherent;
+		core::Utilities::createBuffer(quadBufferInfo, quadVertexBuffer, quadVertexBufferMemory);
+
+		void* data;
+		if (vk::Result result = device.getLogicalDevice().mapMemory(quadVertexBufferMemory, 0, quadBufferInfo.size, {},
+			&data); result != vk::Result::eSuccess)
+		{
+			loggerError("failed to map memory");
+		}
+		memcpy(data, quad.data(), quadBufferInfo.size);
+		device.getLogicalDevice().unmapMemory(quadVertexBufferMemory);
+#pragma endregion VertexBuffer
+#pragma region GraphicsPipline
 		//DEFINE GRAPHICS PIPELINE
 		vk::PipelineInputAssemblyStateCreateInfo inputAssembly;
 		inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
@@ -1411,7 +1446,8 @@ namespace render
 		pipelineInfo.subpass = 0;
 
 		vk::Pipeline graphicsPipeline = device.getLogicalDevice().createGraphicsPipeline(nullptr, pipelineInfo).value;
-
+#pragma endregion GraphicsPipline
+#pragma region FrameBuffer
 		// Framebuffer for BRDF LUT rendering
 		vk::FramebufferCreateInfo framebufferInfo = {};
 		framebufferInfo.renderPass = renderPass;
@@ -1422,9 +1458,9 @@ namespace render
 		framebufferInfo.layers = 1;
 
 		vk::Framebuffer framebuffer = device.getLogicalDevice().createFramebuffer(framebufferInfo);
-
+#pragma endregion FrameBuffer
+#pragma region Draw
 		// Command buffer recording
-		vk::UniqueCommandPool commandPool = device.getLogicalDevice().createCommandPoolUnique(poolInfo);
 		vk::UniqueCommandBuffer commandBuffer = core::Utilities::beginSingleTimeCommands(
 			device.getLogicalDevice(), commandPool.get());
 
@@ -1440,22 +1476,23 @@ namespace render
 		commandBuffer->bindPipeline(vk::PipelineBindPoint::eGraphics, graphicsPipeline);
 
 		vk::DeviceSize offsets[] = { 0 };
-		commandBuffer->bindVertexBuffers(0, vertexBuffer, offsets);
+		commandBuffer->bindVertexBuffers(0, quadVertexBuffer, offsets);
 		commandBuffer->draw(6, 1, 0, 0);
 		commandBuffer->endRenderPass();
 
 		// Execute and wait
 		vk::Fence renderFence = device.getLogicalDevice().createFence({});
 		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandBuffer, renderFence);
-		vk::Result result = device.getLogicalDevice().waitForFences(renderFence, VK_TRUE, UINT64_MAX);
-		if (result != vk::Result::eSuccess)
+		if (vk::Result result = device.getLogicalDevice().waitForFences(renderFence, VK_TRUE, UINT64_MAX); result != vk::Result::eSuccess)
 		{
 			loggerError("Failed to to wait for Fence BRDFLUT:");
 		}
-
+#pragma endregion Draw
+#pragma region EndImageTransition
 		// Transition image layout to shader-readable
 		vk::UniqueCommandBuffer transitionCommandBuffer = core::Utilities::beginSingleTimeCommands(
 			device.getLogicalDevice(), commandPool.get());
+
 		core::Utilities::transitionImageLayout(
 			transitionCommandBuffer.get(),
 			brdfLUTImage.image,
@@ -1464,17 +1501,19 @@ namespace render
 			vk::ImageAspectFlagBits::eColor
 		);
 		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), transitionCommandBuffer);
-
+#pragma endregion EndImageTransition
+#pragma region CleanUp
 		//cleanUp
 		device.getLogicalDevice().destroyFramebuffer(framebuffer);
 		device.getLogicalDevice().destroyFence(renderFence);
 
-		device.getLogicalDevice().destroyBuffer(vertexBuffer);
-		device.getLogicalDevice().freeMemory(vertexBufferMemory);
+		device.getLogicalDevice().destroyBuffer(quadVertexBuffer);
+		device.getLogicalDevice().freeMemory(quadVertexBufferMemory);
 
 		device.getLogicalDevice().destroyRenderPass(renderPass);
 		device.getLogicalDevice().destroyPipeline(graphicsPipeline);
 		device.getLogicalDevice().destroyPipelineLayout(pipelineLayout);
+#pragma endregion CleanUp
 	}
 
 	void IBL::updateUniformBuffer(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,

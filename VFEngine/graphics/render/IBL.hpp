@@ -32,46 +32,6 @@ namespace render
         {1.0f, -1.0f, -1.0f}, {-1.0f, -1.0f, 1.0f}, {1.0f, -1.0f, 1.0f}
     };
 
-    inline static const std::vector<glm::vec3> cubeNormals = {
-        {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f},
-        {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f},
-
-        {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
-        {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 1.0f},
-
-        {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f},
-        {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f},
-
-        {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f},
-        {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f, 0.0f},
-
-        {0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f},
-        {0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f},
-
-        {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f},
-        {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}
-    };
-
-    inline static const std::vector<glm::vec2> cubeTextureCoords = {
-        {0.0f, 0.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},
-        {1.0f, 1.0f}, {0.0f, 0.0f}, {0.0f, 1.0f},
-
-        {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f},
-        {1.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f},
-
-        {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f},
-        {0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f},
-
-        {1.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f},
-        {0.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 0.0f},
-
-        {0.0f, 1.0f}, {1.0f, 1.0f}, {1.0f, 0.0f},
-        {1.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 1.0f},
-
-        {0.0f, 1.0f}, {1.0f, 0.0f}, {1.0f, 1.0f},
-        {1.0f, 0.0f}, {0.0f, 1.0f}, {0.0f, 0.0f}
-    };
-
     struct QuadVertex
     {
         glm::vec3 position;
@@ -116,6 +76,33 @@ namespace render
         inline static const glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     };
 
+    struct OffScreenHelper
+    {
+		vk::Image image;
+		vk::ImageView view;
+		vk::DeviceMemory memory;
+		vk::Framebuffer framebuffer;
+    };
+
+	struct Skybox
+	{
+		std::shared_ptr<core::Shader> skyboxShader;
+		vk::RenderPass renderPass;
+		vk::Pipeline graphicsPipeline;
+		std::vector<vk::Framebuffer> framebuffers;
+		vk::Buffer vertexBuffer;
+        vk::DeviceMemory vertexBufferMemory;
+
+		vk::Buffer uniformBuffer;
+		vk::DeviceMemory uniformBufferMemory;
+
+		vk::PipelineLayout pipelineLayout;
+
+        vk::DescriptorSetLayout descriptorSetLayout;
+		vk::DescriptorSet descriptorSet;
+        vk::DescriptorPool descriptorPool;
+	};
+
 
     class IBL
     {
@@ -123,7 +110,7 @@ namespace render
         core::Device& device;
         core::SwapChain& swapChain;
         std::vector<core::OffscreenResources>& offscreenResources;
-        vk::CommandPoolCreateInfo poolInfo;
+        vk::UniqueCommandPool commandPool;
         std::shared_ptr<core::Texture> hdrTexture;
 
         static constexpr uint32_t CUBE_MAP_SIZE = 512;
@@ -137,16 +124,7 @@ namespace render
         ImageData prefilterImage;
         std::shared_ptr<core::Shader> prefilterShader;
 
-        std::shared_ptr<core::Shader> skyboxShader;
-        vk::RenderPass renderPass;
-        vk::Pipeline graphicsPipeline;
-        std::vector<vk::Framebuffer> framebuffers;
-        vk::Buffer vertexBuffer;
-		vk::Buffer uniformBuffer;
-		vk::DeviceMemory uniformBufferMemory;
-        vk::PipelineLayout pipelineLayout;
-        vk::DescriptorSet descriptorSet;
-        vk::Buffer vertexBufferQuad;
+        Skybox skybox;
 
     public:
         explicit IBL(core::Device& device, core::SwapChain& swapChain,
@@ -157,7 +135,15 @@ namespace render
 
         void init(std::string_view path);
         void recreate();
-        void cleanUp() const;
+        void cleanUp();
+
+        const ImageData& getBrdfLUTImage()const {
+            return brdfLUTImage;
+        }
+
+		const ImageData& getPrefilterImage()const {
+			return prefilterImage;
+		}
 
     private:
         void generateIrradianceCube();
