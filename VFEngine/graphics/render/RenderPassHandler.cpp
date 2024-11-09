@@ -21,7 +21,7 @@ namespace render {
 	void RenderPassHandler::init()
 	{
 		triangleRenderer->init();
-		iblRenderer->init("../../resources/shaders/ibl/HDR_029_Sky_Cloudy_Ref.vfHdr");
+		iblRenderer->init("../../resources/shaders/ibl/Arches_E_PineTree_3k.hdr");
 	}
 
 	void RenderPassHandler::recreate() const

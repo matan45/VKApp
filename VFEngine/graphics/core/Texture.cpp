@@ -3,6 +3,7 @@
 #include "resource/ResourceManager.hpp"
 #include "print/Logger.hpp"
 #include <imgui_impl_vulkan.h>
+#include "stb_image.h"
 
 namespace core {
 	Texture::Texture(Device& device) :device{ device }
@@ -25,10 +26,16 @@ namespace core {
 
 	void Texture::loadHDRFromFile(std::string_view filePath, vk::Format format, bool isEditor)
 	{
-		
-		auto textureData = resource::ResourceManager::loadHDRAsync(filePath);
-		auto texturePtr = textureData.get();
-		vk::DeviceSize imageSize = texturePtr->width * texturePtr->height * texturePtr->numbersOfChannels * sizeof(float);
+		// Load image using stb_image
+		// iusse with the data layout
+		int width;
+		int height;
+		int channels; 
+		float* imageData = stbi_loadf(filePath.data(), &width, &height, &channels, 0);
+
+		//auto textureData = resource::ResourceManager::loadHDRAsync(filePath);
+		//auto texturePtr = textureData.get();
+		vk::DeviceSize imageSize = width * height * channels * sizeof(float);
 
 		vk::Buffer stagingBuffer;
 		vk::DeviceMemory stagingBufferMemory;
@@ -43,13 +50,13 @@ namespace core {
 		if (vk::Result result = device.getLogicalDevice().mapMemory(stagingBufferMemory, 0, imageSize, {}, &data); result != vk::Result::eSuccess) {
 			loggerError("failed to map memory");
 		}
-		memcpy(data, texturePtr->textureData.data(), imageSize);
+		memcpy(data, imageData, imageSize);
 		device.getLogicalDevice().unmapMemory(stagingBufferMemory);
 
 
 		ImageInfoRequest imageInfo(device.getLogicalDevice(), device.getPhysicalDevice());
-		imageInfo.width = texturePtr->width;
-		imageInfo.height = texturePtr->height;
+		imageInfo.width = width;
+		imageInfo.height = height;
 		imageInfo.format = format;
 		imageInfo.tiling = vk::ImageTiling::eLinear;
 		imageInfo.usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
@@ -60,7 +67,7 @@ namespace core {
 		Utilities::transitionImageLayout(commandTransitionA.get(), image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, vk::ImageAspectFlagBits::eColor);
 		Utilities::endSingleTimeCommands(device.getGraphicsQueue(), commandTransitionA);
 
-		copyBufferToImage(stagingBuffer, texturePtr->width, texturePtr->height);
+		copyBufferToImage(stagingBuffer, width, height);
 
 		vk::UniqueCommandBuffer commandTransitionB = core::Utilities::beginSingleTimeCommands(device.getLogicalDevice(), commandPool.get());
 		Utilities::transitionImageLayout(commandTransitionB.get(), image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageAspectFlagBits::eColor);
@@ -84,7 +91,7 @@ namespace core {
 	{
 		auto textureData = resource::ResourceManager::loadTextureAsync(filePath);
 		auto texturePtr = textureData.get();
-		vk::DeviceSize imageSize = texturePtr->width * texturePtr->height * texturePtr->numbersOfChannels * sizeof(int);
+		vk::DeviceSize imageSize = texturePtr->width * texturePtr->height * texturePtr->numbersOfChannels;
 
 		vk::Buffer stagingBuffer;
 		vk::DeviceMemory stagingBufferMemory;

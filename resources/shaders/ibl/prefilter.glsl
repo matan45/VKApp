@@ -4,10 +4,11 @@ layout (location = 0) in vec3 position;
 
 layout(location = 0) out vec3 WorldPos;
 
-layout(binding = 0) uniform UniformBufferObject {
+layout(binding = 0) uniform UniformBufferObject
+{
+    mat4 projection;
     mat4 view;
-    mat4 proj;
-} ubo;
+}ubo;
 
 void main()
 {
@@ -21,8 +22,9 @@ layout(location = 0) out vec4 FragColor;
 layout(location = 0) in vec3 WorldPos;
 
 layout(binding = 1) uniform samplerCube environmentMap;
-layout(binding = 2) uniform float roughness;
-
+layout(binding = 2) uniform RoughnessBuffer {
+    float roughness;
+};
 const float PI = 3.14159265359;
 // ----------------------------------------------------------------------------
 float DistributionGGX(vec3 N, vec3 H, float roughness)

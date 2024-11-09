@@ -145,7 +145,7 @@ namespace core
 
 		static void transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image,
 			vk::ImageLayout oldLayout, vk::ImageLayout newLayout,
-			vk::ImageAspectFlags aspectMask, uint32_t layer = 1);
+			vk::ImageAspectFlags aspectMask, uint32_t layer = 1, uint32_t numMips = 1);
 
 		static void createBuffer(const BufferInfoRequest& bufferInfo, vk::Buffer& buffer,
 			vk::DeviceMemory& bufferMemory);

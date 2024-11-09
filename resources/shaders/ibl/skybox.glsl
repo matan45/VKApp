@@ -27,11 +27,12 @@ layout (location = 0) in vec3 WorldPos;
 
 layout(binding = 1) uniform samplerCube environmentMap;
 
+
 void main()
 {		
     vec3 envColor = texture(environmentMap, WorldPos).rgb;
     
-    // HDR tonemap and gamma correct
+    //gamma correct
     envColor = pow(envColor, vec3(1.0/2.2)); 
     
     FragColor = vec4(envColor,1.0);

@@ -110,7 +110,7 @@ namespace core {
 		}
 	}
 
-	void Utilities::transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageAspectFlags aspectMask, uint32_t layer)
+	void Utilities::transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageAspectFlags aspectMask, uint32_t layer, uint32_t numMips)
 	{
 		using enum vk::AccessFlagBits;
 		using enum vk::ImageLayout;
@@ -123,7 +123,7 @@ namespace core {
 
 		barrier.subresourceRange.aspectMask = aspectMask;
 		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.levelCount = numMips;
 		barrier.subresourceRange.baseArrayLayer = 0;
 		barrier.subresourceRange.layerCount = layer;
 

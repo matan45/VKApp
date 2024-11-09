@@ -416,3 +416,4 @@ FodyWeavers.xsd
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+/resources/shaders/ibl/Arches_E_PineTree_3k.hdr

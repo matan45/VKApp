@@ -100,6 +100,7 @@ namespace render
         vk::Image image;
         vk::DeviceMemory imageMemory;
         vk::ImageView imageView;
+        vk::Sampler sampler;
     };
 
     struct CameraViewMatrix
@@ -165,6 +166,7 @@ namespace render
         void drawCube();
         void updateUniformBuffer(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,
                                  const vk::DeviceMemory& uniformBufferMemory) const;
+		void updateRUniformBuffer(float r,const vk::DeviceMemory& uniformBufferMemory) const;
        
     };
 }
