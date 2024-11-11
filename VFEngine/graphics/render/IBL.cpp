@@ -249,7 +249,7 @@ namespace render
 		poolSizes[0].type = vk::DescriptorType::eCombinedImageSampler;
 		poolSizes[0].descriptorCount = 1;
 		poolSizes[1].type = vk::DescriptorType::eUniformBuffer;
-		poolSizes[1].descriptorCount = 2;
+		poolSizes[1].descriptorCount = 1;
 
 		vk::DescriptorPoolCreateInfo poolInfo{};
 		poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
@@ -261,7 +261,7 @@ namespace render
 
 		vk::DescriptorSetLayout descriptorSetLayout;
 
-		std::vector<vk::DescriptorSetLayoutBinding> bindings(3);
+		std::vector<vk::DescriptorSetLayoutBinding> bindings(2);
 
 		bindings[0].binding = 0;
 		bindings[0].descriptorType = vk::DescriptorType::eUniformBuffer;
@@ -274,12 +274,6 @@ namespace render
 		bindings[1].descriptorCount = 1;
 		bindings[1].stageFlags = vk::ShaderStageFlagBits::eFragment;
 		bindings[1].pImmutableSamplers = nullptr;
-
-		bindings[2].binding = 2;
-		bindings[2].descriptorType = vk::DescriptorType::eUniformBuffer;
-		bindings[2].descriptorCount = 1;
-		bindings[2].stageFlags = vk::ShaderStageFlagBits::eFragment;
-		bindings[2].pImmutableSamplers = nullptr;
 
 		vk::DescriptorSetLayoutCreateInfo layoutInfo;
 		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -336,32 +330,14 @@ namespace render
 
 		device.getLogicalDevice().updateDescriptorSets(descriptorWriteUbo, nullptr);
 
-		vk::Buffer roughnessUniformBuffer;
-		vk::DeviceMemory roughnessUniformBufferMemory;
-		core::BufferInfoRequest roughnessBufferRequest(device.getLogicalDevice(), device.getPhysicalDevice());
-		roughnessBufferRequest.usage = vk::BufferUsageFlagBits::eUniformBuffer;
-		roughnessBufferRequest.properties = vk::MemoryPropertyFlagBits::eHostVisible |
-			vk::MemoryPropertyFlagBits::eHostCoherent;
-		roughnessBufferRequest.size = sizeof(float);
-		core::Utilities::createBuffer(roughnessBufferRequest, roughnessUniformBuffer, roughnessUniformBufferMemory);
-
-		vk::DescriptorBufferInfo roughnessBufferInfo;
-		roughnessBufferInfo.buffer = roughnessUniformBuffer;
-		roughnessBufferInfo.offset = 0;
-		roughnessBufferInfo.range = sizeof(float);
-
-		vk::WriteDescriptorSet descriptorWriteRoughness;
-		descriptorWriteRoughness.dstSet = descriptorSet;
-		descriptorWriteRoughness.dstBinding = 2;
-		descriptorWriteRoughness.dstArrayElement = 0;
-		descriptorWriteRoughness.descriptorType = vk::DescriptorType::eUniformBuffer;
-		descriptorWriteRoughness.descriptorCount = 1;
-		descriptorWriteRoughness.pBufferInfo = &roughnessBufferInfo;
-
-		device.getLogicalDevice().updateDescriptorSets(descriptorWriteRoughness, nullptr);
-
 #pragma endregion UniformBuffer
 #pragma region GraphicsPipline
+
+		vk::PushConstantRange pushConstantRange{};
+		pushConstantRange.stageFlags = vk::ShaderStageFlagBits::eFragment;
+		pushConstantRange.offset = 0;
+		pushConstantRange.size = sizeof(float);
+		
 		vk::PipelineInputAssemblyStateCreateInfo inputAssembly;
 		inputAssembly.topology = vk::PrimitiveTopology::eTriangleList;
 		inputAssembly.primitiveRestartEnable = VK_FALSE;
@@ -410,6 +386,8 @@ namespace render
 		vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
 		pipelineLayoutInfo.setLayoutCount = 1;
 		pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+		pipelineLayoutInfo.pushConstantRangeCount = 1;
+		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 		vk::PipelineLayout pipelineLayout = device.getLogicalDevice().createPipelineLayout(pipelineLayoutInfo);
 
 		std::array<vk::DynamicState, 2> dynamicStateEnables = { vk::DynamicState::eViewport,vk::DynamicState::eScissor };
@@ -503,7 +481,7 @@ namespace render
 				viewport.height = static_cast<float>(CUBE_MAP_SIZE * std::pow(0.5f, m));
 				commandBufferDraw.get().setViewport(0, 1, &viewport);
 
-				updateRUniformBuffer(roughness, roughnessUniformBufferMemory);
+				commandBufferDraw.get().pushConstants(pipelineLayout, vk::ShaderStageFlagBits::eFragment, 0, sizeof(float), &roughness);
 				updateUniformBuffer(CameraViewMatrix::captureViews[face], CameraViewMatrix::captureProjection,
 					uboUniformBufferMemory);
 
@@ -590,9 +568,6 @@ namespace render
 
 		device.getLogicalDevice().destroyBuffer(uboUniformBuffer);
 		device.getLogicalDevice().freeMemory(uboUniformBufferMemory);
-
-		device.getLogicalDevice().destroyBuffer(roughnessUniformBuffer);
-		device.getLogicalDevice().freeMemory(roughnessUniformBufferMemory);
 
 		device.getLogicalDevice().destroyFramebuffer(imageHelper.framebuffer);
 		device.getLogicalDevice().freeMemory(imageHelper.memory);
@@ -1531,17 +1506,4 @@ namespace render
 			device.getLogicalDevice().unmapMemory(uniformBufferMemory);
 		}
 	}
-
-	void IBL::updateRUniformBuffer(float r, const vk::DeviceMemory& uniformBufferMemory) const
-	{
-
-		void* data;
-		vk::Result result = device.getLogicalDevice().mapMemory(uniformBufferMemory, 0, sizeof(float), {}, &data);
-		if (result == vk::Result::eSuccess)
-		{
-			memcpy(data, &r, sizeof(float));
-			device.getLogicalDevice().unmapMemory(uniformBufferMemory);
-		}
-	}
-
 }

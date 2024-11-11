@@ -22,7 +22,7 @@ layout(location = 0) out vec4 FragColor;
 layout(location = 0) in vec3 WorldPos;
 
 layout(binding = 1) uniform samplerCube environmentMap;
-layout(binding = 2) uniform RoughnessBuffer {
+layout(push_constant) uniform RoughnessBuffer {
     float roughness;
 };
 const float PI = 3.14159265359;
