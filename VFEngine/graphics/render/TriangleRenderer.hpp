@@ -38,10 +38,10 @@ namespace render {
 		vk::RenderPass renderPass;
 		std::vector<vk::Framebuffer> framebuffers;
 
-		std::vector<core::OffscreenResources>& offscreenResources;
+		core::OffscreenResources& offscreenResources;
 
 	public:
-		explicit TriangleRenderer(core::Device& device, core::SwapChain& swapChain, std::vector<core::OffscreenResources>& offscreenResources);
+		explicit TriangleRenderer(core::Device& device, core::SwapChain& swapChain, core::OffscreenResources& offscreenResources);
 		~TriangleRenderer()=default;
 
 		void init();

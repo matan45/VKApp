@@ -9,7 +9,7 @@
 namespace render
 {
 	IBL::IBL(core::Device& device, core::SwapChain& swapChain,
-		std::vector<core::OffscreenResources>& offscreenResources) : device{ device },
+		core::OffscreenResources& offscreenResources) : device{ device },
 		swapChain{ swapChain },
 		offscreenResources{ offscreenResources }
 	{
@@ -796,10 +796,10 @@ namespace render
 		skybox.graphicsPipeline = device.getLogicalDevice().createGraphicsPipeline(nullptr, pipelineInfo).value;
 #pragma endregion GraphicsPipline
 #pragma region FrameBuffers
-		skybox.framebuffers.resize(offscreenResources.size());
+		skybox.framebuffers.resize(offscreenResources.colorImages.size());
 
 		for (uint32_t i = 0; i < skybox.framebuffers.size(); i++) {
-			vk::ImageView viewImage = offscreenResources[i].colorImageView;
+			vk::ImageView viewImage = offscreenResources.colorImages[i].colorImageView;
 
 			vk::FramebufferCreateInfo framebufferInfo{};
 			framebufferInfo.renderPass = skybox.renderPass;

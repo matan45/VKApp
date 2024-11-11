@@ -21,9 +21,9 @@ namespace render {
 		TriangleRenderer* triangleRenderer{ nullptr };
 		IBL* iblRenderer{ nullptr };
 
-		std::vector<core::OffscreenResources>& offscreenResources;
+		core::OffscreenResources& offscreenResources;
 	public:
-		explicit RenderPassHandler(core::Device& device, core::SwapChain& swapChain, std::vector<core::OffscreenResources>& offscreenResources);
+		explicit RenderPassHandler(core::Device& device, core::SwapChain& swapChain, core::OffscreenResources& offscreenResources);
 		~RenderPassHandler();
 
 		void init();

@@ -152,7 +152,7 @@ namespace core {
 		}
 
 		else if (oldLayout == eUndefined && newLayout == eDepthStencilAttachmentOptimal) {
-			barrier.srcAccessMask = eNoneKHR;
+			barrier.srcAccessMask = eNone;
 			barrier.dstAccessMask = eDepthStencilAttachmentWrite;
 			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
 			destinationStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;

@@ -6,7 +6,7 @@
 #include "print/Logger.hpp"
 
 namespace render {
-	TriangleRenderer::TriangleRenderer(core::Device& device, core::SwapChain& swapChain, std::vector<core::OffscreenResources>& offscreenResources) : device{ device },
+	TriangleRenderer::TriangleRenderer(core::Device& device, core::SwapChain& swapChain, core::OffscreenResources& offscreenResources) : device{ device },
 		swapChain{ swapChain }, offscreenResources{ offscreenResources }
 	{
 	}
@@ -193,10 +193,10 @@ namespace render {
 
 	void TriangleRenderer::createFrameBuffers()
 	{
-		framebuffers.resize(offscreenResources.size());
+		framebuffers.resize(offscreenResources.colorImages.size());
 
 		for (uint32_t i = 0; i < framebuffers.size(); i++) {
-			vk::ImageView viewImage = offscreenResources[i].colorImageView;
+			vk::ImageView viewImage = offscreenResources.colorImages[i].colorImageView;
 
 			vk::FramebufferCreateInfo framebufferInfo{};
 			framebufferInfo.renderPass = renderPass;
@@ -215,11 +215,11 @@ namespace render {
 		vk::AttachmentDescription colorAttachment{};
 		colorAttachment.format = swapChain.getSwapchainImageFormat();
 		colorAttachment.samples = vk::SampleCountFlagBits::e1;
-		colorAttachment.loadOp = vk::AttachmentLoadOp::eClear;
+		colorAttachment.loadOp = vk::AttachmentLoadOp::eLoad;
 		colorAttachment.storeOp = vk::AttachmentStoreOp::eStore;
 		colorAttachment.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
 		colorAttachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-		colorAttachment.initialLayout = vk::ImageLayout::eUndefined;
+		colorAttachment.initialLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 		colorAttachment.finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 
 		vk::AttachmentReference colorAttachmentRef{};

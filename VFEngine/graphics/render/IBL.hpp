@@ -109,7 +109,7 @@ namespace render
     private:
         core::Device& device;
         core::SwapChain& swapChain;
-        std::vector<core::OffscreenResources>& offscreenResources;
+        core::OffscreenResources& offscreenResources;
         vk::UniqueCommandPool commandPool;
         std::shared_ptr<core::Texture> hdrTexture;
 
@@ -128,7 +128,7 @@ namespace render
 
     public:
         explicit IBL(core::Device& device, core::SwapChain& swapChain,
-                     std::vector<core::OffscreenResources>& offscreenResources);
+                     core::OffscreenResources& offscreenResources);
         ~IBL() = default;
 
         void recordCommandBuffer(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const;

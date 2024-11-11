@@ -5,7 +5,7 @@
 #include "IBL.hpp"
 
 namespace render {
-	RenderPassHandler::RenderPassHandler(core::Device& device, core::SwapChain& swapChain, std::vector<core::OffscreenResources>& offscreenResources) : device{ device },
+	RenderPassHandler::RenderPassHandler(core::Device& device, core::SwapChain& swapChain, core::OffscreenResources& offscreenResources) : device{ device },
 		swapChain{ swapChain }, offscreenResources{ offscreenResources }
 	{
 		triangleRenderer = new TriangleRenderer(device, swapChain, offscreenResources);
@@ -26,20 +26,20 @@ namespace render {
 
 	void RenderPassHandler::recreate() const
 	{
-		triangleRenderer->recreate();
 		iblRenderer->recreate();
+		triangleRenderer->recreate();
 	}
 
 	void RenderPassHandler::cleanUp() const
 	{
-		triangleRenderer->cleanUp();
 		iblRenderer->cleanUp();
+		triangleRenderer->cleanUp();
 	}
 
 	void RenderPassHandler::draw(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const
 	{
-		triangleRenderer->recordCommandBuffer(commandBuffer,imageIndex);
 		iblRenderer->recordCommandBuffer(commandBuffer, imageIndex);
+		triangleRenderer->recordCommandBuffer(commandBuffer, imageIndex);
 	}
 
 }
