@@ -3,6 +3,7 @@
 #include "../core/OffScreen.hpp"
 #include "../core/Shader.hpp"
 #include "../core/Texture.hpp"
+#include "components/Components.hpp"
 
 namespace core
 {
@@ -112,6 +113,7 @@ namespace render
         core::OffscreenResources& offscreenResources;
         vk::UniqueCommandPool commandPool;
         std::shared_ptr<core::Texture> hdrTexture;
+        components::CameraComponent* camera{ nullptr };
 
         static constexpr uint32_t CUBE_MAP_SIZE = 512;
         
@@ -136,6 +138,10 @@ namespace render
         void init(std::string_view path);
         void recreate();
         void cleanUp();
+
+        void setCamera(components::CameraComponent* _camera) {
+            camera = _camera;
+        }
 
         const ImageData& getBrdfLUTImage()const {
             return brdfLUTImage;

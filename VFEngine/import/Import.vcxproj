@@ -102,15 +102,15 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="controllers\files\FileUtils.hpp" />
     <ClInclude Include="controllers\Import.hpp" />
+    <ClInclude Include="controllers\files\FileUtils.hpp" />
     <ClInclude Include="types\Audio.hpp" />
     <ClInclude Include="types\Mesh.hpp" />
     <ClInclude Include="types\Texture.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="controllers\files\FileUtils.cpp" />
     <ClCompile Include="controllers\Import.cpp" />
+    <ClCompile Include="controllers\files\FileUtils.cpp" />
     <ClCompile Include="types\Audio.cpp" />
     <ClCompile Include="types\Mesh.cpp" />
     <ClCompile Include="types\Texture.cpp" />

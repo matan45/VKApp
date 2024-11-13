@@ -9,7 +9,7 @@ namespace core {
 
 namespace render {
 
-	class TriangleRenderer;
+	class ClearColor;
 	class IBL;
 
 	class RenderPassHandler
@@ -18,7 +18,7 @@ namespace render {
 		core::Device& device;
 		core::SwapChain& swapChain;
 
-		TriangleRenderer* triangleRenderer{ nullptr };
+		ClearColor* clearColor{ nullptr };
 		IBL* iblRenderer{ nullptr };
 
 		core::OffscreenResources& offscreenResources;

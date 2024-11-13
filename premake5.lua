@@ -150,6 +150,7 @@ project "Graphics"
 	  "dependencies/imgui",
 	  "dependencies/imgui/backends",
       "dependencies/glm",
+	  "dependencies/entt/single_include",
       "dependencies/stb",
       "VFEngine/utilities",           -- Utilities headers
       "VFEngine/window/controllers",           -- Utilities headers

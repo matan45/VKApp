@@ -31,35 +31,36 @@ namespace render
 
 	void IBL::recordCommandBuffer(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex) const
 	{
-		//TODO get the camera component
-		updateUniformBuffer(CameraViewMatrix::captureViews[1], CameraViewMatrix::captureProjection, skybox.uniformBufferMemory);
-		vk::RenderPassBeginInfo renderPassInfo{};
-		renderPassInfo.renderPass = skybox.renderPass;
-		renderPassInfo.framebuffer = skybox.framebuffers[imageIndex];
-		renderPassInfo.renderArea.offset.x = 0;
-		renderPassInfo.renderArea.offset.y = 0;
-		renderPassInfo.renderArea.extent = swapChain.getSwapchainExtent();
+		if (camera) {
+			updateUniformBuffer(camera->viewMatrix, camera->projectionMatrix, skybox.uniformBufferMemory);
+			vk::RenderPassBeginInfo renderPassInfo{};
+			renderPassInfo.renderPass = skybox.renderPass;
+			renderPassInfo.framebuffer = skybox.framebuffers[imageIndex];
+			renderPassInfo.renderArea.offset.x = 0;
+			renderPassInfo.renderArea.offset.y = 0;
+			renderPassInfo.renderArea.extent = swapChain.getSwapchainExtent();
 
-		std::array<vk::ClearValue, 1> clearValues{};
-		clearValues[0].color = vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});
-		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		renderPassInfo.pClearValues = clearValues.data();
+			std::array<vk::ClearValue, 1> clearValues{};
+			clearValues[0].color = vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});
+			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+			renderPassInfo.pClearValues = clearValues.data();
 
-		// Begin render pass
-		commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+			// Begin render pass
+			commandBuffer.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
 
-		// Bind the graphics pipeline
-		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, skybox.graphicsPipeline);
-		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, skybox.pipelineLayout, 0, skybox.descriptorSet,
-			{});
+			// Bind the graphics pipeline
+			commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, skybox.graphicsPipeline);
+			commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, skybox.pipelineLayout, 0, skybox.descriptorSet,
+				{});
 
-		// Bind vertex buffer
-		vk::DeviceSize offsets[] = { 0 };
-		commandBuffer.bindVertexBuffers(0, skybox.vertexBuffer, offsets);
-		commandBuffer.draw(static_cast<uint32_t>(cubeVertices.size()), 1, 0, 0);
+			// Bind vertex buffer
+			vk::DeviceSize offsets[] = { 0 };
+			commandBuffer.bindVertexBuffers(0, skybox.vertexBuffer, offsets);
+			commandBuffer.draw(static_cast<uint32_t>(cubeVertices.size()), 1, 0, 0);
 
-		// End render pass
-		commandBuffer.endRenderPass();
+			// End render pass
+			commandBuffer.endRenderPass();
+		}
 	}
 
 	void IBL::init(std::string_view path)
