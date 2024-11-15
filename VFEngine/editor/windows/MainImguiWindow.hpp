@@ -2,17 +2,23 @@
 #include "imguiHandler/ImguiWindow.hpp"
 #include "nfd/FileDialog.hpp"
 #include "CoreInterface.hpp"
-
+#include <filesystem>
+namespace fs = std::filesystem;
 namespace windows {
 	class MainImguiWindow : public controllers::imguiHandler::ImguiWindow
 	{
 	private:
 		controllers::CoreInterface& coreInterface;
 		int windowFlags;
+		//import settings
 		nfd::FileDialog fileDialog;
 		std::vector<std::string> files;
 		std::vector<bool> isFlip;
 		bool openModal = false;
+
+		//ibl window
+		fs::path selectedIBLFile;
+		bool showIBLWindow = false;
 	public:
 		explicit MainImguiWindow(controllers::CoreInterface& coreInterface);
 		~MainImguiWindow() override = default;
@@ -26,6 +32,8 @@ namespace windows {
 		void handleFileMenu();
 		void handleSettingsMenu();
 		void handleAddMenu();
+
+		void iblWindow();
 	};
 }
 

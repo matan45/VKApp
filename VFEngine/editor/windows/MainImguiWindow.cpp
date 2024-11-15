@@ -1,9 +1,10 @@
 #include "MainImguiWindow.hpp"
 #include "Import.hpp"
-#include "print/EditorLogger.hpp"
 #include "config/Config.hpp"
 #include "files/FileUtils.hpp"
 #include <imgui.h>
+
+#include "string/StringUtil.hpp"
 
 
 namespace windows
@@ -32,6 +33,10 @@ namespace windows
                              ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_None);
 
             menuBar();
+            if (showIBLWindow)
+            {
+                iblWindow();
+            }
         }
         ImGui::End();
     }
@@ -159,11 +164,41 @@ namespace windows
         {
             if (ImGui::MenuItem("IBL"))
             {
+                showIBLWindow = true;
             }
             else if (ImGui::MenuItem("Terrain"))
             {
             }
             ImGui::EndMenu();
         }
+    }
+
+    void MainImguiWindow::iblWindow()
+    {
+        ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
+        if (ImGui::Begin("IBL", &showIBLWindow))
+        {
+            ImGui::Text("IBL Window");
+            if (ImGui::Button("Select"))
+            {
+                std::vector<std::pair<std::wstring, std::wstring>> fileTypes = {
+                    {L"Hdr Files (*.vfHdr)", L"*.vfHdr"}
+                };
+
+                selectedIBLFile = fileDialog.openFileDialog(fileTypes);
+            }
+            ImGui::SameLine();
+            ImGui::Text(StringUtil::wstringToUtf8(selectedIBLFile.wstring()).c_str());
+            //maybe todo preview of the image that loaded
+
+            if (ImGui::Button("Apply", ImVec2(120, 0)))
+            {
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Remove", ImVec2(120, 0)))
+            {
+            }
+        }
+        ImGui::End();
     }
 }

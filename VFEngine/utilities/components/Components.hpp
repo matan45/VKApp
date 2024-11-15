@@ -23,6 +23,10 @@ namespace components {
 		std::string name;
 	};
 
+	struct IBLComponent {
+		std::string fileName;
+	};
+
 	struct TransformComponent {
 		glm::vec3 position{ 0.0f };
 		glm::vec3 rotation{ 0.0f }; // Euler angles

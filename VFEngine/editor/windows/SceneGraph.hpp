@@ -17,11 +17,11 @@ namespace windows {
 		void draw() override;
 
 	private:
-		void drawEntityNode(scene::Entity entity);  // Helper function to display entity hierarchy
-		void drawDetails(entt::entity entity) const;     // Helper function to display selected entity's details
-		void drawDynamicComponent(scene::Entity entity) const; // Helper for dynamically rendering components
+		void drawEntityNode(scene::Entity entity); 
+		void drawDetails(entt::entity entity) const;
+		void drawDynamicComponent(scene::Entity entity) const;
 
-		void drawDragDropTarget(scene::Entity entity) const; // Helper for drag-and-drop logic
+		void drawDragDropTarget(scene::Entity entity) const;
 	};
 }
 
