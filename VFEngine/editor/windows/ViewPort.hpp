@@ -2,9 +2,6 @@
 #include "imguiHandler/ImguiWindow.hpp"
 #include "OffScreen.hpp"
 
-#include <memory>
-#include <imgui.h>
-
 
 namespace windows {
 	class ViewPort : public controllers::imguiHandler::ImguiWindow

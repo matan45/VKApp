@@ -1,35 +1,46 @@
 #include "OffScreenController.hpp"
 #include "../core/VulkanContext.hpp"
 #include "../imguiPass/OffScreenViewPort.hpp"
+#include "../render/IBL.hpp"
+#include "../render/RenderPassHandler.hpp"
 
-namespace controllers {
+namespace controllers
+{
+    OffScreenController::OffScreenController()
+        : swapChain{*core::VulkanContext::getSwapChain()}, device{*core::VulkanContext::getDevice()}
+    {
+        offScreen = new imguiPass::OffScreenViewPort(device, swapChain);
+    }
 
-	OffScreenController::OffScreenController()
-		:swapChain{ *core::VulkanContext::getSwapChain() }, device{ *core::VulkanContext::getDevice() }
-	{
-		offScreen = new imguiPass::OffScreenViewPort(device, swapChain);
-	}
+    OffScreenController::~OffScreenController()
+    {
+        delete offScreen;
+    }
 
-	OffScreenController::~OffScreenController()
-	{
-		delete offScreen;
-	}
+    void OffScreenController::init()
+    {
+        offScreen->init();
+    }
 
-	void OffScreenController::init()
-	{
-		offScreen->init();
-	}
+    void OffScreenController::cleanUp() const
+    {
+        offScreen->cleanUp();
+    }
 
-	void OffScreenController::cleanUp() const
-	{
-		offScreen->cleanUp();
-	}
+    void OffScreenController::iblAdd(std::string_view iblPath, components::CameraComponent& camera)
+    {
+        render::IBL* ibl = offScreen->getRenderPassHandler()->getIBL();
+        ibl->init(iblPath);
+        ibl->setCamera(&camera);
+    }
 
-	void* OffScreenController::render()
-	{
-		return offScreen->render();
-	}
+    void OffScreenController::iblRemove()
+    {
+        offScreen->getRenderPassHandler()->getIBL()->remove();
+    }
 
-	
-
+    void* OffScreenController::render()
+    {
+        return offScreen->render();
+    }
 }

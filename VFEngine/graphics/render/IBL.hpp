@@ -137,6 +137,7 @@ namespace render
 
         void init(std::string_view path);
         void recreate();
+        void remove();
         void cleanUp();
 
         void setCamera(components::CameraComponent* _camera) {
@@ -158,6 +159,8 @@ namespace render
         void drawCube();
         void updateUniformBuffer(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix,
                                  const vk::DeviceMemory& uniformBufferMemory) const;
+
+        void cleanUpImage(const ImageData& image) const;
        
     };
 }

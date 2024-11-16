@@ -21,7 +21,6 @@ namespace render {
 	void RenderPassHandler::init()
 	{
 		clearColor->init();
-		iblRenderer->init("../../resources/shaders/ibl/Arches_E_PineTree_3k.vfHdr");
 	}
 
 	void RenderPassHandler::recreate() const

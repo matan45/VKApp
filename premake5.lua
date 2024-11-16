@@ -65,6 +65,7 @@ project "Core"
       "VFEngine/graphics/controllers",   -- Graphics headers
       "VFEngine/window/controllers",   -- Graphics headers
 	  "dependencies/spdlog/include",
+	  "dependencies/entt/single_include",
       "VFEngine/utilities",             -- Utilities headers (if used in Core)
 	  "dependencies/imgui",
 	  "dependencies/glm",

@@ -111,9 +111,9 @@
     <ClInclude Include="core\VulkanContext.hpp" />
     <ClInclude Include="imguiPass\ImguiRender.hpp" />
     <ClInclude Include="imguiPass\OffScreenViewPort.hpp" />
+    <ClInclude Include="render\ClearColor.hpp" />
     <ClInclude Include="render\IBL.hpp" />
     <ClInclude Include="render\RenderPassHandler.hpp" />
-    <ClInclude Include="render\ClearColor.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="controllers\Graphics.cpp" />
@@ -130,9 +130,9 @@
     <ClCompile Include="core\VulkanContext.cpp" />
     <ClCompile Include="imguiPass\ImguiRender.cpp" />
     <ClCompile Include="imguiPass\OffScreenViewPort.cpp" />
+    <ClCompile Include="render\ClearColor.cpp" />
     <ClCompile Include="render\IBL.cpp" />
     <ClCompile Include="render\RenderPassHandler.cpp" />
-    <ClCompile Include="render\ClearColor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Window\Window.vcxproj">

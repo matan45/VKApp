@@ -9,7 +9,8 @@
 
 namespace windows
 {
-    MainImguiWindow::MainImguiWindow(controllers::CoreInterface& coreInterface) : coreInterface{coreInterface}
+    MainImguiWindow::MainImguiWindow(controllers::CoreInterface& coreInterface, controllers::OffScreen& offscreen)
+        : coreInterface{coreInterface}, offscreen{offscreen}
     {
         ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking |
             ImGuiWindowFlags_NoBackground;
@@ -188,15 +189,25 @@ namespace windows
                 selectedIBLFile = fileDialog.openFileDialog(fileTypes);
             }
             ImGui::SameLine();
-            ImGui::Text(StringUtil::wstringToUtf8(selectedIBLFile.wstring()).c_str());
-            //maybe todo preview of the image that loaded
+            std::string filePath = StringUtil::wstringToUtf8(selectedIBLFile.wstring());
+            ImGui::Text(filePath.c_str());
+            if (ImGui::Button("Preview", ImVec2(120, 0)))
+            {
+                //TODO preview of the image that loaded
+            }
 
             if (ImGui::Button("Apply", ImVec2(120, 0)))
             {
+                //offscreen.iblAdd(filePath,);
             }
             ImGui::SameLine();
+            ImGui::SetCursorPosX(
+                ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Close").x - ImGui::GetStyle().FramePadding.x *
+                2);
             if (ImGui::Button("Remove", ImVec2(120, 0)))
             {
+                selectedIBLFile = "";
+                offscreen.iblRemove();
             }
         }
         ImGui::End();

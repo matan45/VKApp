@@ -2,13 +2,17 @@
 #include "imguiHandler/ImguiWindow.hpp"
 #include "nfd/FileDialog.hpp"
 #include "CoreInterface.hpp"
+#include "OffScreen.hpp"
 #include <filesystem>
+
+
 namespace fs = std::filesystem;
 namespace windows {
 	class MainImguiWindow : public controllers::imguiHandler::ImguiWindow
 	{
 	private:
 		controllers::CoreInterface& coreInterface;
+		controllers::OffScreen& offscreen;
 		int windowFlags;
 		//import settings
 		nfd::FileDialog fileDialog;
@@ -20,7 +24,7 @@ namespace windows {
 		fs::path selectedIBLFile;
 		bool showIBLWindow = false;
 	public:
-		explicit MainImguiWindow(controllers::CoreInterface& coreInterface);
+		explicit MainImguiWindow(controllers::CoreInterface& coreInterface,controllers::OffScreen& offscreen);
 		~MainImguiWindow() override = default;
 
 		void draw() override;
