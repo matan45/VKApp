@@ -16,7 +16,7 @@ namespace handlers
     void WindowImguiHandler::init() const
     {
         controllers::imguiHandler::ImguiWindowHandler::add(
-            std::make_shared<windows::MainImguiWindow>(coreInterface, offscreen, sceneGraphSystem));
+            std::make_shared<windows::MainImguiWindow>(coreInterface, offscreen));
         controllers::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ConsoleLog>());
         controllers::imguiHandler::ImguiWindowHandler::add(std::make_shared<windows::ContentBrowser>());
         controllers::imguiHandler::ImguiWindowHandler::add(

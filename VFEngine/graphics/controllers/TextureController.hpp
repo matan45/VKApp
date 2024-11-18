@@ -1,6 +1,5 @@
 #pragma once
-#include <memory>
-#include <string>
+
 #include "../core/Texture.hpp"
 
 namespace controllers {

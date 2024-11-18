@@ -3,10 +3,9 @@
 #include "nfd/FileDialog.hpp"
 #include "CoreInterface.hpp"
 #include "OffScreen.hpp"
+#include "EditorTextureController.hpp"
+
 #include <filesystem>
-
-#include "scene/SceneGraphSystem.hpp"
-
 
 namespace fs = std::filesystem;
 
@@ -27,12 +26,12 @@ namespace windows
         //ibl window
         fs::path selectedIBLFile;
         bool showIBLWindow = false;
-        std::shared_ptr<scene::SceneGraphSystem> sceneGraphSystem;
+        bool deletePreview = false;
+        dto::EditorTexture* iblPreview{nullptr};
 
     public:
-        explicit MainImguiWindow(controllers::CoreInterface& coreInterface, controllers::OffScreen& offscreen,
-                                 std::shared_ptr<scene::SceneGraphSystem> sceneGraphSystem);
-        ~MainImguiWindow() override = default;
+        explicit MainImguiWindow(controllers::CoreInterface& coreInterface, controllers::OffScreen& offscreen);
+        ~MainImguiWindow() override;
 
         void draw() override;
 
