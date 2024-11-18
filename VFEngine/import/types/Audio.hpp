@@ -1,12 +1,13 @@
 #pragma once
 #include <string>
+#include "config/Config.hpp"
 #include "resource/Types.hpp"
 
 namespace types {
 	class Audio
 	{
 	public:
-		void loadFromFile(std::string_view path, std::string_view fileName, std::string_view extension, std::string_view location) const;
+		void loadFromFile(const importConfig::ImportFiles& file, std::string_view fileName, std::string_view location) const;
 
 	private:
 		void loadOggFile(std::string_view path, std::string_view fileName, std::string_view location) const;

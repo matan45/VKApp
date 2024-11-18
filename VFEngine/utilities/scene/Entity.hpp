@@ -21,8 +21,8 @@ namespace scene {
 		explicit Entity(const std::string& name)
 		{
 			entityHandle = EntityRegistry::getRegistry().create();
-			addComponent<components::Name>(name); // Set the name on creation
-			addComponent<components::Transform>();
+			addComponent<components::NameComponent>(name); // Set the name on creation
+			addComponent<components::TransformComponent>();
 		}
 
 		// Default constructor creates an invalid entity
@@ -98,8 +98,8 @@ namespace scene {
 
 		// Get the entity name
 		std::string getName() {
-			if (hasComponent<components::Name>()) {
-				return getComponent<components::Name>().name; // Access the 'name' field
+			if (hasComponent<components::NameComponent>()) {
+				return getComponent<components::NameComponent>().name; // Access the 'name' field
 			}
 			else {
 				return "Unnamed Entity"; // Return a default name if the entity doesn't have a Name component
@@ -108,7 +108,7 @@ namespace scene {
 
 		// Set the entity name
 		void setName(std::string_view newName) {
-			addOrReplaceComponent<components::Name>(std::string(newName));
+			addOrReplaceComponent<components::NameComponent>(std::string(newName));
 		}
 
 		// Add a child entity

@@ -9,6 +9,7 @@ namespace resource {
 		inline static const size_t chunkSize = 1024 * 1024;  // Example chunk size for streaming
 	public:
 		static TextureData loadTexture(std::string_view path);
+		static HDRData loadHDR(std::string_view path);
 	};
 
 }

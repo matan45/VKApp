@@ -20,6 +20,10 @@ namespace scene {
 
 	void SceneGraphSystem::removeEntity(Entity& entity)
 	{
+		if (!entity.isValid() || entity == root) {
+			vfLogError("Cannot remove the root entity or an invalid entity.");
+			return;
+		}
 		if (!entity.isValid()) {
 			vfLogError("Invalid entity.");
 			return;
@@ -61,10 +65,10 @@ namespace scene {
 	{
 		std::vector<Entity> foundEntities;
 
-		auto view = EntityRegistry::getRegistry().view<components::Name>(); // Create a view of entities with a Name component
+		auto view = EntityRegistry::getRegistry().view<components::NameComponent>(); // Create a view of entities with a Name component
 
 		for (auto entityHandle : view) {
-			const auto& entityName = view.get<components::Name>(entityHandle).name;
+			const auto& entityName = view.get<components::NameComponent>(entityHandle).name;
 			if (entityName == name) {
 				foundEntities.emplace_back(entityHandle); // Wrap the entt::entity handle in an Entity object
 			}
@@ -79,17 +83,30 @@ namespace scene {
 		updateChildWorldTransforms(root, identityMatrix); // Begin updating from the root entity
 	}
 
+	void SceneGraphSystem::updateCamera()
+	{
+		auto view = EntityRegistry::getRegistry().view<components::CameraComponent, components::TransformComponent>();
+
+		for (auto entityHandle : view) {
+			auto entity = Entity(entityHandle);
+			auto& camera = entity.getComponent<components::CameraComponent>();
+			auto& transform = entity.getComponent<components::TransformComponent>();
+
+			camera.updateViewMatrix(transform.position, transform.rotation);
+		}
+	}
+
 	void SceneGraphSystem::markTransformDirty(Entity& entity) const
 	{
-		if (entity.hasComponent<components::Transform>()) {
-			auto& transform = entity.getComponent<components::Transform>();
+		if (entity.hasComponent<components::TransformComponent>()) {
+			auto& transform = entity.getComponent<components::TransformComponent>();
 			transform.isDirty = true;
 		}
 	}
 
 	void SceneGraphSystem::updateChildWorldTransforms(Entity& entity, const glm::mat4& parentWorldTransform)
 	{
-		auto& transform = entity.getComponent<components::Transform>();
+		auto& transform = entity.getComponent<components::TransformComponent>();
 
 		// Check if the transform or any ancestor's transform is dirty
 		if (transform.isDirty) {
@@ -97,7 +114,7 @@ namespace scene {
 			glm::mat4 worldMatrix = parentWorldTransform * transform.GetMatrix();
 
 			// Update or replace the WorldTransform component
-			entity.addOrReplaceComponent<components::WorldTransform>().worldMatrix = worldMatrix;
+			entity.addOrReplaceComponent<components::WorldTransformComponent>().worldMatrix = worldMatrix;
 
 			// Mark the transform as clean
 			transform.isDirty = false;

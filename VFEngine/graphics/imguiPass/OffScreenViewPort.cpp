@@ -60,7 +60,7 @@ namespace imguiPass {
 		device.getGraphicsQueue().waitIdle();
 
 		// Return the descriptor set for ImGui rendering
-		return offscreenResources[core::RenderManager::getImageIndex()].descriptorSet;
+		return offscreenResources.colorImages[core::RenderManager::getImageIndex()].descriptorSet;
 	}
 
 	void OffScreenViewPort::cleanUp() const
@@ -73,14 +73,14 @@ namespace imguiPass {
 
 		device.getLogicalDevice().destroySampler(sampler);
 
-		for (auto const& resources : offscreenResources) {
+		for (auto const& resources : offscreenResources.colorImages) {
 			device.getLogicalDevice().destroyImageView(resources.colorImageView);
-			device.getLogicalDevice().destroyImageView(resources.depthImageView);
 			device.getLogicalDevice().destroyImage(resources.colorImage);
-			device.getLogicalDevice().destroyImage(resources.depthImage);
 			device.getLogicalDevice().freeMemory(resources.colorImageMemory);
-			device.getLogicalDevice().freeMemory(resources.depthImageMemory);
 		}
+		device.getLogicalDevice().destroyImageView(offscreenResources.depthImage.depthImageView);
+		device.getLogicalDevice().destroyImage(offscreenResources.depthImage.depthImage);
+		device.getLogicalDevice().freeMemory(offscreenResources.depthImage.depthImageMemory);
 	}
 
 	void OffScreenViewPort::draw(const vk::CommandBuffer& commandBuffer) const
@@ -109,26 +109,39 @@ namespace imguiPass {
 		imageDepthInfo.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
 		imageDepthInfo.properties = vk::MemoryPropertyFlagBits::eDeviceLocal;
 
+		core::DepthImage depth;
+		// Create depth image
+		core::Utilities::createImage(imageDepthInfo, depth.depthImage, depth.depthImageMemory);
+		core::ImageViewInfoRequest imageDepthRequest(device.getLogicalDevice(), depth.depthImage);
+
+		imageDepthRequest.format = depthFormat;
+		imageDepthRequest.aspectFlags = vk::ImageAspectFlagBits::eDepth;
+		core::Utilities::createImageView(imageDepthRequest, depth.depthImageView);
+
+		vk::UniqueCommandBuffer trasitionDepthImage = core::Utilities::beginSingleTimeCommands(device.getLogicalDevice(), commandPool->getCommandPool());
+		core::Utilities::transitionImageLayout(trasitionDepthImage.get(), depth.depthImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal, vk::ImageAspectFlagBits::eDepth| vk::ImageAspectFlagBits::eStencil);
+		core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), trasitionDepthImage);
+
+		offscreenResources.depthImage = std::move(depth);
+
+		offscreenResources.colorImages.reserve(swapChain.getImageCount());
+
 		for (size_t i = 0; i < swapChain.getImageCount(); i++) {
-			OffscreenResources resources;
-
+			core::ColorImage color;
 			// Create color image for off-screen rendering
-			core::Utilities::createImage(imageColorInfo, resources.colorImage, resources.colorImageMemory);
-			core::ImageViewInfoRequest imageColorViewRequest(device.getLogicalDevice(), resources.colorImage);
+			core::Utilities::createImage(imageColorInfo, color.colorImage, color.colorImageMemory);
+			core::ImageViewInfoRequest imageColorViewRequest(device.getLogicalDevice(), color.colorImage);
 			imageColorViewRequest.format = colorFormat;
-			core::Utilities::createImageView(imageColorViewRequest, resources.colorImageView);
+			core::Utilities::createImageView(imageColorViewRequest, color.colorImageView);
 
-			// Create depth image
-			core::Utilities::createImage(imageDepthInfo, resources.depthImage, resources.depthImageMemory);
-			core::ImageViewInfoRequest imageDepthRequest(device.getLogicalDevice(), resources.depthImage);
-			imageDepthRequest.format = depthFormat;
-			imageDepthRequest.aspectFlags = vk::ImageAspectFlagBits::eDepth;
-			core::Utilities::createImageView(imageDepthRequest, resources.depthImageView);
+			vk::UniqueCommandBuffer trasitionColorImage = core::Utilities::beginSingleTimeCommands(device.getLogicalDevice(), commandPool->getCommandPool());
+			core::Utilities::transitionImageLayout(trasitionColorImage.get(), color.colorImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eShaderReadOnlyOptimal, vk::ImageAspectFlagBits::eColor);
+			core::Utilities::endSingleTimeCommands(device.getGraphicsQueue(), trasitionColorImage);
 
-			updateDescriptorSets(resources.descriptorSet, resources.colorImageView);
+			updateDescriptorSets(color.descriptorSet, color.colorImageView);
 
 			// Store resources
-			offscreenResources.push_back(std::move(resources));
+			offscreenResources.colorImages.push_back(std::move(color));
 		}
 	}
 

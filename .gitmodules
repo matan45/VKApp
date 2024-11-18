@@ -31,3 +31,6 @@
 [submodule "dependencies/IconFontCppHeaders"]
 	path = dependencies/IconFontCppHeaders
 	url = https://github.com/juliettef/IconFontCppHeaders.git
+[submodule "dependencies/tinyexr"]
+	path = dependencies/tinyexr
+	url = https://github.com/syoyo/tinyexr.git

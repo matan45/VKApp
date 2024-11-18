@@ -65,6 +65,7 @@ project "Core"
       "VFEngine/graphics/controllers",   -- Graphics headers
       "VFEngine/window/controllers",   -- Graphics headers
 	  "dependencies/spdlog/include",
+	  "dependencies/entt/single_include",
       "VFEngine/utilities",             -- Utilities headers (if used in Core)
 	  "dependencies/imgui",
 	  "dependencies/glm",
@@ -99,10 +100,13 @@ project "Import"
       "VFEngine/utilities",             -- Utilities headers
       "dependencies/stb",               -- stb headers
       "dependencies/dr_libs",           -- dr_mp3.h, dr_wav.h, and other dr_libs headers
+      "dependencies/tinyexr",           -- exr headers
       "dependencies/assimp/include",     -- Assimp headers
 	  "dependencies/glm",
 	  
    }
+   
+   defines { "_CRT_SECURE_NO_WARNINGS" }
 
    links { "Utilities" }
 
@@ -147,6 +151,7 @@ project "Graphics"
 	  "dependencies/imgui",
 	  "dependencies/imgui/backends",
       "dependencies/glm",
+	  "dependencies/entt/single_include",
       "dependencies/stb",
       "VFEngine/utilities",           -- Utilities headers
       "VFEngine/window/controllers",           -- Utilities headers

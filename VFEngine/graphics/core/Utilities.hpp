@@ -8,18 +8,21 @@ constexpr bool debug = false;
 constexpr bool debug = true;
 #endif
 
-namespace core {
-
-	struct QueueFamilyIndices {
+namespace core
+{
+	struct QueueFamilyIndices
+	{
 		std::optional<uint32_t> presentFamily;
 		std::optional<uint32_t> graphicsAndComputeFamily;
 
-		bool isComplete() const {
+		bool isComplete() const
+		{
 			return presentFamily.has_value() && graphicsAndComputeFamily.has_value();
 		}
 	};
 
-	struct SwapchainSupportDetails {
+	struct SwapchainSupportDetails
+	{
 		vk::SurfaceCapabilitiesKHR capabilities;
 		std::vector<vk::SurfaceFormatKHR> formats;
 		std::vector<vk::PresentModeKHR> presentModes;
@@ -32,6 +35,7 @@ namespace core {
 		uint32_t width;
 		uint32_t height;
 		uint32_t layers;
+		uint32_t mipLevels;
 		vk::Format format;
 		vk::ImageTiling tiling;
 		vk::ImageUsageFlags usage;
@@ -44,6 +48,7 @@ namespace core {
 			uint32_t width = 1,
 			uint32_t height = 1,
 			uint32_t layers = 1,
+			uint32_t mipLevels = 1,
 			vk::Format format = vk::Format::eR8G8B8A8Unorm,
 			vk::ImageTiling tiling = vk::ImageTiling::eOptimal,
 			vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
@@ -55,37 +60,44 @@ namespace core {
 			width{ width },
 			height{ height },
 			layers{ layers },
+			mipLevels{ mipLevels },
 			format{ format },
 			tiling{ tiling },
 			usage{ usage },
 			properties{ properties },
 			imageFlags{ imageFlags }
-		{}
+		{
+		}
 	};
 
-	struct ImageViewInfoRequest {
+	struct ImageViewInfoRequest
+	{
 		const vk::Device& logicalDevice;
 		const vk::Image& image;
 		vk::Format format;
 		vk::ImageAspectFlags aspectFlags;
 		vk::ImageViewType imageType;
 		uint32_t layerCount;
+		uint32_t mipLevels;
 
 		explicit ImageViewInfoRequest(
 			const vk::Device& logicalDevice,
 			const vk::Image& image,
-			vk::Format format = vk::Format::eR8G8B8A8Unorm, // Default format: 8-bit RGBA
-			vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor, // Default to color aspect
-			vk::ImageViewType imageType = vk::ImageViewType::e2D, // Default view type is 2D
-			uint32_t layerCount = 1 // Default to a single layer
+			vk::Format format = vk::Format::eR8G8B8A8Unorm,
+			vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor,
+			vk::ImageViewType imageType = vk::ImageViewType::e2D,
+			uint32_t layerCount = 1,
+			uint32_t mipLevels = 1
 		)
 			: logicalDevice{ logicalDevice },
 			image{ image },
 			format{ format },
 			aspectFlags{ aspectFlags },
 			imageType{ imageType },
-			layerCount{ layerCount }
-		{}
+			layerCount{ layerCount },
+			mipLevels{ mipLevels }
+		{
+		}
 	};
 
 	struct BufferInfoRequest
@@ -108,7 +120,8 @@ namespace core {
 			size{ size },
 			usage{ usage },
 			properties{ properties }
-		{}
+		{
+		}
 	};
 
 	class Utilities
@@ -116,20 +129,27 @@ namespace core {
 	private:
 		Utilities() = delete;
 		~Utilities() = delete;
+
 	public:
-		static QueueFamilyIndices findQueueFamiliesFromDevice(const vk::PhysicalDevice& device, const vk::SurfaceKHR& surface);
-		static SwapchainSupportDetails querySwapchainSupport(const vk::PhysicalDevice& device, const vk::SurfaceKHR& surface);
-		static uint32_t findMemoryType(const vk::PhysicalDevice& device, uint32_t typeFilter, vk::MemoryPropertyFlags properties);
+		static QueueFamilyIndices findQueueFamiliesFromDevice(const vk::PhysicalDevice& device,
+			const vk::SurfaceKHR& surface);
+		static SwapchainSupportDetails querySwapchainSupport(const vk::PhysicalDevice& device,
+			const vk::SurfaceKHR& surface);
+		static uint32_t findMemoryType(const vk::PhysicalDevice& device, uint32_t typeFilter,
+			vk::MemoryPropertyFlags properties);
 
-		static vk::UniqueCommandBuffer beginSingleTimeCommands(const vk::Device& device, const vk::CommandPool& commandPool);
-		static void endSingleTimeCommands(const vk::Queue& queue, const vk::UniqueCommandBuffer& commandBuffer);
+		static vk::UniqueCommandBuffer beginSingleTimeCommands(const vk::Device& device,
+			const vk::CommandPool& commandPool);
+		static void endSingleTimeCommands(const vk::Queue& queue, const vk::UniqueCommandBuffer& commandBuffer,
+			const vk::Fence& renderFence = nullptr);
 
-		static void transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageAspectFlags aspectMask);
+		static void transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image,
+			vk::ImageLayout oldLayout, vk::ImageLayout newLayout,
+			vk::ImageAspectFlags aspectMask, uint32_t layer = 1, uint32_t numMips = 1);
 
-		static void createBuffer(const BufferInfoRequest& bufferInfo, vk::Buffer& buffer, vk::DeviceMemory& bufferMemory);
+		static void createBuffer(const BufferInfoRequest& bufferInfo, vk::Buffer& buffer,
+			vk::DeviceMemory& bufferMemory);
 		static void createImage(const ImageInfoRequest& imageInfo, vk::Image& image, vk::DeviceMemory& imageMemory);
 		static void createImageView(const ImageViewInfoRequest& imageInfoView, vk::ImageView& imageView);
-
 	};
 }
-

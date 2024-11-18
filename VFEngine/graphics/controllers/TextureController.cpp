@@ -3,13 +3,8 @@
 
 namespace controllers {
 
-	std::shared_ptr<core::Texture> TextureController::createTexture()
+	core::Texture* TextureController::createTexture()
 	{
-		return textures.emplace_back(std::make_shared<core::Texture>(*core::VulkanContext::getDevice()));
-	}
-
-	void TextureController::cleanUp()
-	{
-		textures.clear();
+		return new core::Texture(*core::VulkanContext::getDevice());
 	}
 }

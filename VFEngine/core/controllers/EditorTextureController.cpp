@@ -1,18 +1,19 @@
 #include "EditorTextureController.hpp"
 #include "TextureController.hpp"
-#include <vector>
 
 namespace controllers {
 
-	void* EditorTextureController::loadTexture(std::string_view path)
+	dto::EditorTexture* EditorTextureController::loadTexture(std::string_view path)
 	{
 		auto texture = TextureController::createTexture();
-		texture->loadFromFile(path);
-		return texture->getDescriptorSet();
+		texture->loadTextureFromFile(path);
+		return new dto::EditorTexture(texture);
 	}
 
-	void EditorTextureController::cleanUp()
+	dto::EditorTexture* EditorTextureController::loadHdrTexture(std::string_view path)
 	{
-		TextureController::cleanUp();
+		auto texture = TextureController::createTexture();
+		texture->loadHDRFromFile(path);
+		return new dto::EditorTexture(texture);
 	}
 }

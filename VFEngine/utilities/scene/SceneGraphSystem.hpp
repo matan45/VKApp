@@ -19,6 +19,7 @@ namespace scene {
 		std::vector<Entity> findAllEntitiesByName(std::string_view name) const;
 
 		void updateWorldTransforms();
+		void updateCamera();
 
 		const Entity& GetRoot() const {
 			return root;

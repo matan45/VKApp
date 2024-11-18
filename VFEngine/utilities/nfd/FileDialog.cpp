@@ -56,7 +56,7 @@ namespace nfd {
 		{
 			pFileOpen->Release();
 			vfLogError("Failed to set default file type");
-			return std::string();
+			return {};
 		}
 
 		// Show the Open dialog box
@@ -65,7 +65,7 @@ namespace nfd {
 		{
 			pFileOpen->Release();
 			vfLogError("No file was selected or dialog failed");
-			return std::string();
+			return {};
 		}
 
 		// Get the file name from the dialog box
@@ -75,7 +75,7 @@ namespace nfd {
 		{
 			pFileOpen->Release();
 			vfLogError("Failed to retrieve file result");
-			return std::string();
+			return {};
 		}
 
 		// Extract the file path
@@ -86,7 +86,7 @@ namespace nfd {
 			pItem->Release();
 			pFileOpen->Release();
 			vfLogError("Failed to get file path");
-			return std::string();
+			return {};
 		}
 
 		// Convert the wide string (WCHAR) to a standard string (char)
@@ -109,7 +109,7 @@ namespace nfd {
 		if (FAILED(hr))
 		{
 			vfLogError("Failed to create File Open Dialog");
-			return std::vector<std::string>();
+			return {};
 		}
 
 		// Enable multi-selection
@@ -123,7 +123,7 @@ namespace nfd {
 		{
 			pFileOpen->Release();
 			vfLogError("Failed to enable multi-select");
-			return std::vector<std::string>();
+			return {};
 		}
 
 		// Prepare COMDLG_FILTERSPEC array from the input fileTypes
@@ -140,7 +140,7 @@ namespace nfd {
 		{
 			pFileOpen->Release();
 			vfLogError("Failed to set file filters");
-			return std::vector<std::string>();
+			return {};
 		}
 
 		// Set the default file type index (optional)
@@ -149,7 +149,7 @@ namespace nfd {
 		{
 			pFileOpen->Release();
 			vfLogError("Failed to set default file type");
-			return std::vector<std::string>();
+			return {};
 		}
 
 		// Show the Open dialog box
@@ -158,7 +158,7 @@ namespace nfd {
 		{
 			pFileOpen->Release();
 			vfLogError("No file was selected or dialog failed");
-			return std::vector<std::string>();
+			return {};
 		}
 
 		// Get the file names from the dialog box
@@ -168,7 +168,7 @@ namespace nfd {
 		{
 			pFileOpen->Release();
 			vfLogError("Failed to retrieve file results");
-			return std::vector<std::string>();
+			return {};
 		}
 
 		// Extract the file paths

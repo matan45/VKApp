@@ -1,5 +1,6 @@
 #include "Audio.hpp"
 #include "print/EditorLogger.hpp"
+#include "../controllers/files/FileUtils.hpp"
 
 #include <vector>
 #include <fstream>
@@ -15,23 +16,24 @@
 
 
 namespace types {
-	void Audio::loadFromFile(std::string_view path, std::string_view fileName, std::string_view extension, std::string_view location) const
+	void Audio::loadFromFile(const importConfig::ImportFiles& file, std::string_view fileName, std::string_view location) const
 	{
-		if (extension == "ogg") {
-			loadOggFile(path, fileName, location);
+		std::string type = files::FileUtils::getAudioFileType(file.path.data());
+		if (type == "OGG") {
+			loadOggFile(file.path, fileName, location);
 		}
-		else if (extension == "wav") {
-			loadWavFile(path, fileName, location);
+		else if (type == "WAV") {
+			loadWavFile(file.path, fileName, location);
 		}
-		else if (extension == "mp3") {
-			loadMp3File(path, fileName, location);
+		else if (type == "MP3") {
+			loadMp3File(file.path, fileName, location);
 		}
 	}
 
 	void Audio::loadOggFile(std::string_view path, std::string_view fileName, std::string_view location) const
 	{
 		resource::AudioData audioData;
-
+		audioData.headerFileType = resource::FileType::AUDIO;
 		// Open and load Ogg Vorbis file using stb_vorbis
 		int error;
 		stb_vorbis* vorbis = stb_vorbis_open_filename(path.data(), &error, nullptr);
@@ -46,8 +48,9 @@ namespace types {
 		audioData.channels = info.channels;
 
 		// Get the total number of samples
-		int totalSamples = stb_vorbis_stream_length_in_samples(vorbis) * info.channels;
-		audioData.frames = stb_vorbis_stream_length_in_samples(vorbis);
+		int frames = stb_vorbis_stream_length_in_samples(vorbis);
+		int totalSamples = frames * info.channels;
+		audioData.frames = frames;
 		audioData.totalDurationInSeconds = static_cast<uint32_t>(stb_vorbis_stream_length_in_seconds(vorbis));
 
 		// Resize the data buffer and read samples
@@ -63,7 +66,7 @@ namespace types {
 	void Audio::loadWavFile(std::string_view path, std::string_view fileName, std::string_view location) const
 	{
 		resource::AudioData audioData;
-
+		audioData.headerFileType = resource::FileType::AUDIO;
 		// Open and load WAV file using dr_wav
 		drwav wav;
 		if (!drwav_init_file(&wav, path.data(), nullptr)) {
@@ -72,7 +75,6 @@ namespace types {
 		}
 
 		// Set up the AudioData structure
-		audioData.version = { 1, 0, 0 }; // Version
 		audioData.sampleRate = wav.sampleRate;
 		audioData.channels = wav.channels;
 		audioData.frames = static_cast<uint32_t>(wav.totalPCMFrameCount);
@@ -91,6 +93,7 @@ namespace types {
 	void Audio::loadMp3File(std::string_view path, std::string_view fileName, std::string_view location) const
 	{
 		resource::AudioData audioData;
+		audioData.headerFileType = resource::FileType::AUDIO;
 
 		// Open and load MP3 file using dr_mp3
 		drmp3 mp3;
@@ -100,7 +103,6 @@ namespace types {
 		}
 
 		// Set up the AudioData structure
-		audioData.version = { 1, 0, 0 }; // Version
 		audioData.sampleRate = mp3.sampleRate;
 		audioData.channels = mp3.channels;
 
@@ -130,9 +132,17 @@ namespace types {
 		}
 
 		// Write version
-		outFile.write(std::bit_cast<const char*>(&audioData.version.major), sizeof(audioData.version.major));
-		outFile.write(std::bit_cast<const char*>(&audioData.version.minor), sizeof(audioData.version.minor));
-		outFile.write(std::bit_cast<const char*>(&audioData.version.patch), sizeof(audioData.version.patch));
+		// Write the header file type
+		uint8_t headerFileType = static_cast<uint8_t>(audioData.headerFileType);
+		outFile.write(std::bit_cast<const char*>(&headerFileType), sizeof(headerFileType));
+		
+		// Serialize the mesh data (this is just an example, adapt to your format)
+		uint32_t majorVersion = std::bit_cast<uint32_t>(Version::major);
+		uint32_t minorVersion = std::bit_cast<uint32_t>(Version::minor);
+		uint32_t patchVersion = std::bit_cast<uint32_t>(Version::patch);
+		outFile.write(std::bit_cast<const char*>(&majorVersion), sizeof(majorVersion));
+		outFile.write(std::bit_cast<const char*>(&minorVersion), sizeof(minorVersion));
+		outFile.write(std::bit_cast<const char*>(&patchVersion), sizeof(patchVersion));
 
 		// Write sample rate, channels, frames, and total duration
 		outFile.write(std::bit_cast<const char*>(&audioData.sampleRate), sizeof(audioData.sampleRate));
@@ -143,7 +153,7 @@ namespace types {
 		// Write audio data size and the raw audio data
 		auto dataSize = static_cast<uint32_t>(audioData.data.size());
 		outFile.write(std::bit_cast<const char*>(&dataSize), sizeof(dataSize));
-		outFile.write(std::bit_cast<const char*>(audioData.data.data()), dataSize * sizeof(short));
+		outFile.write(std::bit_cast<const char*>(audioData.data.data()), dataSize);
 
 		outFile.close();
 	}

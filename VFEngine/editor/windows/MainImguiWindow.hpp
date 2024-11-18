@@ -1,32 +1,48 @@
 #pragma once
 #include "imguiHandler/ImguiWindow.hpp"
-#include "imgui.h"
 #include "nfd/FileDialog.hpp"
 #include "CoreInterface.hpp"
+#include "OffScreen.hpp"
+#include "EditorTextureController.hpp"
 
-namespace windows {
-	class MainImguiWindow : public controllers::imguiHandler::ImguiWindow
-	{
-	private:
-		controllers::CoreInterface& coreInterface;
-		int windowFlags;
-		nfd::FileDialog fileDialog;
-		std::vector<std::string> files;
-		bool openModal = false;
-	public:
-		explicit MainImguiWindow(controllers::CoreInterface& coreInterface);
-		~MainImguiWindow() override = default;
+#include <filesystem>
 
-		void draw() override;
+namespace fs = std::filesystem;
 
-	private:
-		void menuBar();
-		void importModel();
+namespace windows
+{
+    class MainImguiWindow : public controllers::imguiHandler::ImguiWindow
+    {
+    private:
+        controllers::CoreInterface& coreInterface;
+        controllers::OffScreen& offscreen;
+        int windowFlags;
+        //import settings
+        nfd::FileDialog fileDialog;
+        std::vector<std::string> files;
+        std::vector<bool> isFlip;
+        bool openModal = false;
 
-		void handleFileMenu();
-		void handleSettingsMenu();
-		void handleAddMenu();
-	};
+        //ibl window
+        fs::path selectedIBLFile;
+        bool showIBLWindow = false;
+        bool deletePreview = false;
+        dto::EditorTexture* iblPreview{nullptr};
+
+    public:
+        explicit MainImguiWindow(controllers::CoreInterface& coreInterface, controllers::OffScreen& offscreen);
+        ~MainImguiWindow() override;
+
+        void draw() override;
+
+    private:
+        void menuBar();
+        void importModel();
+
+        void handleFileMenu();
+        void handleSettingsMenu();
+        void handleAddMenu();
+
+        void iblWindow();
+    };
 }
-
-

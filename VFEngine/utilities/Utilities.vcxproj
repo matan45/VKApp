@@ -119,7 +119,6 @@
     <ClCompile Include="resource\ResourceManager.cpp" />
     <ClCompile Include="resource\ShaderResource.cpp" />
     <ClCompile Include="resource\TextureResource.cpp" />
-    <ClCompile Include="scene\Entity.cpp" />
     <ClCompile Include="scene\SceneGraphSystem.cpp" />
     <ClCompile Include="serialization\SceneSerialization.cpp" />
     <ClCompile Include="string\StringUtil.cpp" />

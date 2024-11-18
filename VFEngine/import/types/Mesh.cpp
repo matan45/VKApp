@@ -10,14 +10,14 @@
 #include <assimp/postprocess.h>
 
 namespace types {
-	void Mesh::loadFromFile(std::string_view path, std::string_view fileName, std::string_view location) const
+	void Mesh::loadFromFile(const importConfig::ImportFiles& file, std::string_view fileName, std::string_view location) const
 	{
 		Assimp::Importer importer;
-		const aiScene* scene = importer.ReadFile(path.data(),
+		const aiScene* scene = importer.ReadFile(file.path.data(),
 			aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-			vfLogError("Failed to load Ogg Vorbis file: {}", importer.GetErrorString());
+			vfLogError("Failed to load Mesh file: {}", importer.GetErrorString());
 			return;
 		}
 		//TODO also extract the animation each animation to single file 
@@ -25,7 +25,7 @@ namespace types {
 		processAssimpScene(scene, fileName, location);
 	}
 
-	void Mesh::saveToFile(std::string_view location, std::string_view fileName, const resource::MeshData& meshData) const
+	void Mesh::saveToFile(std::string_view location, std::string_view fileName, const resource::MeshesData& meshesData) const
 	{
 		// Open the file in binary mode
 		std::filesystem::path newFileLocation = std::filesystem::path(location) / (std::string(fileName) + "." + FileExtension::mesh);
@@ -36,31 +36,51 @@ namespace types {
 			return;
 		}
 
+		// Write the header file type
+		uint8_t headerFileType = static_cast<uint8_t>(meshesData.headerFileType);
+		outFile.write(reinterpret_cast<const char*>(&headerFileType), sizeof(headerFileType));
+		
 		// Serialize the mesh data (this is just an example, adapt to your format)
-		outFile.write(std::bit_cast<const char*>(&meshData.version.major), sizeof(meshData.version.major));
-		outFile.write(std::bit_cast<const char*>(&meshData.version.minor), sizeof(meshData.version.minor));
-		outFile.write(std::bit_cast<const char*>(&meshData.version.patch), sizeof(meshData.version.patch));
+		uint32_t majorVersion = std::bit_cast<uint32_t>(Version::major);
+		uint32_t minorVersion = std::bit_cast<uint32_t>(Version::minor);
+		uint32_t patchVersion = std::bit_cast<uint32_t>(Version::patch);
+		outFile.write(std::bit_cast<const char*>(&majorVersion), sizeof(majorVersion));
+		outFile.write(std::bit_cast<const char*>(&minorVersion), sizeof(minorVersion));
+		outFile.write(std::bit_cast<const char*>(&patchVersion), sizeof(patchVersion));
 
-		// Save vertices
-		size_t vertexCount = meshData.vertices.size();
-		outFile.write(std::bit_cast<const char*>(&vertexCount), sizeof(vertexCount));
-		outFile.write(std::bit_cast<const char*>(meshData.vertices.data()), vertexCount * sizeof(resource::Vertex));
+		// Write the number of meshes
+		outFile.write(std::bit_cast<const char*>(&meshesData.numberOfMeshes), sizeof(meshesData.numberOfMeshes));
 
-		// Save indices
-		size_t indexCount = meshData.indices.size();
-		outFile.write(std::bit_cast<const char*>(&indexCount), sizeof(indexCount));
-		outFile.write(std::bit_cast<const char*>(meshData.indices.data()), indexCount * sizeof(uint32_t));
+		// Iterate through each mesh and write its data
+		for (const auto& meshData : meshesData.meshes) {
+			// Write the number of vertices
+			uint32_t vertexCount = static_cast<uint32_t>(meshData.vertices.size());
+			outFile.write(std::bit_cast<const char*>(&vertexCount), sizeof(vertexCount));
+
+			// Write the vertex data (position, normal, and texCoords)
+			outFile.write(std::bit_cast<const char*>(meshData.vertices.data()), vertexCount * sizeof(resource::Vertex));
+
+			// Write the number of indices
+			uint32_t indexCount = static_cast<uint32_t>(meshData.indices.size());
+			outFile.write(std::bit_cast<const char*>(&indexCount), sizeof(indexCount));
+
+			// Write the index data
+			outFile.write(std::bit_cast<const char*>(meshData.indices.data()), indexCount * sizeof(uint32_t));
+		}
 
 		outFile.close();
 	}
 
 	void Mesh::processAssimpScene(const aiScene* scene, std::string_view fileName, std::string_view location) const
 	{
-		resource::MeshData meshData;
+		resource::MeshesData meshesData;
+		meshesData.headerFileType = resource::FileType::MESH;
+		meshesData.meshes.reserve(scene->mNumMeshes);
+		meshesData.numberOfMeshes = scene->mNumMeshes;
 		// Loop over each mesh in the scene
 		for (unsigned int i = 0; i < scene->mNumMeshes; ++i) {
 			const aiMesh* assimpMesh = scene->mMeshes[i];
-
+			resource::MeshData meshData;
 			// Reserve space for vertices and indices
 			meshData.vertices.reserve(assimpMesh->mNumVertices);
 			meshData.indices.reserve(assimpMesh->mNumFaces * 3); // Assuming all faces are triangles
@@ -112,7 +132,8 @@ namespace types {
 					meshData.indices.push_back(face.mIndices[k]);
 				}
 			}
+			meshesData.meshes.emplace_back(meshData);
 		}
-		saveToFile(location, fileName, meshData);
+		saveToFile(location, fileName, meshesData);
 	}
 }

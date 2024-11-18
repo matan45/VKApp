@@ -23,7 +23,7 @@ namespace window {
 		glfwSetWindowUserPointer(window, this); // Set the user pointer to access the class
 		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 
-		setWindowIcon("../../resources/editor/VertexForge-icon.vfImage");
+		setWindowIcon("../../resources/editor/window-icon.vfImage");
 	}
 
 	void Window::framebufferResizeCallback(GLFWwindow* window, int width, int height)

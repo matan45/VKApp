@@ -1,82 +1,79 @@
 #include "Import.hpp"
-#include <filesystem> 
-#include <algorithm>
+#include <filesystem>
 #include <future>
 
+#include "files/FileUtils.hpp"
 #include "print/EditorLogger.hpp"
-#include "string/StringUtil.hpp"
 
 
-namespace fs = std::filesystem;
+namespace controllers
+{
+    void Import::importFiles(const std::vector<importConfig::ImportFiles>& paths)
+    {
+        std::vector<std::future<void>> futures;
+        futures.reserve(paths.size());
 
-namespace controllers {
+        for (const auto& path : paths)
+        {
+            futures.push_back(std::async(std::launch::async, &Import::processPath, path));
+        }
+    }
 
-	void Import::importFiles(const std::vector<std::string>& paths)
-	{
-		std::vector<std::future<void>> futures;
-		for (const auto& path : paths) {
-			futures.push_back(std::async(std::launch::async, &Import::processPath, path));
-		}
+    void Import::setLocation(std::string_view newLocation)
+    {
+        location = newLocation;
+    }
 
-		for (auto& future : futures) {
-			future.get();
-		}
-	}
+    void Import::processPath(const importConfig::ImportFiles& file)
+    {
+        // Get the file name
+        std::string fileName = files::FileUtils::getFileName(file.path.data());
+        vfLogInfo("Import File name: {}", fileName);
 
-	void Import::setLocation(std::string_view newLocation)
-	{
-		location = newLocation;
-	}
+        // Use if-else to handle different file types
+        if (files::FileUtils::isTextureFile(file.path.data()))
+        {
+            // Handle texture files
+            processTexture(file, fileName);
+        }
+        else if (files::FileUtils::isHDRFile(file.path.data()))
+        {
+            // Handle hdr files
+            processHDR(file, fileName);
+        }
+        else if (files::FileUtils::isMeshFile(file.path.data()))
+        {
+            // Handle model and animations files
+            processModel(file, fileName);
+        }
+        else if (files::FileUtils::isAudioFile(file.path.data()))
+        {
+            // Handle model files
+            processAudio(file, fileName);
+        }
+        else
+        {
+            vfLogError("Unknown file extension: {}", files::FileUtils::getFileExtension(file.path.data()));
+        }
+    }
 
-	void Import::processPath(const std::string& path)
-	{
-		// Convert the string path to a std::filesystem::path object
-		fs::path fsPath(path);
+    void Import::processTexture(const importConfig::ImportFiles& file, std::string_view fileName)
+    {
+        texture.loadTextureFile(file, fileName, location);
+    }
 
-		// Get the file name
-		std::string fileName = fsPath.stem().string();
-		vfLogInfo("Import File name: {}", fileName);
+    void Import::processModel(const importConfig::ImportFiles& file, std::string_view fileName)
+    {
+        mesh.loadFromFile(file, fileName, location);
+    }
 
-		// Get the file extension
-		std::string extension = fsPath.extension().string();
-		extension.erase(std::find(extension.begin(), extension.end(), '\0'), extension.end());
-		extension = StringUtil::toLower(extension);
+    void Import::processAudio(const importConfig::ImportFiles& file, std::string_view fileName)
+    {
+        audio.loadFromFile(file, fileName, location);
+    }
 
-		if (extension.empty()) {
-			vfLogError("No file extension found for path: {}", path);
-			return;
-		}
-
-		// Use if-else to handle different file types
-		if (extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".hdr") {
-			// Handle texture files
-			processTexture(path, fileName);
-		}
-		else if (extension == ".obj" || extension == ".fbx" || extension == ".dae" || extension == ".gltf") {
-			// Handle model and animations files
-			processModel(path, fileName);
-		}
-		else if (extension == ".wav" || extension == ".mp3" || extension == ".ogg") {
-			// Handle model files
-			processAudio(path, fileName, extension);
-		}
-		else {
-			vfLogError("Unknown file extension: {}", extension);
-		}
-	}
-
-	void Import::processTexture(std::string_view path, std::string_view fileName)
-	{
-		texture.loadFromFile(path, fileName, location);
-	}
-
-	void Import::processModel(std::string_view path, std::string_view fileName)
-	{
-		mesh.loadFromFile(path, fileName, location);
-	}
-
-	void Import::processAudio(std::string_view path, std::string_view fileName, std::string_view extension)
-	{
-		audio.loadFromFile(path, fileName, extension, location);
-	}
+    void Import::processHDR(const importConfig::ImportFiles& file, std::string_view fileName)
+    {
+        texture.loadHDRFile(file, fileName, location);
+    }
 }

@@ -5,7 +5,6 @@
 #include "../window/Window.hpp"
 #include "time/Timer.hpp"
 #include "../controllers/imguiHandler/ImguiWindowHandler.hpp"
-#include "../controllers/EditorTextureController.hpp"
 #include "resource/ResourceManager.hpp"
 
 #include <imgui.h>
@@ -51,7 +50,6 @@ namespace core {
 
 	void MainLoop::cleanUp() const
 	{
-		controllers::EditorTextureController::cleanUp();
 		renderController->cleanUp();
 		controllers::Graphics::destroyContext();
 		controllers::WindowController::cleanUp();

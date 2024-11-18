@@ -93,7 +93,7 @@ namespace core {
 		return commandBuffer;
 	}
 
-	void Utilities::endSingleTimeCommands(const vk::Queue& queue, const vk::UniqueCommandBuffer& commandBuffer)
+	void Utilities::endSingleTimeCommands(const vk::Queue& queue, const vk::UniqueCommandBuffer& commandBuffer, const vk::Fence& renderFence)
 	{
 		commandBuffer->end();
 
@@ -102,7 +102,7 @@ namespace core {
 		submitInfo.pCommandBuffers = &(*commandBuffer);
 
 		try {
-			queue.submit(submitInfo, nullptr);
+			queue.submit(submitInfo, renderFence);
 			queue.waitIdle();
 		}
 		catch (const vk::SystemError& err) {
@@ -110,7 +110,7 @@ namespace core {
 		}
 	}
 
-	void Utilities::transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageAspectFlags aspectMask)
+	void Utilities::transitionImageLayout(const vk::CommandBuffer& commandBuffer, vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageAspectFlags aspectMask, uint32_t layer, uint32_t numMips)
 	{
 		using enum vk::AccessFlagBits;
 		using enum vk::ImageLayout;
@@ -123,9 +123,9 @@ namespace core {
 
 		barrier.subresourceRange.aspectMask = aspectMask;
 		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
+		barrier.subresourceRange.levelCount = numMips;
 		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
+		barrier.subresourceRange.layerCount = layer;
 
 		vk::PipelineStageFlags sourceStage;
 		vk::PipelineStageFlags destinationStage;
@@ -144,8 +144,15 @@ namespace core {
 			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
 
 		}
+		else if (oldLayout == eShaderReadOnlyOptimal && newLayout == eTransferSrcOptimal) {
+			barrier.srcAccessMask = eShaderRead;
+			barrier.dstAccessMask = eTransferRead;
+			sourceStage = vk::PipelineStageFlagBits::eFragmentShader;
+			destinationStage = vk::PipelineStageFlagBits::eTransfer;
+		}
+
 		else if (oldLayout == eUndefined && newLayout == eDepthStencilAttachmentOptimal) {
-			barrier.srcAccessMask = eNoneKHR;
+			barrier.srcAccessMask = eNone;
 			barrier.dstAccessMask = eDepthStencilAttachmentWrite;
 			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
 			destinationStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
@@ -157,6 +164,13 @@ namespace core {
 			sourceStage = vk::PipelineStageFlagBits::eLateFragmentTests;
 			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
 		}
+		else if (oldLayout == eTransferSrcOptimal && newLayout == eColorAttachmentOptimal) {
+			barrier.srcAccessMask = eTransferRead;
+			barrier.dstAccessMask = eColorAttachmentWrite;
+			sourceStage = vk::PipelineStageFlagBits::eTransfer;
+			destinationStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		}
+
 		else if (oldLayout == eUndefined && newLayout == eShaderReadOnlyOptimal) {
 			barrier.srcAccessMask = eNone;
 			barrier.dstAccessMask = eShaderRead;
@@ -169,10 +183,15 @@ namespace core {
 			sourceStage = vk::PipelineStageFlagBits::eTopOfPipe;
 			destinationStage = vk::PipelineStageFlagBits::eTransfer;
 		}
+		else if (oldLayout == eColorAttachmentOptimal && newLayout == eTransferSrcOptimal) {
+			barrier.srcAccessMask = eColorAttachmentWrite;
+			barrier.dstAccessMask = eTransferRead;
+			sourceStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+			destinationStage = vk::PipelineStageFlagBits::eTransfer;
+		}
 		else if (oldLayout == eTransferDstOptimal && newLayout == eShaderReadOnlyOptimal) {
 			barrier.srcAccessMask = eTransferWrite;
 			barrier.dstAccessMask = eShaderRead;
-
 			sourceStage = vk::PipelineStageFlagBits::eTransfer;
 			destinationStage = vk::PipelineStageFlagBits::eFragmentShader;
 		}
@@ -213,7 +232,7 @@ namespace core {
 		imageCreateInfo.extent.width = imageInfo.width;
 		imageCreateInfo.extent.height = imageInfo.height;
 		imageCreateInfo.extent.depth = 1;
-		imageCreateInfo.mipLevels = 1;
+		imageCreateInfo.mipLevels = imageInfo.mipLevels;
 		imageCreateInfo.arrayLayers = imageInfo.layers;
 		imageCreateInfo.format = imageInfo.format;
 		imageCreateInfo.tiling = imageInfo.tiling;
@@ -242,7 +261,7 @@ namespace core {
 		viewInfo.format = imageInfoView.format;
 		viewInfo.subresourceRange.aspectMask = imageInfoView.aspectFlags;
 		viewInfo.subresourceRange.baseMipLevel = 0;
-		viewInfo.subresourceRange.levelCount = 1;
+		viewInfo.subresourceRange.levelCount = imageInfoView.mipLevels;
 		viewInfo.subresourceRange.baseArrayLayer = 0;
 		viewInfo.subresourceRange.layerCount = imageInfoView.layerCount;
 

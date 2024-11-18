@@ -1,14 +1,29 @@
 #include "MainImguiWindow.hpp"
 #include "Import.hpp"
-#include "print/EditorLogger.hpp"
+#include "config/Config.hpp"
+#include "files/FileUtils.hpp"
+#include <imgui.h>
 
-namespace windows {
-	MainImguiWindow::MainImguiWindow(controllers::CoreInterface& coreInterface) :coreInterface{ coreInterface }
+#include "scene/EntityRegistry.hpp"
+#include "string/StringUtil.hpp"
+
+
+namespace windows
+{
+	MainImguiWindow::MainImguiWindow(controllers::CoreInterface& coreInterface, controllers::OffScreen& offscreen)
+		: coreInterface{ coreInterface }, offscreen{ offscreen }
 	{
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoBackground;
-		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking |
+			ImGuiWindowFlags_NoBackground;
+		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoMove;
 		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 		windowFlags = window_flags;
+	}
+
+	MainImguiWindow::~MainImguiWindow()
+	{
+		delete iblPreview;
 	}
 
 	void MainImguiWindow::draw()
@@ -17,24 +32,32 @@ namespace windows {
 		ImGui::SetNextWindowPos(viewport->WorkPos);
 		ImGui::SetNextWindowSize(viewport->WorkSize);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		if (ImGui::Begin("Vulkan Engine", nullptr, windowFlags)) {
+		if (ImGui::Begin("Vulkan Engine", nullptr, windowFlags))
+		{
 			ImGui::PopStyleVar(1);
 
-			ImGui::DockSpace(ImGui::GetID("MyDockSpace"), ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_None);
+			ImGui::DockSpace(ImGui::GetID("MyDockSpace"), ImVec2(0.0f, 0.0f),
+				ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_None);
 
 			menuBar();
+			if (showIBLWindow)
+			{
+				iblWindow();
+			}
 		}
 		ImGui::End();
 	}
 
 	void MainImguiWindow::menuBar()
 	{
-		if (openModal) {
-			ImGui::OpenPopup("Import Model");
+		if (openModal)
+		{
+			ImGui::OpenPopup("Import Files");
 		}
 
 		importModel();
-		if (ImGui::BeginMainMenuBar()) {
+		if (ImGui::BeginMainMenuBar())
+		{
 			handleFileMenu();
 			handleSettingsMenu();
 			handleAddMenu();
@@ -45,25 +68,42 @@ namespace windows {
 	void MainImguiWindow::importModel()
 	{
 		// Check if the popup modal is open
-		if (ImGui::BeginPopupModal("Import Model", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+		if (ImGui::BeginPopupModal("Import Files", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
 		{
-			ImGui::Text("Files Dropped:");
+			std::vector<importConfig::ImportFiles> paths;
+			paths.reserve(files.size());
+			isFlip.resize(files.size(), false);
 
+			ImGui::Text("Files Dropped:");
 			// Display the dropped files in the modal popup
-			for (const auto& file : files)
+			for (int i = 0; i < files.size(); i++)
 			{
-				ImGui::BulletText("%s", file.c_str());
+				ImGui::PushID(files[i].c_str());
+				importConfig::ImportConfig config;
+				ImGui::BulletText("%s", files[i].c_str());
+				if (files::FileUtils::isHDRFile(files[i]))
+				{
+					bool flip = isFlip[i];
+					ImGui::Checkbox("Flip Vertically", &flip);
+					isFlip[i] = flip;
+					config.isImageFlipVertically = isFlip[i];
+				}
+				importConfig::ImportFiles importFile(files[i], config);
+				paths.emplace_back(importFile);
+				ImGui::PopID();
 			}
 
 			if (ImGui::Button("Continue"))
 			{
-				controllers::Import::importFiles(files);
+				controllers::Import::importFiles(paths);
 				ImGui::CloseCurrentPopup(); // Close the popup
 				openModal = false; // Reset the flag
 			}
 
 			ImGui::SameLine();
-			ImGui::SetCursorPosX(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Close").x - ImGui::GetStyle().FramePadding.x * 2);
+			ImGui::SetCursorPosX(
+				ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Close").x - ImGui::GetStyle().FramePadding.x *
+				2);
 
 			if (ImGui::Button("Close"))
 			{
@@ -73,15 +113,23 @@ namespace windows {
 
 			ImGui::EndPopup(); // End the modal
 		}
-
 	}
+
 	void MainImguiWindow::handleFileMenu()
 	{
-		if (ImGui::BeginMenu("File")) {
-			if (ImGui::MenuItem("New Level")) {}
-			else if (ImGui::MenuItem("Open Level")) {}
-			else if (ImGui::MenuItem("Save Level")) {}
-			else if (ImGui::MenuItem("Exit")) {
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("New Level"))
+			{
+			}
+			else if (ImGui::MenuItem("Open Level"))
+			{
+			}
+			else if (ImGui::MenuItem("Save Level"))
+			{
+			}
+			else if (ImGui::MenuItem("Exit"))
+			{
 				coreInterface.closeWindow();
 			}
 			ImGui::EndMenu();
@@ -90,38 +138,114 @@ namespace windows {
 
 	void MainImguiWindow::handleSettingsMenu()
 	{
-		if (ImGui::BeginMenu("Settings")) {
-			if (ImGui::MenuItem("Import")) {
+		if (ImGui::BeginMenu("Settings"))
+		{
+			if (ImGui::MenuItem("Import"))
+			{
 				std::vector<std::pair<std::wstring, std::wstring>> fileTypes = {
-						{ L"Model Files (*.obj;*.fbx;*.dae;*.gltf)", L"*.obj;*.fbx;*.dae;*.gltf" },
-						{ L"Image Files (*.png;*.jpg;*.jpeg;*.hdr)", L"*.png;*.jpg;*.jpeg;*.hdr" },
-						{ L"Audio Files (*.wav;*.ogg:*.mp3)", L"*.wav;*.ogg;*.mp3" }
+					{L"Model Files (*.obj;*.fbx;*.dae;*.gltf)", L"*.obj;*.fbx;*.dae;*.gltf"},
+					{L"Image Files (*.png;*.jpg;*.jpeg;*.tga;*.bmp)", L"*.png;*.jpg;*.jpeg;*.tga;*.bmp"},
+					{L"Hdr Files (*.exr;*.hdr)", L"*.exr;*.hdr"},
+					{L"Audio Files (*.wav;*.ogg:*.mp3)", L"*.wav;*.ogg;*.mp3"}
 				};
-				try
-				{
-					files = fileDialog.multiSelectFileDialog(fileTypes);
-					if (!files.empty()) {
-						openModal = true;
-					}
-				}
-				catch (...)
-				{
-					vfLogInfo("native file dalog close");
-				}
 
+				files = fileDialog.multiSelectFileDialog(fileTypes);
+				if (!files.empty())
+				{
+					openModal = true;
+				}
 			}
-			else if (ImGui::MenuItem("Editor Camera")) {}
-			else if (ImGui::MenuItem("Layout Style")) {}
+			else if (ImGui::MenuItem("Editor Camera"))
+			{
+			}
+			else if (ImGui::MenuItem("Layout Style"))
+			{
+			}
 			ImGui::EndMenu();
 		}
 	}
 
 	void MainImguiWindow::handleAddMenu()
 	{
-		if (ImGui::BeginMenu("Add")) {
-			if (ImGui::MenuItem("IBL")) {}
-			else if (ImGui::MenuItem("Terrain")) {}
+		if (ImGui::BeginMenu("Add"))
+		{
+			if (ImGui::MenuItem("IBL"))
+			{
+				showIBLWindow = true;
+			}
+			else if (ImGui::MenuItem("Terrain"))
+			{
+			}
 			ImGui::EndMenu();
 		}
+	}
+
+	void MainImguiWindow::iblWindow()
+	{
+		ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
+		if (ImGui::Begin("IBL", &showIBLWindow))
+		{
+			ImGui::Text("IBL Window");
+			if (ImGui::Button("Select"))
+			{
+				std::vector<std::pair<std::wstring, std::wstring>> fileTypes = {
+					{L"Hdr Files (*.vfHdr)", L"*.vfHdr"}
+				};
+
+				selectedIBLFile = fileDialog.openFileDialog(fileTypes);
+			}
+			ImGui::SameLine();
+			std::string filePath = StringUtil::wstringToUtf8(selectedIBLFile.wstring());
+			ImGui::Text(filePath.c_str());
+			if (ImGui::Button("Preview", ImVec2(120, 0)))
+			{
+				if (iblPreview)
+				{
+					deletePreview = true;
+				}
+				if (!filePath.empty())
+				{
+					iblPreview = controllers::EditorTextureController::loadHdrTexture(filePath);
+				}
+
+			}
+
+			if (deletePreview)
+			{
+				delete iblPreview;
+				deletePreview = false;
+				iblPreview = nullptr;
+			}
+			else if(!deletePreview && iblPreview)
+			{
+				ImGui::Image(iblPreview->getDescriptorSet(), ImVec2(200, 200));
+			}
+
+			if (ImGui::Button("Apply", ImVec2(120, 0)))
+			{
+				auto& registry = scene::EntityRegistry::getRegistry();
+				auto view = registry.view<components::CameraComponent>();
+				for (auto entity : view)
+				{
+					auto& cameraComp = view.get<components::CameraComponent>(entity);
+					offscreen.iblAdd(filePath, cameraComp);
+					break;
+				}
+			}
+			ImGui::SameLine();
+			ImGui::SetCursorPosX(
+				ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize("Close").x - ImGui::GetStyle().FramePadding.x *
+				2);
+			if (ImGui::Button("Remove", ImVec2(120, 0)))
+			{
+				selectedIBLFile = "";
+				offscreen.iblRemove();
+				if (iblPreview)
+				{
+					deletePreview = true;
+				}
+			}
+		}
+		ImGui::End();
 	}
 }

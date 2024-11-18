@@ -6,7 +6,7 @@
 
 namespace components {
 
-	struct WorldTransform
+	struct WorldTransformComponent
 	{
 		glm::mat4 worldMatrix;
 	};
@@ -19,11 +19,15 @@ namespace components {
 		std::vector<entt::entity> children; // List of child entity handles
 	};
 
-	struct Name {
+	struct NameComponent {
 		std::string name;
 	};
 
-	struct Transform {
+	struct IBLComponent {
+		std::string fileName;
+	};
+
+	struct TransformComponent {
 		glm::vec3 position{ 0.0f };
 		glm::vec3 rotation{ 0.0f }; // Euler angles
 		glm::vec3 scale{ 1.0f };
@@ -54,6 +58,52 @@ namespace components {
 			transform = glm::rotate(transform, glm::radians(rotation.z), glm::vec3(0, 0, 1));
 			transform = glm::scale(transform, scale);
 			return transform;
+		}
+	};
+
+	struct CameraComponent
+	{
+		glm::mat4 projectionMatrix{1.0f};
+		glm::mat4 viewMatrix{1.0f};
+		bool isPerspective = true; // True for perspective, false for orthographic
+		float fieldOfView = 45.0f; // For perspective cameras, in degrees
+		float orthoSize = 10.0f; // For orthographic cameras, half the height of the view
+		float nearPlane = 0.1f;
+		float farPlane = 1000.0f;
+		float aspectRatio = 1.778f; // Typically screen width / height
+		// Update the projection matrix based on the current settings
+		void updateProjectionMatrix()
+		{
+			if (isPerspective) {
+				projectionMatrix = glm::perspective(
+					glm::radians(fieldOfView),
+					aspectRatio,
+					nearPlane,
+					farPlane
+				);
+			} else {
+				float orthoHalfWidth = orthoSize * aspectRatio;
+				projectionMatrix = glm::ortho(
+					-orthoHalfWidth,
+					orthoHalfWidth,
+					-orthoSize,
+					orthoSize,
+					nearPlane,
+					farPlane
+				);
+			}
+		}
+		// Update the view matrix based on the camera's position, rotation, and direction
+		void updateViewMatrix(const glm::vec3& position, const glm::vec3& rotation) {
+			// Create a transformation matrix based on position and rotation.
+			glm::mat4 transform = glm::mat4(1.0f);
+			transform = glm::rotate(transform, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+			transform = glm::rotate(transform, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+			transform = glm::rotate(transform, glm::radians(rotation.z), glm::vec3(0, 0, 1));
+			transform = glm::translate(transform, -position);
+
+			// View matrix is the inverse of the transformation matrix.
+			viewMatrix = glm::inverse(transform);
 		}
 	};
 

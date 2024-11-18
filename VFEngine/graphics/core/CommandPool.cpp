@@ -27,7 +27,7 @@ namespace core {
 	void CommandPool::createCommandPool() {
 		vk::CommandPoolCreateInfo poolInfo{};
 		poolInfo.queueFamilyIndex = device.getQueueFamilyIndices().graphicsAndComputeFamily.value();
-		poolInfo.flags = poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer | vk::CommandPoolCreateFlagBits::eTransient;
+		poolInfo.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer | vk::CommandPoolCreateFlagBits::eTransient;
 
 		try {
 			commandPool = device.getLogicalDevice().createCommandPoolUnique(poolInfo);
