@@ -10,8 +10,8 @@
 
 namespace windows
 {
-	MainImguiWindow::MainImguiWindow(controllers::CoreInterface& coreInterface, controllers::OffScreen& offscreen)
-		: coreInterface{ coreInterface }, offscreen{ offscreen }
+	MainImguiWindow::MainImguiWindow(controllers::CoreInterface& coreInterface, controllers::OffScreen& offscreen, std::shared_ptr<scene::SceneGraphSystem> sceneGraphSystem)
+		: coreInterface{ coreInterface }, offscreen{ offscreen }, sceneGraphSystem{ sceneGraphSystem }
 	{
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking |
 			ImGuiWindowFlags_NoBackground;
@@ -193,6 +193,15 @@ namespace windows
 				};
 
 				selectedIBLFile = fileDialog.openFileDialog(fileTypes);
+				auto root = sceneGraphSystem->GetRoot();
+
+				if (root.hasComponent<components::IBLComponent>()) {
+					root.getComponent<components::IBLComponent>().fileName = StringUtil::wstringToUtf8(selectedIBLFile.wstring());
+				}
+				else
+				{
+					root.addComponent<components::IBLComponent>(StringUtil::wstringToUtf8(selectedIBLFile.wstring()));
+				}
 			}
 			ImGui::SameLine();
 			std::string filePath = StringUtil::wstringToUtf8(selectedIBLFile.wstring());
@@ -223,14 +232,10 @@ namespace windows
 
 			if (ImGui::Button("Apply", ImVec2(120, 0)))
 			{
-				auto& registry = scene::EntityRegistry::getRegistry();
-				auto view = registry.view<components::CameraComponent>();
-				for (auto entity : view)
-				{
-					auto& cameraComp = view.get<components::CameraComponent>(entity);
-					offscreen.iblAdd(filePath, cameraComp);
-					break;
+				if (auto firstCamera = getFirstCameraComponent(); firstCamera.has_value()) {
+					offscreen.iblAdd(filePath, firstCamera.value());
 				}
+				
 			}
 			ImGui::SameLine();
 			ImGui::SetCursorPosX(
@@ -244,8 +249,23 @@ namespace windows
 				{
 					deletePreview = true;
 				}
+				auto root = sceneGraphSystem->GetRoot();
+				if (root.hasComponent<components::IBLComponent>()) {
+					root.removeComponent<components::IBLComponent>();
+				}
 			}
 		}
 		ImGui::End();
 	}
+
+	std::optional<components::CameraComponent> MainImguiWindow::getFirstCameraComponent() const
+	{
+		auto& registry = scene::EntityRegistry::getRegistry();
+		auto view = registry.view<components::CameraComponent>();
+		for (auto entity : view) {
+			return view.get<components::CameraComponent>(entity);
+		}
+		return std::nullopt;
+	}
+
 }

@@ -21,7 +21,7 @@ namespace scene {
 		void updateWorldTransforms();
 		void updateCamera();
 
-		const Entity& GetRoot() const {
+		Entity& GetRoot() {
 			return root;
 		}
 		

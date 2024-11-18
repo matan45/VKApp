@@ -236,5 +236,16 @@ namespace windows
                 }
             }
         }
+
+        // Handle Ibl component
+		if (registry.all_of<components::IBLComponent>(entity.getHandle()))
+		{
+			if (ImGui::CollapsingHeader("IBL", ImGuiTreeNodeFlags_DefaultOpen))
+			{
+				auto const& ibl = registry.get<components::IBLComponent>(entity.getHandle());
+                ImGui::BulletText("IBL image Path");
+                ImGui::Text(ibl.fileName.c_str());
+			}
+		}
     }
 }
