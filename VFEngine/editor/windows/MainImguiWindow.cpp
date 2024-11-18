@@ -9,8 +9,9 @@
 
 namespace windows
 {
-    MainImguiWindow::MainImguiWindow(controllers::CoreInterface& coreInterface, controllers::OffScreen& offscreen)
-        : coreInterface{coreInterface}, offscreen{offscreen}
+    MainImguiWindow::MainImguiWindow(controllers::CoreInterface& coreInterface, controllers::OffScreen& offscreen,
+                                     std::shared_ptr<scene::SceneGraphSystem> sceneGraphSystem)
+        : coreInterface{coreInterface}, offscreen{offscreen}, sceneGraphSystem{sceneGraphSystem}
     {
         ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking |
             ImGuiWindowFlags_NoBackground;
@@ -198,7 +199,14 @@ namespace windows
 
             if (ImGui::Button("Apply", ImVec2(120, 0)))
             {
-                //offscreen.iblAdd(filePath,);
+                auto& registry = scene::EntityRegistry::getRegistry();
+                auto view = registry.view<components::CameraComponent>();
+                for (auto entity : view)
+                {
+                    auto& cameraComp = view.get<components::CameraComponent>(entity);
+                    offscreen.iblAdd(filePath, cameraComp);
+                    break;
+                }
             }
             ImGui::SameLine();
             ImGui::SetCursorPosX(

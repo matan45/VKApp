@@ -9,9 +9,9 @@ namespace windows {
 	private:
 		entt::entity selected = entt::null;  // Currently selected entity
 		//TODO be part of the level class maybe need to be shared when swap levels?
-		std::unique_ptr<scene::SceneGraphSystem> sceneGraphSystem = std::make_unique<scene::SceneGraphSystem>();
+		std::shared_ptr<scene::SceneGraphSystem> sceneGraphSystem;
 	public:
-		explicit SceneGraph() = default;
+		explicit SceneGraph(std::shared_ptr<scene::SceneGraphSystem> sceneGraphSystem);
 		~SceneGraph() override = default;
 
 		void draw() override;

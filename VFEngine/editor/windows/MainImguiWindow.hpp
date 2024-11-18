@@ -5,40 +5,45 @@
 #include "OffScreen.hpp"
 #include <filesystem>
 
+#include "scene/SceneGraphSystem.hpp"
+
 
 namespace fs = std::filesystem;
-namespace windows {
-	class MainImguiWindow : public controllers::imguiHandler::ImguiWindow
-	{
-	private:
-		controllers::CoreInterface& coreInterface;
-		controllers::OffScreen& offscreen;
-		int windowFlags;
-		//import settings
-		nfd::FileDialog fileDialog;
-		std::vector<std::string> files;
-		std::vector<bool> isFlip;
-		bool openModal = false;
 
-		//ibl window
-		fs::path selectedIBLFile;
-		bool showIBLWindow = false;
-	public:
-		explicit MainImguiWindow(controllers::CoreInterface& coreInterface,controllers::OffScreen& offscreen);
-		~MainImguiWindow() override = default;
+namespace windows
+{
+    class MainImguiWindow : public controllers::imguiHandler::ImguiWindow
+    {
+    private:
+        controllers::CoreInterface& coreInterface;
+        controllers::OffScreen& offscreen;
+        int windowFlags;
+        //import settings
+        nfd::FileDialog fileDialog;
+        std::vector<std::string> files;
+        std::vector<bool> isFlip;
+        bool openModal = false;
 
-		void draw() override;
+        //ibl window
+        fs::path selectedIBLFile;
+        bool showIBLWindow = false;
+        std::shared_ptr<scene::SceneGraphSystem> sceneGraphSystem;
 
-	private:
-		void menuBar();
-		void importModel();
+    public:
+        explicit MainImguiWindow(controllers::CoreInterface& coreInterface, controllers::OffScreen& offscreen,
+                                 std::shared_ptr<scene::SceneGraphSystem> sceneGraphSystem);
+        ~MainImguiWindow() override = default;
 
-		void handleFileMenu();
-		void handleSettingsMenu();
-		void handleAddMenu();
+        void draw() override;
 
-		void iblWindow();
-	};
+    private:
+        void menuBar();
+        void importModel();
+
+        void handleFileMenu();
+        void handleSettingsMenu();
+        void handleAddMenu();
+
+        void iblWindow();
+    };
 }
-
-
