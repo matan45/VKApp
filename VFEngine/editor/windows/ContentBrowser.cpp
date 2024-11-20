@@ -72,7 +72,7 @@ namespace windows
             ImGui::Text("Current Path: %s", StringUtil::wstringToUtf8(currentPath.wstring()).c_str());
 
             // Draw search bar
-            ImGui::Text("Search:"); 
+            ImGui::Text("Search:");
             ImGui::SameLine();
             ImGui::SetNextItemWidth(150.0f);
             char searchBuffer[256];
@@ -98,7 +98,11 @@ namespace windows
             }
             else
             {
-                //clean the data if needed
+                if (selectedImage)
+                {
+                    delete selectedImage;
+                    selectedImage = nullptr;
+                }
             }
 
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
@@ -115,7 +119,18 @@ namespace windows
                         && (asset.type != AssetType::Other || !fs::is_directory(asset.path)))
                     {
                         selectedFile = asset.path;
+                        selectedType = asset.type;
                         showFileWindow = true;
+                        if (selectedType == AssetType::Texture)
+                        {
+                            selectedImage = controllers::EditorTextureController::loadTexture(
+                                StringUtil::wstringToUtf8(selectedFile.wstring()));
+                        }
+                        else if (selectedType == AssetType::HDR)
+                        {
+                            selectedImage = controllers::EditorTextureController::loadHdrTexture(
+                                StringUtil::wstringToUtf8(selectedFile.wstring()));
+                        }
                     }
                 }
             }
@@ -253,7 +268,7 @@ namespace windows
 
     void ContentBrowser::drawFileWindow()
     {
-        ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_FirstUseEver);
 
         if (std::string windowTitle = "File: " + StringUtil::wstringToUtf8(selectedFile.filename().wstring());
             ImGui::Begin(windowTitle.c_str(), &showFileWindow))
@@ -261,6 +276,11 @@ namespace windows
             ImGui::Text("File Name: %s", StringUtil::wstringToUtf8(selectedFile.filename().wstring()).c_str());
             ImGui::Text("File Path: %s", StringUtil::wstringToUtf8(selectedFile.wstring()).c_str());
             ImGui::Separator();
+
+            if(selectedType == AssetType::Texture|| selectedType == AssetType::HDR)
+            {
+                ImGui::Image(selectedImage->getDescriptorSet(), ImVec2(200, 200));
+            }
 
             // Add more information or options specific to the file.
             // For example, if the file is an image, you could display it.

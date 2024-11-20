@@ -83,14 +83,14 @@ namespace scene {
 		updateChildWorldTransforms(root, identityMatrix); // Begin updating from the root entity
 	}
 
-	void SceneGraphSystem::updateCamera()
+	void SceneGraphSystem::updateCamera() const
 	{
 		auto view = EntityRegistry::getRegistry().view<components::CameraComponent, components::TransformComponent>();
 
 		for (auto entityHandle : view) {
 			auto entity = Entity(entityHandle);
 			auto& camera = entity.getComponent<components::CameraComponent>();
-			auto& transform = entity.getComponent<components::TransformComponent>();
+			const auto& transform = entity.getComponent<components::TransformComponent>();
 
 			camera.updateViewMatrix(transform.position, transform.rotation);
 		}

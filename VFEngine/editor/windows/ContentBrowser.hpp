@@ -31,6 +31,8 @@ namespace windows
         bool showCreateFolderModal = false;
 
         fs::path selectedFile;
+        AssetType selectedType;
+        dto::EditorTexture* selectedImage{nullptr};
         bool showFileWindow = false;
 
         dto::EditorTexture* fileIcon;
