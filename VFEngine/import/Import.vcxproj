@@ -105,6 +105,7 @@
     <ClInclude Include="controllers\Import.hpp" />
     <ClInclude Include="controllers\files\FileUtils.hpp" />
     <ClInclude Include="types\Audio.hpp" />
+    <ClInclude Include="types\Header.hpp" />
     <ClInclude Include="types\Mesh.hpp" />
     <ClInclude Include="types\Texture.hpp" />
   </ItemGroup>
