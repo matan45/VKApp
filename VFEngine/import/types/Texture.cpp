@@ -72,7 +72,6 @@ namespace types
         std::string type = files::FileUtils::getImageFileType(file.path.data());
         if (type == "HDR")
         {
-			
             if (file.config.isImageFlipVertically)
             {
                 stbi_set_flip_vertically_on_load(true);
@@ -96,11 +95,11 @@ namespace types
             // Store raw texture data into the vector
             hdrData.textureData = std::vector<float>(imageData, imageData + (width * height * channels));
             //TEST
-			HDRWriter writer;
-			writer.writeHDR("c:\\matan\\test.hdr", hdrData.width, hdrData.height, hdrData.textureData);
+            HDRWriter writer;
+            writer.writeHDR("c:\\matan\\test.hdr", hdrData.width, hdrData.height, hdrData.textureData);
             HDRReader read;
-			int width2;
-			int height2;
+            int width2;
+            int height2;
             std::vector<float> pixels;
             read.readHDR("c:\\matan\\test.hdr", width2, height2, pixels);
             writer.writeHDR("c:\\matan\\test2.hdr", width2, height2, pixels);
@@ -166,26 +165,15 @@ namespace types
             hdrData.width = static_cast<uint32_t>(width);
             hdrData.height = static_cast<uint32_t>(height);
             hdrData.numbersOfChannels = static_cast<uint32_t>(channels);
-            hdrData.textureData.resize(width * height * channels);
-
-            // Copy the data into the hdrData.textureData
-            std::copy_n(out, width * height * channels, hdrData.textureData.begin());
+            
             // If vertical flip is enabled, flip the image data
             if (file.config.isImageFlipVertically)
             {
-                for (int y = 0; y < height / 2; ++y)
-                {
-                    int oppositeY = height - y - 1;
-                    for (int x = 0; x < width * channels; ++x)
-                    {
-                        std::swap(
-                            hdrData.textureData[y * width * channels + x],
-                            hdrData.textureData[oppositeY * width * channels + x]
-                        );
-                    }
-                }
+                flipImageVertically(out, width, height);
             }
-
+            hdrData.textureData = convert(out, width, height);
+            HDRWriter writer;
+            writer.writeHDR("c:\\matan\\test2.hdr", hdrData.width, hdrData.height, hdrData.textureData);
             // Free the memory allocated by LoadEXR
             free(out);
 
@@ -280,5 +268,59 @@ namespace types
 
         // Close the file
         outFile.close();
+    }
+
+    std::vector<float> Texture::convert(const float* data, int width, int height) const
+    {
+        std::vector<float> result(width * height * 3); // RGB needs 3 floats per pixel
+        for (int y = 0; y < height; ++y)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                const int index = (y * width + x) * 4; // EXR data has 4 channels (RGBA)
+                float r = data[index];
+                float g = data[index + 1];
+                float b = data[index + 2];
+
+                // Normalize RGB values to [0, 1]
+                float maxValue = std::max({r, g, b, 1e-6f}); // Avoid division by zero
+                if (maxValue > 1.0f)
+                {
+                    r /= maxValue;
+                    g /= maxValue;
+                    b /= maxValue;
+                }
+
+                // Store normalized values in result
+                int resultIndex = (y * width + x) * 3;
+                result[resultIndex] = r;
+                result[resultIndex + 1] = g;
+                result[resultIndex + 2] = b;
+            }
+        }
+        return result;
+    }
+
+    void Texture::flipImageVertically(float* imageData, int width, int height) const
+    {
+        if (!imageData || width <= 0 || height <= 0) {
+            return; // Invalid input
+        }
+
+        int rowSize = width * 4; // Number of floats per row (RGBA)
+        float* tempRow = new float[rowSize]; // Temporary buffer to hold a row
+
+        for (int y = 0; y < height / 2; ++y) {
+            // Calculate row indices to swap
+            float* topRow = imageData + y * rowSize;
+            float* bottomRow = imageData + (height - 1 - y) * rowSize;
+
+            // Swap rows
+            std::memcpy(tempRow, topRow, rowSize * sizeof(float));
+            std::memcpy(topRow, bottomRow, rowSize * sizeof(float));
+            std::memcpy(bottomRow, tempRow, rowSize * sizeof(float));
+        }
+
+        delete[] tempRow; // Free the temporary buffer
     }
 }

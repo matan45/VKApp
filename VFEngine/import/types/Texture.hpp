@@ -18,5 +18,8 @@ namespace types
                                const resource::TextureData& textureData) const;
         void saveToFileHDR(std::string_view fileName, std::string_view location,
                            const resource::HDRData& hdrData) const;
+
+        std::vector<float> convert(const float* data, int width, int height) const;
+       void flipImageVertically(float* imageData, int width, int height) const;
     };
 }
