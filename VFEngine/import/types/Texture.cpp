@@ -96,9 +96,14 @@ namespace types
             // Store raw texture data into the vector
             hdrData.textureData = std::vector<float>(imageData, imageData + (width * height * channels));
             //TEST
-			/*HDRWriter writer;
+			HDRWriter writer;
 			writer.writeHDR("c:\\matan\\test.hdr", hdrData.width, hdrData.height, hdrData.textureData);
-*/
+            HDRReader read;
+			int width2;
+			int height2;
+            std::vector<float> pixels;
+            read.readHDR("c:\\matan\\test.hdr", width2, height2, pixels);
+            writer.writeHDR("c:\\matan\\test2.hdr", width2, height2, pixels);
 
             if (file.config.isImageFlipVertically)
             {
