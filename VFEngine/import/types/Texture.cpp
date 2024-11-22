@@ -95,14 +95,14 @@ namespace types
             // Store raw texture data into the vector
             hdrData.textureData = std::vector<float>(imageData, imageData + (width * height * channels));
             //TEST
-            HDRWriter writer;
+           /* HDRWriter writer;
             writer.writeHDR("c:\\matan\\test.hdr", hdrData.width, hdrData.height, hdrData.textureData);
             HDRReader read;
             int width2;
             int height2;
             std::vector<float> pixels;
             read.readHDR("c:\\matan\\test.hdr", width2, height2, pixels);
-            writer.writeHDR("c:\\matan\\test2.hdr", width2, height2, pixels);
+            writer.writeHDR("c:\\matan\\test2.hdr", width2, height2, pixels);*/
 
             if (file.config.isImageFlipVertically)
             {
@@ -159,21 +159,21 @@ namespace types
                 return;
             }
 
+            // If vertical flip is enabled, flip the image data
+            if (file.config.isImageFlipVertically)
+            {
+                flipImageVertically(out, width, height);
+            }
+
             int channels = exrImage.num_channels < 4 ? exrImage.num_channels : 4;
 
             // Allocate space for texture data
             hdrData.width = static_cast<uint32_t>(width);
             hdrData.height = static_cast<uint32_t>(height);
             hdrData.numbersOfChannels = static_cast<uint32_t>(channels);
-            
-            // If vertical flip is enabled, flip the image data
-            if (file.config.isImageFlipVertically)
-            {
-                flipImageVertically(out, width, height);
-            }
             hdrData.textureData = convert(out, width, height);
-            HDRWriter writer;
-            writer.writeHDR("c:\\matan\\test2.hdr", hdrData.width, hdrData.height, hdrData.textureData);
+           /* HDRWriter writer;
+            writer.writeHDR("c:\\matan\\test2.hdr", hdrData.width, hdrData.height, hdrData.textureData);*/
             // Free the memory allocated by LoadEXR
             free(out);
 
@@ -259,15 +259,12 @@ namespace types
         outFile.write(std::bit_cast<const char*>(&hdrData.height), sizeof(hdrData.height));
         outFile.write(std::bit_cast<const char*>(&hdrData.numbersOfChannels), sizeof(hdrData.numbersOfChannels));
 
-        // Write the size of the texture data and then the raw texture data
-        auto textureDataSize = hdrData.width * hdrData.height * hdrData.numbersOfChannels;
-        outFile.write(std::bit_cast<const char*>(&textureDataSize), sizeof(textureDataSize));
-        // Write the size of the texture data
-        outFile.write(std::bit_cast<const char*>(hdrData.textureData.data()), textureDataSize * sizeof(float));
-        // Write the raw texture data
+        HDRWriter writer;
+        writer.writeHDR(outFile, hdrData.width, hdrData.height, hdrData.textureData);
 
         // Close the file
         outFile.close();
+        
     }
 
     std::vector<float> Texture::convert(const float* data, int width, int height) const

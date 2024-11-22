@@ -268,7 +268,7 @@ namespace windows
 
     void ContentBrowser::drawFileWindow()
     {
-        ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
 
         if (std::string windowTitle = "File: " + StringUtil::wstringToUtf8(selectedFile.filename().wstring());
             ImGui::Begin(windowTitle.c_str(), &showFileWindow))
@@ -279,7 +279,24 @@ namespace windows
 
             if(selectedType == AssetType::Texture|| selectedType == AssetType::HDR)
             {
-                ImGui::Image(selectedImage->getDescriptorSet(), ImVec2(200, 200));
+                // Dimensions of the image
+                ImVec2 imageSize(600, 400); // Replace with the actual size of the image if available
+            
+                // Get the available space in the window
+                ImVec2 availableSpace = ImGui::GetContentRegionAvail();
+            
+                // Calculate padding for centering
+                float xPadding = (availableSpace.x - imageSize.x) * 0.5f;
+                float yPadding = (availableSpace.y - imageSize.y) * 0.5f;
+
+                // Ensure padding is at least 0 (to avoid negative offset)
+                if (xPadding < 0) xPadding = 0;
+                if (yPadding < 0) yPadding = 0;
+
+                // Apply padding before rendering the image
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + xPadding);
+                ImGui::SetCursorPosY(ImGui::GetCursorPosY() + yPadding);
+                ImGui::Image(selectedImage->getDescriptorSet(),imageSize);
             }
 
             // Add more information or options specific to the file.

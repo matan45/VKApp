@@ -1,5 +1,6 @@
 #include "TextureResource.hpp"
 #include "../print/EditorLogger.hpp"
+#include "HdrHalper.hpp"
 
 #include <fstream>
 #include <bit>  // For std::bit_cast
@@ -103,7 +104,7 @@ namespace resource {
 		inFile.read(std::bit_cast<char*>(&hdrData.numbersOfChannels), sizeof(hdrData.numbersOfChannels));
 
 		// Read the texture data size and then the texture data itself
-		size_t textureDataSize = hdrData.width * hdrData.height * hdrData.numbersOfChannels;
+	/*	size_t textureDataSize = hdrData.width * hdrData.height * hdrData.numbersOfChannels;
 		hdrData.textureData.resize(textureDataSize); // Resize the textureData vector
 
 		size_t currentOffset = 0;
@@ -116,10 +117,13 @@ namespace resource {
 
 			currentOffset += bytesToRead;
 			textureDataSize -= bytesToRead;
-		}
-
+		}*/
+		
+		HDRReader reader;
+		reader.readHDR(inFile, hdrData.width, hdrData.height, hdrData.textureData);
 		// Close the file
 		inFile.close();
+		
 
 		return hdrData;
 	}
