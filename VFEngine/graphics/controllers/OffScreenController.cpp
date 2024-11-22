@@ -31,7 +31,7 @@ namespace controllers
     {
         render::IBL* ibl = offScreen->getRenderPassHandler()->getIBL();
         ibl->init(iblPath);
-        ibl->setCamera(&camera);
+        ibl->setCamera(camera);
     }
 
     void OffScreenController::iblRemove()
