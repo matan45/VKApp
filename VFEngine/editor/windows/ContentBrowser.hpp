@@ -2,6 +2,7 @@
 #include "imguiHandler/ImguiWindow.hpp"
 #include "imgui.h"
 #include "Import.hpp"
+#include "TextEditor.h"
 #include "EditorTextureController.hpp"
 
 #include <string>
@@ -29,6 +30,9 @@ namespace windows
 
         std::string newFolderName;
         bool showCreateFolderModal = false;
+
+        TextEditor editor;
+        bool isShaderLoaded = false;
 
         fs::path selectedFile;
         AssetType selectedType;

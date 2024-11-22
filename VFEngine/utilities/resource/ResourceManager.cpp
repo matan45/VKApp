@@ -2,7 +2,8 @@
 #include "TextureResource.hpp"
 #include "AudioResource.hpp"
 #include "MeshResource.hpp"
-#include <bit>  // For std::bit_cast
+#include <bit>
+
 
 namespace resource
 {
@@ -37,9 +38,12 @@ namespace resource
         std::erase_if(shaderCache, [](const auto& pair) { return pair.second.expired(); });
     }
 
-    FileType ResourceManager::readHeaderFile(std::string_view path)
+    FileType ResourceManager::readHeaderFile(const fs::path& filePath)
     {
-        std::ifstream file(path.data(), std::ios::binary);
+        if (filePath.extension().string() == ".glsl") {
+            return FileType::SHADER;
+        }
+        std::ifstream file(filePath, std::ios::binary);
         if (!file.is_open()) {
             return FileType::UNKNOWN;
         }
@@ -48,7 +52,7 @@ namespace resource
         file.read(std::bit_cast<char*>(&typeByte), sizeof(typeByte));
 
         if (!file) {
-            vfLogError( "Failed to read headerFileType from file: {}", path.data());
+            vfLogError( "Failed to read headerFileType from file: {}", filePath.string());
             return FileType::UNKNOWN;
         }
 

@@ -26,6 +26,7 @@ project "Editor"
    includedirs {
 	  "dependencies/imgui",  
 	  "dependencies/ImGuizmo",   
+	  "dependencies/ImGuiColorTextEdit",   
 	  "dependencies/imgui-node-editor",
 	  "dependencies/spdlog/include",
 	  "dependencies/glm",
@@ -334,6 +335,8 @@ project "imgui"
       "dependencies/ImGuizmo/*.h",
       "dependencies/ImGuizmo/*.cpp",
       "dependencies/imgui-node-editor/*.h",
+      "dependencies/ImGuiColorTextEdit/*.h",
+      "dependencies/ImGuiColorTextEdit/*.cpp",
       "dependencies/imgui-node-editor/*.cpp"
    }
 
@@ -354,6 +357,7 @@ project "imgui"
       "dependencies/ImGuizmo",              
       "dependencies/imgui-node-editor", 
 	  "dependencies/glfw/include",	  
+	  "dependencies/ImGuiColorTextEdit/*.h",	  
       vulkanLibPath.."/Include"                   -- Vulkan SDK headers
    }
    
