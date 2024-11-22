@@ -1,7 +1,6 @@
 #include "Texture.hpp"
 #include "print/EditorLogger.hpp"
 #include "../controllers/files/FileUtils.hpp"
-#include "Header.hpp"
 #include <iostream>
 #define TINYEXR_USE_MINIZ 0
 #define TINYEXR_USE_STB_ZLIB 1
@@ -15,7 +14,7 @@
 
 #include <vector>
 #include <fstream>
-#include <bit>  // For std::bit_cast
+#include <bit> 
 
 #include <filesystem>
 
@@ -84,30 +83,19 @@ namespace types
             if (!imageData)
             {
                 vfLogError("Failed to load texture: {}", file.path.data());
-                return; // Return
+                return;
             }
-
-            // Store texture information
-            hdrData.width = static_cast<uint32_t>(width);
-            hdrData.height = static_cast<uint32_t>(height);
-            hdrData.numbersOfChannels = channels;
-
-            // Store raw texture data into the vector
-            hdrData.textureData = std::vector<float>(imageData, imageData + (width * height * channels));
-            //TEST
-           /* HDRWriter writer;
-            writer.writeHDR("c:\\matan\\test.hdr", hdrData.width, hdrData.height, hdrData.textureData);
-            HDRReader read;
-            int width2;
-            int height2;
-            std::vector<float> pixels;
-            read.readHDR("c:\\matan\\test.hdr", width2, height2, pixels);
-            writer.writeHDR("c:\\matan\\test2.hdr", width2, height2, pixels);*/
 
             if (file.config.isImageFlipVertically)
             {
                 stbi_set_flip_vertically_on_load(false);
             }
+
+            hdrData.width = static_cast<uint32_t>(width);
+            hdrData.height = static_cast<uint32_t>(height);
+            hdrData.numbersOfChannels = channels;
+            hdrData.textureData = std::vector<float>(imageData, imageData + (width * height * channels));
+
             saveToFileHDR(fileName, location, hdrData);
 
             stbi_image_free(imageData);
@@ -131,7 +119,7 @@ namespace types
             if (ret != TINYEXR_SUCCESS)
             {
                 vfLogError("Parse EXR err: {}", exrError);
-                FreeEXRErrorMessage(exrError); // free's buffer for an error message
+                FreeEXRErrorMessage(exrError);
                 return;
             }
 
@@ -143,11 +131,11 @@ namespace types
             {
                 vfLogError("Load EXR err: {}", exrError);
                 FreeEXRHeader(&exrHeader);
-                FreeEXRErrorMessage(exrError); // free's buffer for an error message
+                FreeEXRErrorMessage(exrError);
                 return;
             }
 
-            float* out; // width * height * RGBA
+            float* out;
             int width;
             int height;
 
@@ -159,7 +147,6 @@ namespace types
                 return;
             }
 
-            // If vertical flip is enabled, flip the image data
             if (file.config.isImageFlipVertically)
             {
                 flipImageVertically(out, width, height);
@@ -167,20 +154,15 @@ namespace types
 
             int channels = exrImage.num_channels < 4 ? exrImage.num_channels : 4;
 
-            // Allocate space for texture data
             hdrData.width = static_cast<uint32_t>(width);
             hdrData.height = static_cast<uint32_t>(height);
             hdrData.numbersOfChannels = static_cast<uint32_t>(channels);
-            hdrData.textureData = convert(out, width, height);
-           /* HDRWriter writer;
-            writer.writeHDR("c:\\matan\\test2.hdr", hdrData.width, hdrData.height, hdrData.textureData);*/
-            // Free the memory allocated by LoadEXR
-            free(out);
+            hdrData.textureData = convertFromEXRToHDR(out, width, height);
 
+            free(out);
             FreeEXRImage(&exrImage);
             FreeEXRHeader(&exrHeader);
 
-            // Save the EXR data to a file
             saveToFileHDR(fileName, location, hdrData);
         }
     }
@@ -231,7 +213,6 @@ namespace types
     void Texture::saveToFileHDR(std::string_view fileName, std::string_view location,
                                 const resource::HDRData& hdrData) const
     {
-        // Open the file in binary mode
         std::filesystem::path newFileLocation = std::filesystem::path(location) / (std::string(fileName) + "." +
             FileExtension::hdr);
         std::ofstream outFile(newFileLocation, std::ios::binary);
@@ -241,33 +222,27 @@ namespace types
             vfLogError("Failed to open file for writing: ", newFileLocation.string());
             return;
         }
-
-        // Write the header file type
+        
         uint8_t headerFileType = static_cast<uint8_t>(hdrData.headerFileType);
         outFile.write(reinterpret_cast<const char*>(&headerFileType), sizeof(headerFileType));
-
-        // Serialize the mesh data (this is just an example, adapt to your format)
+        
         uint32_t majorVersion = std::bit_cast<uint32_t>(Version::major);
         uint32_t minorVersion = std::bit_cast<uint32_t>(Version::minor);
         uint32_t patchVersion = std::bit_cast<uint32_t>(Version::patch);
         outFile.write(std::bit_cast<const char*>(&majorVersion), sizeof(majorVersion));
         outFile.write(std::bit_cast<const char*>(&minorVersion), sizeof(minorVersion));
         outFile.write(std::bit_cast<const char*>(&patchVersion), sizeof(patchVersion));
-
-        // Write width and height
+        
         outFile.write(std::bit_cast<const char*>(&hdrData.width), sizeof(hdrData.width));
         outFile.write(std::bit_cast<const char*>(&hdrData.height), sizeof(hdrData.height));
         outFile.write(std::bit_cast<const char*>(&hdrData.numbersOfChannels), sizeof(hdrData.numbersOfChannels));
 
-        HDRWriter writer;
-        writer.writeHDR(outFile, hdrData.width, hdrData.height, hdrData.textureData);
-
-        // Close the file
-        outFile.close();
+        HDRWriter::writeHDR(outFile, hdrData.width, hdrData.height, hdrData.numbersOfChannels, hdrData.textureData);
         
+        outFile.close();
     }
 
-    std::vector<float> Texture::convert(const float* data, int width, int height) const
+    std::vector<float> Texture::convertFromEXRToHDR(const float* data, int width, int height) const
     {
         std::vector<float> result(width * height * 3); // RGB needs 3 floats per pixel
         for (int y = 0; y < height; ++y)
@@ -300,14 +275,16 @@ namespace types
 
     void Texture::flipImageVertically(float* imageData, int width, int height) const
     {
-        if (!imageData || width <= 0 || height <= 0) {
+        if (!imageData || width <= 0 || height <= 0)
+        {
             return; // Invalid input
         }
 
         int rowSize = width * 4; // Number of floats per row (RGBA)
         float* tempRow = new float[rowSize]; // Temporary buffer to hold a row
 
-        for (int y = 0; y < height / 2; ++y) {
+        for (int y = 0; y < height / 2; ++y)
+        {
             // Calculate row indices to swap
             float* topRow = imageData + y * rowSize;
             float* bottomRow = imageData + (height - 1 - y) * rowSize;
@@ -318,6 +295,85 @@ namespace types
             std::memcpy(bottomRow, tempRow, rowSize * sizeof(float));
         }
 
-        delete[] tempRow; // Free the temporary buffer
+        delete[] tempRow;
+    }
+
+    void HDRWriter::writeHDR(std::ofstream& file, int width, int height, int numbersOfChannels,
+                             const std::vector<float>& pixels)
+    {
+        if (pixels.size() != width * height * numbersOfChannels)
+        {
+            vfLogError("Pixel data size does not match image dimensions!");
+            return;
+        }
+        for (int y = 0; y < height; ++y)
+        {
+            // Write scanline header
+            uint8_t scanlineHeader[4] = {2, 2, (uint8_t)(width >> 8), (uint8_t)(width & 0xFF)};
+            file.write(reinterpret_cast<char*>(scanlineHeader), 4);
+
+            for (int channel = 0; channel < 4; ++channel)
+            {
+                int x = 0;
+                while (x < width)
+                {
+                    int runLength = 1;
+                    while (x + runLength < width && runLength < 127 &&
+                        getChannel(pixels, width, y, x, channel) ==
+                        getChannel(pixels, width, y, x + runLength, channel))
+                    {
+                        runLength++;
+                    }
+
+                    if (runLength > 1)
+                    {
+                        // RLE
+                        uint8_t value = getChannel(pixels, width, y, x, channel);
+                        file.put(128 + runLength);
+                        file.put(value);
+                    }
+                    else
+                    {
+                        // Raw data
+                        uint8_t value = getChannel(pixels, width, y, x, channel);
+                        file.put(1);
+                        file.put(value);
+                    }
+                    x += runLength;
+                }
+            }
+        }
+    }
+
+    uint8_t HDRWriter::getChannel(const std::vector<float>& pixels, int width, int y, int x, int channel)
+    {
+        float r = pixels[(y * width + x) * 3 + 0];
+        float g = pixels[(y * width + x) * 3 + 1];
+        float b = pixels[(y * width + x) * 3 + 2];
+
+        switch (channel)
+        {
+        case 0: return encodeRGBE(r, g, b).r; // Red
+        case 1: return encodeRGBE(r, g, b).g; // Green
+        case 2: return encodeRGBE(r, g, b).b; // Blue
+        case 3: return encodeRGBE(r, g, b).e; // Exponent
+        default: return 0;
+        }
+    }
+
+    RGBE HDRWriter::encodeRGBE(float r, float g, float b)
+    {
+        float maxColor = std::max(r, std::max(g, b));
+        if (maxColor < 1e-5f) return {0, 0, 0, 0};
+
+        int e;
+        float scale = std::frexp(maxColor, &e) * 256.0f / maxColor;
+
+        return {
+            (uint8_t)(r * scale),
+            (uint8_t)(g * scale),
+            (uint8_t)(b * scale),
+            (uint8_t)(e + 128)
+        };
     }
 }

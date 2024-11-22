@@ -29,6 +29,10 @@ namespace core {
 		auto texturePtr = textureData.get();
 		vk::DeviceSize imageSize = texturePtr->width * texturePtr->height * texturePtr->numbersOfChannels * sizeof(float);
 
+		imageData.height = texturePtr->height;
+		imageData.width = texturePtr->width;
+		imageData.numbersOfChannels = texturePtr->numbersOfChannels;
+		
 		vk::Buffer stagingBuffer;
 		vk::DeviceMemory stagingBufferMemory;
 
@@ -85,6 +89,10 @@ namespace core {
 		auto texturePtr = textureData.get();
 		vk::DeviceSize imageSize = texturePtr->width * texturePtr->height * texturePtr->numbersOfChannels;
 
+		imageData.height = texturePtr->height;
+		imageData.width = texturePtr->width;
+		imageData.numbersOfChannels = texturePtr->numbersOfChannels;
+		
 		vk::Buffer stagingBuffer;
 		vk::DeviceMemory stagingBufferMemory;
 

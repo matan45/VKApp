@@ -11,7 +11,7 @@ namespace windows
     ContentBrowser::ContentBrowser()
     {
         navigateTo(currentPath);
-        
+
         fileIcon = controllers::EditorTextureController::loadTexture(
             "../../resources/editor/contentBrowser/file.vfImage");
         folderIcon = controllers::EditorTextureController::loadTexture(
@@ -277,33 +277,26 @@ namespace windows
             ImGui::Text("File Path: %s", StringUtil::wstringToUtf8(selectedFile.wstring()).c_str());
             ImGui::Separator();
 
-            if(selectedType == AssetType::Texture|| selectedType == AssetType::HDR)
+            if (selectedType == AssetType::Texture || selectedType == AssetType::HDR)
             {
-                // Dimensions of the image
-                ImVec2 imageSize(600, 400); // Replace with the actual size of the image if available
-            
-                // Get the available space in the window
-                ImVec2 availableSpace = ImGui::GetContentRegionAvail();
-            
-                // Calculate padding for centering
-                float xPadding = (availableSpace.x - imageSize.x) * 0.5f;
-                float yPadding = (availableSpace.y - imageSize.y) * 0.5f;
+                ImGui::Columns(2, nullptr, false);
+                ImGui::SetColumnOffset(1, 200.0f);
+                
+                ImGui::Text("Width: %d", selectedImage->getWidth());
+                ImGui::Text("Height: %d", selectedImage->getHeight());
+                ImGui::Text("Numbers of Channels: %d", selectedImage->getNumbersOfChannels());
 
-                // Ensure padding is at least 0 (to avoid negative offset)
-                if (xPadding < 0) xPadding = 0;
-                if (yPadding < 0) yPadding = 0;
+                ImGui::NextColumn();
+                
+                ImVec2 imageSize(600, 400);
+                float aspectRatio = static_cast<float>(selectedImage->getWidth() / selectedImage->getHeight());
+                imageSize.y = imageSize.x / aspectRatio;
+                ImGui::Image(selectedImage->getDescriptorSet(), imageSize);
 
-                // Apply padding before rendering the image
-                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + xPadding);
-                ImGui::SetCursorPosY(ImGui::GetCursorPosY() + yPadding);
-                ImGui::Image(selectedImage->getDescriptorSet(),imageSize);
+                ImGui::Columns(1);
             }
-
-            // Add more information or options specific to the file.
-            // For example, if the file is an image, you could display it.
-            // If it's a text file, you could show its contents.
-            //if (selectedFile.extension() == L".txt") {}
         }
+
         ImGui::End();
     }
 

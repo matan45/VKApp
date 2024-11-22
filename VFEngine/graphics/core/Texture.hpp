@@ -1,9 +1,15 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
-#include <string>
 
 namespace core {
 	class Device;
+
+	struct ImageData
+	{
+		uint32_t width;
+		uint32_t height;
+		uint32_t numbersOfChannels;
+	};
 
 	class Texture
 	{
@@ -14,6 +20,7 @@ namespace core {
 		vk::Image image;
 		vk::DeviceMemory imageMemory;
 		vk::ImageView imageView;
+		ImageData imageData;
 
 		vk::Sampler sampler;
 
@@ -29,6 +36,7 @@ namespace core {
 		const vk::DescriptorSet& getDescriptorSet() const { return descriptorSet; }
 		const vk::ImageView& getImageView() const { return imageView; }
 		const vk::Sampler& getSampler() const { return sampler; }
+		const ImageData& getImageData() const { return imageData; }
 
 	private:
 		void createSampler();
