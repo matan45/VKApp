@@ -107,6 +107,7 @@
     <ClInclude Include="types\Audio.hpp" />
     <ClInclude Include="types\Mesh.hpp" />
     <ClInclude Include="types\Texture.hpp" />
+    <ClInclude Include="types\TGA.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="controllers\Import.cpp" />

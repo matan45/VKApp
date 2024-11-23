@@ -1,6 +1,9 @@
 #include "Texture.hpp"
 #include "print/EditorLogger.hpp"
 #include "../controllers/files/FileUtils.hpp"
+#include "config/Config.hpp"
+#include "TGA.hpp"
+
 #include <iostream>
 #define TINYEXR_USE_MINIZ 0
 #define TINYEXR_USE_STB_ZLIB 1
@@ -14,12 +17,9 @@
 
 #include <vector>
 #include <fstream>
-#include <bit> 
-
+#include <bit>
 #include <filesystem>
 
-
-#include "config/Config.hpp"
 
 namespace types
 {
@@ -57,7 +57,13 @@ namespace types
         {
             stbi_set_flip_vertically_on_load(false);
         }
-        // Free the image data once copied to the structure
+        //TEST
+        writeTGA("c:\\matan\\test.tga", textureData.width, textureData.height, textureData.numbersOfChannels,
+                 textureData.textureData);
+        TGAImage image;
+        readTGA("c:\\matan\\test.tga", image);
+        writeTGA("c:\\matan\\test2.tga", image.width, image.height, image.channels, image.pixelData);
+
         stbi_image_free(imageData);
 
         saveToFileTexture(fileName, location, textureData);
@@ -222,23 +228,23 @@ namespace types
             vfLogError("Failed to open file for writing: ", newFileLocation.string());
             return;
         }
-        
+
         uint8_t headerFileType = static_cast<uint8_t>(hdrData.headerFileType);
         outFile.write(reinterpret_cast<const char*>(&headerFileType), sizeof(headerFileType));
-        
+
         uint32_t majorVersion = std::bit_cast<uint32_t>(Version::major);
         uint32_t minorVersion = std::bit_cast<uint32_t>(Version::minor);
         uint32_t patchVersion = std::bit_cast<uint32_t>(Version::patch);
         outFile.write(std::bit_cast<const char*>(&majorVersion), sizeof(majorVersion));
         outFile.write(std::bit_cast<const char*>(&minorVersion), sizeof(minorVersion));
         outFile.write(std::bit_cast<const char*>(&patchVersion), sizeof(patchVersion));
-        
+
         outFile.write(std::bit_cast<const char*>(&hdrData.width), sizeof(hdrData.width));
         outFile.write(std::bit_cast<const char*>(&hdrData.height), sizeof(hdrData.height));
         outFile.write(std::bit_cast<const char*>(&hdrData.numbersOfChannels), sizeof(hdrData.numbersOfChannels));
 
         HDRWriter::writeHDR(outFile, hdrData.width, hdrData.height, hdrData.numbersOfChannels, hdrData.textureData);
-        
+
         outFile.close();
     }
 
