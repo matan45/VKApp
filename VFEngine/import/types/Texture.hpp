@@ -38,4 +38,10 @@ namespace types
         static uint8_t getChannel(const std::vector<float>& pixels, int width, int y, int x, int channel);
         static RGBE encodeRGBE(float r, float g, float b);
     };
+
+    class TGAWriter
+    {
+        public:
+        static void writeTGA(std::ofstream& file, int numbersOfChannels,const std::vector<unsigned char>& pixelData);
+    };
 }

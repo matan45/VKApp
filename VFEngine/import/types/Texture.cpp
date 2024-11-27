@@ -58,11 +58,11 @@ namespace types
             stbi_set_flip_vertically_on_load(false);
         }
         //TEST
-        writeTGA("c:\\matan\\test.tga", textureData.width, textureData.height, textureData.numbersOfChannels,
+        /*writeTGA("c:\\matan\\test.tga", textureData.width, textureData.height, textureData.numbersOfChannels,
                  textureData.textureData);
         TGAImage image;
         readTGA("c:\\matan\\test.tga", image);
-        writeTGA("c:\\matan\\test2.tga", image.width, image.height, image.channels, image.pixelData);
+        writeTGA("c:\\matan\\test2.tga", image.width, image.height, image.channels, image.pixelData);*/
 
         stbi_image_free(imageData);
 
@@ -205,12 +205,7 @@ namespace types
         outFile.write(std::bit_cast<const char*>(&textureData.numbersOfChannels),
                       sizeof(textureData.numbersOfChannels));
 
-        // Write the size of the texture data and then the raw texture data
-        auto textureDataSize = static_cast<uint32_t>(textureData.textureData.size());
-        outFile.write(std::bit_cast<const char*>(&textureDataSize), sizeof(textureDataSize));
-        // Write the size of the texture data
-        outFile.write(std::bit_cast<const char*>(textureData.textureData.data()), textureDataSize);
-        // Write the raw texture data
+        TGAWriter::writeTGA(outFile, textureData.numbersOfChannels,textureData.textureData);
 
         // Close the file
         outFile.close();
@@ -381,5 +376,38 @@ namespace types
             (uint8_t)(b * scale),
             (uint8_t)(e + 128)
         };
+    }
+
+    void TGAWriter::writeTGA(std::ofstream& file, int numbersOfChannels,
+                             const std::vector<unsigned char>& pixelData)
+    {
+        if (numbersOfChannels == 1)
+        {
+            file.write(reinterpret_cast<const char*>(pixelData.data()), pixelData.size());
+        }
+        else if (numbersOfChannels == 2)
+        {
+            for (size_t i = 0; i < pixelData.size(); i += 2)
+            {
+                uint8_t ga[2] = {pixelData[i], pixelData[i + 1]}; // G (intensity), A (alpha)
+                file.write(reinterpret_cast<char*>(ga), sizeof(ga));
+            }
+        }
+        else if (numbersOfChannels == 3)
+        {
+            for (size_t i = 0; i < pixelData.size(); i += numbersOfChannels)
+            {
+                uint8_t bgr[3] = {pixelData[i + 2], pixelData[i + 1], pixelData[i]};
+                file.write(reinterpret_cast<char*>(bgr), sizeof(bgr));
+            }
+        }
+        else if (numbersOfChannels == 4)
+        {
+            for (size_t i = 0; i < pixelData.size(); i += numbersOfChannels)
+            {
+                uint8_t bgra[4] = {pixelData[i + 2], pixelData[i + 1], pixelData[i], pixelData[i + 3]};
+                file.write(reinterpret_cast<char*>(bgra), sizeof(bgra));
+            }
+        }
     }
 }

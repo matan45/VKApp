@@ -43,29 +43,8 @@ namespace resource
         inFile.read(std::bit_cast<char*>(&textureData.height), sizeof(textureData.height));
         inFile.read(std::bit_cast<char*>(&textureData.numbersOfChannels), sizeof(textureData.numbersOfChannels));
 
-        // Read the texture data size and then the texture data itself
-        uint32_t textureDataSize;
-        inFile.read(std::bit_cast<char*>(&textureDataSize), sizeof(textureDataSize));
-        // Read the size of the texture data
-        textureData.textureData.resize(textureDataSize); // Resize the textureData vector
-
-        size_t bytesRemaining = textureDataSize;
-
-        textureData.textureData.resize(textureDataSize); // Reserve space in advance if possible
-        size_t currentOffset = 0;
-
-        while (bytesRemaining > 0)
-        {
-            size_t bytesToRead = std::min(chunkSize, bytesRemaining);
-
-            // Read chunk into memory
-            inFile.read(std::bit_cast<char*>(&textureData.textureData[currentOffset]), bytesToRead);
-
-            currentOffset += bytesToRead;
-            bytesRemaining -= bytesToRead;
-        }
-
-        // Close the file
+        TGAReader::readTGA(inFile, textureData.width, textureData.height, textureData.numbersOfChannels,
+                           textureData.textureData);
         inFile.close();
 
         return textureData;
@@ -74,14 +53,14 @@ namespace resource
     HDRData TextureResource::loadHDR(std::string_view path)
     {
         resource::HDRData hdrData;
-        
+
         std::ifstream inFile(path.data(), std::ios::binary);
         if (!inFile)
         {
             vfLogError("Failed to open file for reading: ", path);
             return {};
         }
-        
+
         // Read the header file type
         uint8_t headerFileType;
         inFile.read(std::bit_cast<char*>(&headerFileType), sizeof(headerFileType));
@@ -99,15 +78,15 @@ namespace resource
             vfLogError("Incompatible file version: {}.{}.{}", majorVersion, minorVersion, patchVersion);
             return {};
         }
-        
+
         inFile.read(std::bit_cast<char*>(&hdrData.width), sizeof(hdrData.width));
         inFile.read(std::bit_cast<char*>(&hdrData.height), sizeof(hdrData.height));
         inFile.read(std::bit_cast<char*>(&hdrData.numbersOfChannels), sizeof(hdrData.numbersOfChannels));
-        
+
         HDRReader::readHDR(inFile, hdrData.width, hdrData.height, hdrData.textureData);
-       
+
         inFile.close();
-        
+
         return hdrData;
     }
 
@@ -181,6 +160,25 @@ namespace resource
             r = rgbe.r * scale;
             g = rgbe.g * scale;
             b = rgbe.b * scale;
+        }
+    }
+
+    void TGAReader::readTGA(std::ifstream& file, int width, int height, int numbersOfChannels,
+                            std::vector<unsigned char>& pixelData)
+    {
+        // Allocate memory for the pixel data
+        size_t pixelDataSize = width * height * numbersOfChannels;
+        pixelData.resize(pixelDataSize);
+
+        // Read pixel data
+        file.read(reinterpret_cast<char*>(pixelData.data()), pixelDataSize);
+       
+        if (numbersOfChannels == 3 || numbersOfChannels == 4)
+        {
+            for (size_t i = 0; i < pixelDataSize; i += numbersOfChannels)
+            {
+                std::swap(pixelData[i], pixelData[i + 2]); // Swap B and R
+            }
         }
     }
 }
