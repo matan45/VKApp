@@ -96,8 +96,8 @@ namespace core
     {
         auto textureData = resource::ResourceManager::loadTextureAsync(filePath);
         auto texturePtr = textureData.get();
-        vk::DeviceSize imageSize = texturePtr->width * texturePtr->height * texturePtr->numbersOfChannels * sizeof(
-            unsigned char);
+		vk::DeviceSize imageSize = texturePtr->width * texturePtr->height * texturePtr->numbersOfChannels * sizeof(
+			unsigned char);
 
         imageData.height = texturePtr->height;
         imageData.width = texturePtr->width;
@@ -120,7 +120,6 @@ namespace core
         }
         memcpy(data, texturePtr->textureData.data(), imageSize);
         device.getLogicalDevice().unmapMemory(stagingBufferMemory);
-
 
         ImageInfoRequest imageInfo(device.getLogicalDevice(), device.getPhysicalDevice());
         imageInfo.width = texturePtr->width;

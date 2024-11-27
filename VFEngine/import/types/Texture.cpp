@@ -24,7 +24,7 @@
 namespace types
 {
     void Texture::loadTextureFile(const importConfig::ImportFiles& file, std::string_view fileName,
-                                  std::string_view location) const
+                                  std::string_view location) 
     {
         resource::TextureData textureData;
         textureData.headerFileType = resource::FileType::TEXTURE;
@@ -37,7 +37,8 @@ namespace types
         int width;
         int height;
         int channels;
-        unsigned char* imageData = stbi_load(file.path.data(), &width, &height, &channels, 0);
+        
+        unsigned char* imageData = stbi_load(file.path.data(), &width, &height, &channels, STBI_rgb_alpha);;
 
         if (!imageData)
         {
@@ -57,13 +58,7 @@ namespace types
         {
             stbi_set_flip_vertically_on_load(false);
         }
-        //TEST
-        /*writeTGA("c:\\matan\\test.tga", textureData.width, textureData.height, textureData.numbersOfChannels,
-                 textureData.textureData);
-        TGAImage image;
-        readTGA("c:\\matan\\test.tga", image);
-        writeTGA("c:\\matan\\test2.tga", image.width, image.height, image.channels, image.pixelData);*/
-
+        
         stbi_image_free(imageData);
 
         saveToFileTexture(fileName, location, textureData);

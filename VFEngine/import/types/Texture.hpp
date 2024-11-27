@@ -9,7 +9,7 @@ namespace types
     {
     public:
         void loadTextureFile(const importConfig::ImportFiles& file, std::string_view fileName,
-                             std::string_view location) const;
+                             std::string_view location);
         void loadHDRFile(const importConfig::ImportFiles& file, std::string_view fileName,
                          std::string_view location) const;
 
