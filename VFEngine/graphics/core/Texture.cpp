@@ -96,7 +96,7 @@ namespace core
     {
         auto textureData = resource::ResourceManager::loadTextureAsync(filePath);
         auto texturePtr = textureData.get();
-		vk::DeviceSize imageSize = texturePtr->width * texturePtr->height * texturePtr->numbersOfChannels * sizeof(
+		vk::DeviceSize imageSize = texturePtr->width * texturePtr->height * 4 * sizeof(
 			unsigned char);
 
         imageData.height = texturePtr->height;

@@ -42,6 +42,6 @@ namespace types
     class TGAWriter
     {
         public:
-        static void writeTGA(std::ofstream& file, int numbersOfChannels,const std::vector<unsigned char>& pixelData);
+        static void writeTGA(std::ofstream& file, const std::vector<unsigned char>& pixelData);
     };
 }

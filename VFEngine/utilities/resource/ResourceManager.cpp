@@ -52,7 +52,6 @@ namespace resource
         std::ifstream file(filePath, std::ios::binary);
         if (!file.is_open())
         {
-            vfLogError("Error: Unable to open file: {}", filePath.string());
             return FileType::UNKNOWN;
         }
 

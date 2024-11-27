@@ -38,7 +38,7 @@ namespace resource
     class TGAReader
     {
     public:
-        static void readTGA(std::ifstream& file, int width, int height, int numbersOfChannels,
+        static void readTGA(std::ifstream& file, int width, int height,
                             std::vector<unsigned char>& pixelData);
     };
 }
