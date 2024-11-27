@@ -19,6 +19,9 @@ namespace types
         void saveToFileHDR(std::string_view fileName, std::string_view location,
                            const resource::HDRData& hdrData) const;
 
+        void convertTo4Channels(unsigned char* inputData, int width, int height, int inputChannels,
+            std::vector<unsigned char>& outputData);
+
         std::vector<float> convertFromEXRToHDR(const float* data, int width, int height) const;
         void flipImageVertically(float* imageData, int width, int height) const;
     };

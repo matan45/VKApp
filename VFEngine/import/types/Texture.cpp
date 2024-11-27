@@ -38,7 +38,7 @@ namespace types
 		int height;
 		int channels;
 
-		unsigned char* imageData = stbi_load(file.path.data(), &width, &height, &channels, STBI_rgb_alpha);
+		unsigned char* imageData = stbi_load(file.path.data(), &width, &height, &channels, 0);
 
 		if (!imageData)
 		{
@@ -51,8 +51,10 @@ namespace types
 		textureData.height = static_cast<uint32_t>(height);
 		textureData.numbersOfChannels = channels;
 
+		convertTo4Channels(imageData, width, height, channels, textureData.textureData);
+
 		// Store raw texture data into the vector
-		textureData.textureData = std::vector<unsigned char>(imageData, imageData + (width * height * channels));
+		//textureData.textureData = std::vector<unsigned char>(imageData, imageData + (width * height * channels));
 
 		if (file.config.isImageFlipVertically)
 		{
@@ -236,6 +238,48 @@ namespace types
 		HDRWriter::writeHDR(outFile, hdrData.width, hdrData.height, hdrData.numbersOfChannels, hdrData.textureData);
 
 		outFile.close();
+	}
+
+	void Texture::convertTo4Channels(unsigned char* inputData, int width, int height, int inputChannels, std::vector<unsigned char>& outputData)
+	{
+		int outputChannels = 4; // RGBA
+		outputData.resize(width * height * outputChannels);
+
+		for (int i = 0; i < width * height; ++i) {
+			unsigned char r, g, b, a;
+			if (inputChannels == 1) {
+				// Grayscale -> RGBA
+				r = g = b = inputData[i];
+				a = 255; // Default alpha
+			}
+			else if (inputChannels == 2) {
+				// Grayscale + Alpha -> RGBA
+				r = g = b = inputData[i * 2];
+				a = inputData[i * 2 + 1];
+			}
+			else if (inputChannels == 3) {
+				// RGB -> RGBA
+				r = inputData[i * 3];
+				g = inputData[i * 3 + 1];
+				b = inputData[i * 3 + 2];
+				a = 255; // Default alpha
+			}
+			else if (inputChannels == 4) {
+				// Already RGBA
+				r = inputData[i * 4];
+				g = inputData[i * 4 + 1];
+				b = inputData[i * 4 + 2];
+				a = inputData[i * 4 + 3];
+			}
+			else {
+				//throw std::runtime_error("Unsupported number of channels");
+			}
+
+			outputData[i * 4] = r;
+			outputData[i * 4 + 1] = g;
+			outputData[i * 4 + 2] = b;
+			outputData[i * 4 + 3] = a;
+		}
 	}
 
 	std::vector<float> Texture::convertFromEXRToHDR(const float* data, int width, int height) const
