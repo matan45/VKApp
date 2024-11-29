@@ -2,7 +2,6 @@
 #include "print/EditorLogger.hpp"
 #include "../controllers/files/FileUtils.hpp"
 #include "config/Config.hpp"
-#include "TGA.hpp"
 
 #include <iostream>
 #define TINYEXR_USE_MINIZ 0
@@ -52,9 +51,6 @@ namespace types
 		textureData.numbersOfChannels = channels;
 
 		convertTo4Channels(imageData, width, height, channels, textureData.textureData);
-
-		// Store raw texture data into the vector
-		//textureData.textureData = std::vector<unsigned char>(imageData, imageData + (width * height * channels));
 
 		if (file.config.isImageFlipVertically)
 		{
