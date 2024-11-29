@@ -96,6 +96,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\dependencies\ImGuiColorTextEdit\TextEditor.h" />
     <ClInclude Include="..\dependencies\ImGuizmo\GraphEditor.h" />
     <ClInclude Include="..\dependencies\ImGuizmo\ImCurveEdit.h" />
     <ClInclude Include="..\dependencies\ImGuizmo\ImGradient.h" />
@@ -118,6 +119,7 @@
     <ClInclude Include="..\dependencies\imgui\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\dependencies\ImGuiColorTextEdit\TextEditor.cpp" />
     <ClCompile Include="..\dependencies\ImGuizmo\GraphEditor.cpp" />
     <ClCompile Include="..\dependencies\ImGuizmo\ImCurveEdit.cpp" />
     <ClCompile Include="..\dependencies\ImGuizmo\ImGradient.cpp" />

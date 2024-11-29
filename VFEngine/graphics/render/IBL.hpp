@@ -113,7 +113,8 @@ namespace render
         core::OffscreenResources& offscreenResources;
         vk::UniqueCommandPool commandPool;
         std::shared_ptr<core::Texture> hdrTexture;
-        components::CameraComponent* camera{ nullptr };
+        components::CameraComponent camera;
+        bool isDisplay = false;
 
         static constexpr uint32_t CUBE_MAP_SIZE = 512;
         
@@ -140,8 +141,9 @@ namespace render
         void remove();
         void cleanUp();
 
-        void setCamera(components::CameraComponent* _camera) {
+        void setCamera(components::CameraComponent& _camera) {
             camera = _camera;
+            isDisplay = true;
         }
 
         const ImageData& getBrdfLUTImage()const {

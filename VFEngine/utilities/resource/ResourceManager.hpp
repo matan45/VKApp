@@ -7,6 +7,9 @@
 #include <chrono>
 #include <thread>
 
+#include <filesystem>
+namespace fs = std::filesystem;
+
 #include "../print/EditorLogger.hpp"
 #include "Types.hpp"
 #include "ShaderResource.hpp"
@@ -27,7 +30,7 @@ namespace resource {
 		inline static std::atomic<bool> running;
 
 	public:
-		static FileType readHeaderFile(std::string_view path);
+		static FileType readHeaderFile(const fs::path& filePath);
 		static std::future <std::shared_ptr<TextureData>> loadTextureAsync(std::string_view path);
 		static std::future <std::shared_ptr<HDRData>> loadHDRAsync(std::string_view path);
 		static std::future <std::shared_ptr<AudioData>> loadAudioAsync(std::string_view path);

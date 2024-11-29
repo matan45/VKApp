@@ -17,6 +17,7 @@ namespace controllers
         {
             futures.push_back(std::async(std::launch::async, &Import::processPath, path));
         }
+        
     }
 
     void Import::setLocation(std::string_view newLocation)

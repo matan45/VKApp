@@ -2,7 +2,8 @@
 #include "TextureResource.hpp"
 #include "AudioResource.hpp"
 #include "MeshResource.hpp"
-#include <bit>  // For std::bit_cast
+#include <bit>
+
 
 namespace resource
 {
@@ -37,24 +38,37 @@ namespace resource
         std::erase_if(shaderCache, [](const auto& pair) { return pair.second.expired(); });
     }
 
-    FileType ResourceManager::readHeaderFile(std::string_view path)
+    FileType ResourceManager::readHeaderFile(const fs::path& filePath)
     {
-        std::ifstream file(path.data(), std::ios::binary);
-        if (!file.is_open()) {
+        if (filePath.extension() == ".glsl")
+        {
+            return FileType::SHADER;
+        }
+        if (filePath.extension() == ".tga")
+        {
             return FileType::UNKNOWN;
         }
 
-        uint8_t typeByte;
-        file.read(std::bit_cast<char*>(&typeByte), sizeof(typeByte));
-
-        if (!file) {
-            vfLogError( "Failed to read headerFileType from file: {}", path.data());
+        std::ifstream file(filePath, std::ios::binary);
+        if (!file.is_open())
+        {
             return FileType::UNKNOWN;
         }
 
-        file.close();
+        uint8_t typeByte = 0;
+        file.read(reinterpret_cast<char*>(&typeByte), sizeof(typeByte));
 
-        // Cast the read byte back to a FileType
+        if (!file)
+        {
+            vfLogError("Error: Failed to read headerFileType from file: {}", filePath.string());
+            return FileType::UNKNOWN;
+        }
+        
+        if (typeByte >= static_cast<uint8_t>(FileType::UNKNOWN))
+        {
+            return FileType::UNKNOWN;
+        }
+
         return static_cast<FileType>(typeByte);
     }
 
@@ -68,10 +82,10 @@ namespace resource
 
     std::future<std::shared_ptr<HDRData>> ResourceManager::loadHDRAsync(std::string_view path)
     {
-		return loadResourceAsync<HDRData>(
-			path,
-			hdrCache,
-			[](std::string_view p) { return TextureResource::loadHDR(p); });
+        return loadResourceAsync<HDRData>(
+            path,
+            hdrCache,
+            [](std::string_view p) { return TextureResource::loadHDR(p); });
     }
 
     std::future<std::shared_ptr<AudioData>> ResourceManager::loadAudioAsync(std::string_view path)

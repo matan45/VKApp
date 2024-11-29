@@ -34,3 +34,6 @@
 [submodule "dependencies/tinyexr"]
 	path = dependencies/tinyexr
 	url = https://github.com/syoyo/tinyexr.git
+[submodule "dependencies/ImGuiColorTextEdit"]
+	path = dependencies/ImGuiColorTextEdit
+	url = https://github.com/BalazsJako/ImGuiColorTextEdit.git
