@@ -13,12 +13,14 @@ namespace scene
         std::shared_ptr<SceneGraphSystem> sceneGraphSystem;
 
     public:
-        Level() = default;
+        Level();
         ~Level() = default;
 
         void setName(const std::string& name);
         std::string getName();
         void setSceneGraphSystem(const std::shared_ptr<SceneGraphSystem>& sceneGraphSystem);
         std::shared_ptr<SceneGraphSystem> getSceneGraphSystem();
+
+        void update() const;
     };
 }

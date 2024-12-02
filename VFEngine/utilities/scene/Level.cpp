@@ -1,6 +1,12 @@
 ﻿#include "Level.hpp"
+
 namespace scene
 {
+    Level::Level()
+    {
+        sceneGraphSystem = std::make_shared<SceneGraphSystem>();
+    }
+
     void Level::setName(const std::string& _name)
     {
         name = _name;
@@ -21,4 +27,9 @@ namespace scene
         return this->sceneGraphSystem;
     }
 
+    void Level::update() const
+    {
+        sceneGraphSystem->updateWorldTransforms();
+        sceneGraphSystem->updateCamera();
+    }
 }
